@@ -11,6 +11,10 @@ import ForgotPassword from '../features/auth/components/ForgotPassword';
 import ResetPassword from '../features/auth/components/ResetPassword';
 import VerifyEmail from '../features/auth/components/VerifyEmail';
 
+// Profile pages
+import Profile from '../features/profile/components/Profile';
+import ChangePassword from '../features/profile/components/ChangePassword';
+
 // // User pages
 // import Profile from '../features/profile/components/Profile';
 // import UserSettings from '../features/profile/components/UserSettings';
@@ -48,6 +52,8 @@ const AppRoutes: React.FC = () => {
           }
         >
           {/* Profile routes */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/change-password" element={<ChangePassword />} />
           {/* <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<UserSettings />} />
           <Route path="/addresses" element={<Addresses />} /> */}
