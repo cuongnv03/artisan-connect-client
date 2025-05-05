@@ -15,15 +15,10 @@ import VerifyEmail from '../features/auth/components/VerifyEmail';
 import Profile from '../features/profile/components/Profile';
 import ChangePassword from '../features/profile/components/ChangePassword';
 
-// // User pages
-// import Profile from '../features/profile/components/Profile';
-// import UserSettings from '../features/profile/components/UserSettings';
-// import Addresses from '../features/profile/components/Addresses';
-
-// // Artisan pages
-// import ArtisanProfile from '../features/artisan/components/ArtisanProfile';
-// import ArtisanDashboard from '../features/artisan/components/ArtisanDashboard';
-// import ArtisanUpgrade from '../features/artisan/components/ArtisanUpgrade';
+// Artisan pages
+import ArtisanProfile from '../features/artisan/components/ArtisanProfile';
+import ArtisanDashboard from '../features/artisan/components/ArtisanDashboard';
+import ArtisanUpgrade from '../features/artisan/components/ArtisanUpgrade';
 
 // Other pages
 import HomePage from '../features/home/components/HomePage';
@@ -59,7 +54,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/addresses" element={<Addresses />} /> */}
 
           {/* Artisan routes */}
-          {/* <Route
+          <Route
             path="/artisan/profile"
             element={
               <ProtectedRoute roles={['ARTISAN']}>
@@ -75,7 +70,7 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} /> */}
+          <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} />
         </Route>
 
         {/* Public routes with main layout */}
