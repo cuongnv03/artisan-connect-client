@@ -1,57 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-  HomeIcon,
-  MagnifyingGlassIcon,
-  PlusCircleIcon,
-  HeartIcon,
-  UserIcon,
-} from '@heroicons/react/24/outline';
-import {
-  HomeIcon as HomeIconSolid,
-  MagnifyingGlassIcon as MagnifyingGlassIconSolid,
-  PlusCircleIcon as PlusCircleIconSolid,
-  HeartIcon as HeartIconSolid,
-  UserIcon as UserIconSolid,
-} from '@heroicons/react/24/solid';
+import { useAuth } from '../../store/AuthContext';
+import { getNavItemsByRole } from '../../config/navigation';
 
 export const MobileNav: React.FC = () => {
   const location = useLocation();
+  const { state } = useAuth();
+  const { user } = state;
 
-  const navigationItems = [
-    {
-      name: 'Home',
-      path: '/',
-      icon: HomeIcon,
-      activeIcon: HomeIconSolid,
-    },
-    {
-      name: 'Discover',
-      path: '/discover',
-      icon: MagnifyingGlassIcon,
-      activeIcon: MagnifyingGlassIconSolid,
-    },
-    {
-      name: 'Create',
-      path: '/post/create',
-      icon: PlusCircleIcon,
-      activeIcon: PlusCircleIconSolid,
-      special: true,
-    },
-    {
-      name: 'Notifications',
-      path: '/notifications',
-      icon: HeartIcon,
-      activeIcon: HeartIconSolid,
-    },
-    {
-      name: 'Profile',
-      path: '/profile',
-      icon: UserIcon,
-      activeIcon: UserIconSolid,
-    },
-  ];
+  // Get navigation items based on user role
+  // For mobile, we'll only show the main items (up to 5)
+  const navigationItems = getNavItemsByRole(user?.role).slice(0, 5);
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -61,7 +21,7 @@ export const MobileNav: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 bg-white border-t border-gray-200 md:hidden">
+    <div className="fixed inset-x-0 bottom-0 bg-white border-t border-gray-200 md:hidden z-10">
       <div className="grid grid-cols-5 h-16">
         {navigationItems.map((item) => {
           const active = isActive(item.path);
@@ -80,6 +40,11 @@ export const MobileNav: React.FC = () => {
             >
               <Icon className={clsx('h-6 w-6', item.special && 'h-8 w-8')} />
               <span className="text-xs mt-1">{item.name}</span>
+              {item.badge && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                  {item.badge > 9 ? '9+' : item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

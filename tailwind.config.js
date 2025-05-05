@@ -23,12 +23,16 @@ module.exports = {
           dark: '#4338ca',
         },
         artisan: {
-          beige: '#F5F5DC',
-          clay: '#D2691E',
-          wood: '#8B4513',
-          gold: '#FFD700',
-          silver: '#C0C0C0',
-          emerald: '#50C878',
+          // beige: '#F5F5DC',
+          // clay: '#D2691E',
+          // wood: '#8B4513',
+          // gold: '#FFD700',
+          // silver: '#C0C0C0',
+          // emerald: '#50C878',
+          clay: '#b65c3c', // Terracotta
+          navy: '#344055', // Deep navy
+          sage: '#76877d', // Muted sage
+          cream: '#f7f3e9', // Natural paper
         },
       },
       fontFamily: {

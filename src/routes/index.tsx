@@ -11,10 +11,16 @@ import ForgotPassword from '../features/auth/components/ForgotPassword';
 import ResetPassword from '../features/auth/components/ResetPassword';
 import VerifyEmail from '../features/auth/components/VerifyEmail';
 
-// Feed pages
+// Homepage
+import HomePage from '../features/home/components/HomePage';
+
+// Feed & Discovery pages
 import { NewsFeed } from '../features/feed/components/NewsFeed';
 import DiscoverPage from '../features/discover/components/DiscoverPage';
+
+// Post pages
 import PostDetail from '../features/post/components/PostDetail';
+import PostEditor from '../features/post/components/PostEditor';
 
 // Profile pages
 import Profile from '../features/profile/components/Profile';
@@ -25,8 +31,27 @@ import ArtisanProfile from '../features/artisan/components/ArtisanProfile';
 import ArtisanDashboard from '../features/artisan/components/ArtisanDashboard';
 import ArtisanUpgrade from '../features/artisan/components/ArtisanUpgrade';
 
-// Other pages
-import HomePage from '../features/home/components/HomePage';
+// Product pages
+import ProductsManage from '../features/product/components/ProductsManage';
+import ProductCreate from '../features/product/components/ProductCreate';
+import ProductCategories from '../features/product/components/ProductCategories';
+import ProductDetail from '../features/product/components/ProductDetail';
+
+// Order pages
+import OrdersList from '../features/order/components/OrdersList';
+import OrderDetail from '../features/order/components/OrderDetail';
+
+// Messages
+import MessagesList from '../features/message/components/MessagesList';
+import MessageDetail from '../features/message/components/MessageDetail';
+
+// Notifications
+import NotificationsPage from '../features/notification/components/NotificationsPage';
+
+// Settings
+import SettingsPage from '../features/settings/components/SettingsPage';
+
+// Error pages
 import NotFound from '../components/common/NotFound';
 import Unauthorized from '../components/common/Unauthorized';
 
@@ -51,14 +76,20 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          {/* Feed routes */}
+          {/* Common routes */}
           <Route path="/feed" element={<NewsFeed />} />
           <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/post/:id" element={<PostDetail />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Profile routes */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
+
+          {/* Post routes */}
+          <Route path="/post/:id" element={<PostDetail />} />
+          <Route path="/post/create" element={<PostEditor />} />
+          <Route path="/post/edit/:id" element={<PostEditor />} />
 
           {/* Artisan routes */}
           <Route
@@ -78,6 +109,77 @@ const AppRoutes: React.FC = () => {
             }
           />
           <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} />
+          <Route path="/artisan/:id" element={<ArtisanProfile />} />
+
+          {/* Product routes - artisan only */}
+          <Route
+            path="/products/manage"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <ProductsManage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products/create"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <ProductCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products/categories"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <ProductCategories />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products/edit/:id"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <ProductCreate />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Product detail - public but in protected layout */}
+          <Route path="/product/:id" element={<ProductDetail />} />
+
+          {/* Order routes - artisan only */}
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <OrdersList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute roles={['ARTISAN']}>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Message routes */}
+          <Route path="/messages" element={<MessagesList />} />
+          <Route path="/messages/:id" element={<MessageDetail />} />
+
+          {/* Admin routes */}
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute roles={['ADMIN']}>
+                {/* Admin components would go here */}
+                <div>Admin Panel (Placeholder)</div>
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
         {/* Public routes with main layout */}

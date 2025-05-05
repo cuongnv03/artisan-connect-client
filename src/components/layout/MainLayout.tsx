@@ -12,7 +12,7 @@ export const MainLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Determine if sidebar should be shown
-  const showSidebar = isAuthenticated && user?.role !== 'CUSTOMER';
+  const showSidebar = isAuthenticated;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
