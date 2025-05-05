@@ -11,6 +11,11 @@ import ForgotPassword from '../features/auth/components/ForgotPassword';
 import ResetPassword from '../features/auth/components/ResetPassword';
 import VerifyEmail from '../features/auth/components/VerifyEmail';
 
+// Feed pages
+import { NewsFeed } from '../features/feed/components/NewsFeed';
+import DiscoverPage from '../features/discover/components/DiscoverPage';
+import PostDetail from '../features/post/components/PostDetail';
+
 // Profile pages
 import Profile from '../features/profile/components/Profile';
 import ChangePassword from '../features/profile/components/ChangePassword';
@@ -46,12 +51,14 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           }
         >
+          {/* Feed routes */}
+          <Route path="/feed" element={<NewsFeed />} />
+          <Route path="/discover" element={<DiscoverPage />} />
+          <Route path="/post/:id" element={<PostDetail />} />
+
           {/* Profile routes */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
-          {/* <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<UserSettings />} />
-          <Route path="/addresses" element={<Addresses />} /> */}
 
           {/* Artisan routes */}
           <Route

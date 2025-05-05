@@ -11,6 +11,18 @@ import {
   UpgradeRequest,
   UpgradeRequestWithUser,
 } from '../types/artisan.types';
+import { UserWithArtisanProfile } from '../types/user.types';
+
+export interface ArtisanQueryOptions {
+  search?: string;
+  categoryId?: string;
+  specialties?: string[];
+  isVerified?: boolean;
+  sortBy?: 'rating' | 'followerCount' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}
 
 export const ArtisanService = {
   // Get current user's artisan profile
@@ -118,6 +130,34 @@ export const ArtisanService = {
       `/artisan-profiles/upgrade-requests/${id}/reject`,
       { adminNotes },
     );
+    return response.data.data;
+  },
+
+  getArtisans: async (
+    options: ArtisanQueryOptions = {},
+  ): Promise<PaginatedResponse<UserWithArtisanProfile>> => {
+    const response = await api.get('/artisans', { params: options });
+    return response.data.data;
+  },
+
+  getArtisanById: async (id: string): Promise<UserWithArtisanProfile> => {
+    const response = await api.get(`/artisans/${id}`);
+    return response.data.data;
+  },
+
+  getArtisanByUsername: async (
+    username: string,
+  ): Promise<UserWithArtisanProfile> => {
+    const response = await api.get(`/artisans/username/${username}`);
+    return response.data.data;
+  },
+
+  getPopularArtisans: async (
+    limit: number = 5,
+  ): Promise<UserWithArtisanProfile[]> => {
+    const response = await api.get('/artisans/popular', {
+      params: { limit },
+    });
     return response.data.data;
   },
 };
