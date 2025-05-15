@@ -1,8 +1,8 @@
 import React from 'react';
-import { formatDateTime } from '../../helpers/formatters';
-import { Message } from '../../types/message.types';
-import { useAuth } from '../../context/AuthContext';
-import { Avatar } from '../../components/common/Avatar';
+import { formatDateTime } from '../../../../helpers/formatters';
+import { Message } from '../../../../types/message.types';
+import { useAuth } from '../../../../context/AuthContext';
+import { Avatar } from '../../../../components/common/Avatar';
 import clsx from 'clsx';
 
 interface MessageItemProps {

@@ -10,7 +10,7 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { NotificationBadge } from '../data/NotificationBadge';
-import { MessageNotificationBadge } from '../../screens/Messages/MessageNotificationBadge';
+import { MessageNotificationBadge } from '../data/MessageNotificationBadge/MessageNotificationBadge';
 
 interface NavbarProps {
   onMenuClick?: () => void;

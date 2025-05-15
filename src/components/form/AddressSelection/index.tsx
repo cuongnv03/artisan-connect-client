@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Address } from '@/types/profile.types';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/form/Button';
-import { AddressForm } from './AddressForm';
+import { Card } from '../../common/Card';
+import { Button } from '../Button';
+import { AddressForm } from '../AddressForm';
 import { PlusCircleIcon } from '@heroicons/react/24/outline';
 
 interface AddressSelectionProps {

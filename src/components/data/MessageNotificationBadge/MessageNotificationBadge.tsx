@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import { ChatBubbleLeftIcon as ChatBubbleLeftIconSolid } from '@heroicons/react/24/solid';
-import { useMessages } from '../../context/MessageContext';
-import { Badge } from '../../components/common/Badge';
+import { useMessages } from '../../../context/MessageContext';
+import { Badge } from '../../common/Badge';
 
 interface MessageNotificationBadgeProps {
   isActive?: boolean;

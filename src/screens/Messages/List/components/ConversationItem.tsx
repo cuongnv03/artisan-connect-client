@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { formatRelativeTime } from '../../helpers/formatters';
-import { Avatar } from '../../components/common/Avatar';
-import { Badge } from '../../components/common/Badge';
-import { Conversation } from '../../types/message.types';
+import { formatRelativeTime } from '../../../../helpers/formatters';
+import { Avatar } from '../../../../components/common/Avatar';
+import { Badge } from '../../../../components/common/Badge';
+import { Conversation } from '../../../../types/message.types';
 import clsx from 'clsx';
 
 interface ConversationItemProps {

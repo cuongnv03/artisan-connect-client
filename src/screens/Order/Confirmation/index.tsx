@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useOrders } from '../../hooks/useOrders';
-import { formatDate, formatPrice } from '../../helpers/formatters';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/form/Button';
-import { Loader } from '../../components/feedback/Loader';
-import { Alert } from '../../components/feedback/Alert';
+import { useOrders } from '../../../hooks/useOrders';
+import { formatDate, formatPrice } from '../../../helpers/formatters';
+import { Card } from '../../../components/common/Card';
+import { Button } from '../../../components/form/Button';
+import { Loader } from '../../../components/feedback/Loader';
+import { Alert } from '../../../components/feedback/Alert';
 import { CheckCircleIcon } from '@heroicons/react/24/outline';
-import { OrderStatusBadge } from './OrderStatusBadge';
+import { OrderStatusBadge } from '../OrderStatusBadge';
 
 const OrderConfirmation: React.FC = () => {
   const { id } = useParams<{ id: string }>();

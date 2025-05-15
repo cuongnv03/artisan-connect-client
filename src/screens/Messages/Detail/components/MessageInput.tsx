@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from '../../components/form/Button';
+import { Button } from '../../../../components/form/Button';
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 
 interface MessageInputProps {

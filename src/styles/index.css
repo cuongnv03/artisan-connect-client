@@ -1,12 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
-@import './variables.css';
-@import './themes.css';
-@import './global.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Base styles */
+html,
+body {
+  @apply text-gray-900 antialiased h-full;
+}
+
+#root {
+  @apply flex flex-col min-h-screen;
+}
+
+/* Animation utilities */
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-500 {
+  animation-delay: 0.5s;
+}
 
 /* Custom utilities */
 @layer utilities {
@@ -66,6 +81,19 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
+}
+
+/* Form component styling */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='search'],
+input[type='tel'],
+input[type='url'],
+textarea,
+select {
+  @apply w-full rounded-md border-gray-300 shadow-sm focus:border-accent focus:ring-accent;
 }
 
 /* Custom placeholder for file inputs */

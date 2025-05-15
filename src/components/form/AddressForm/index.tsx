@@ -1,10 +1,10 @@
 import React from 'react';
-import { useForm } from '../../hooks/useForm';
-import { Input } from '../../components/form/Input';
-import { Button } from '../../components/form/Button';
-import { AddressService } from '../../services/address.service';
+import { useForm } from '../../../hooks/useForm';
+import { Input } from '../Input';
+import { Button } from '../Button';
+import { AddressService } from '../../../services/address.service';
 import { CreateAddressRequest } from '@/types/profile.types';
-import { useToast } from '../../hooks/useToast';
+import { useToast } from '../../../hooks/useToast';
 
 interface AddressFormProps {
   onSuccess?: () => void;

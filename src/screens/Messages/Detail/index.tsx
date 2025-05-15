@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMessages } from '../../../context/MessageContext';
-import { MessageItem } from '../MessageItem';
-import { MessageInput } from '../MessageInput';
-import { NoConversationSelected } from '../NoConversationSelected';
+import { MessageItem } from './components/MessageItem';
+import { MessageInput } from './components/MessageInput';
+import { NoConversationSelected } from './components/NoConversationSelected';
 import { Loader } from '../../../components/feedback/Loader';
 import { Avatar } from '../../../components/common/Avatar';
 import {

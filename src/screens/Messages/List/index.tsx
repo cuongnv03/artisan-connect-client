@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMessages } from '../../../context/MessageContext';
-import { ConversationItem } from '../ConversationItem';
+import { ConversationItem } from './components/ConversationItem';
 import { Loader } from '../../../components/feedback/Loader';
 import { Input } from '../../../components/form/Input';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -10,7 +10,7 @@ import { Modal } from '../../../components/feedback/Modal';
 import { useAuth } from '../../../context/AuthContext';
 import { User } from '../../../types/user.types';
 import { Dropdown } from '../../../components/form/Dropdown';
-import { MessageInput } from '../MessageInput';
+import { MessageInput } from '../Detail/components/MessageInput';
 
 const MessagesList: React.FC = () => {
   const { state, fetchConversations, setCurrentConversation, sendMessage } =

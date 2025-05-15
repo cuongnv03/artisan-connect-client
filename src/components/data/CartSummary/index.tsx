@@ -1,6 +1,6 @@
 import React from 'react';
-import { formatPrice } from '../../helpers/formatters';
-import { Card } from '../../components/common/Card';
+import { formatPrice } from '../../../helpers/formatters';
+import { Card } from '../../common/Card';
 
 interface CartSummaryProps {
   subtotal: number;

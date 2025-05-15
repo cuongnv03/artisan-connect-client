@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOrders } from '../../hooks/useOrders';
-import { CartSummary } from './CartSummary';
-import { AddressSelection } from './AddressSelection';
-import { PaymentMethodSelection } from './PaymentMethodSelection';
-import { Card } from '../../components/common/Card';
-import { Button } from '../../components/form/Button';
-import { Input } from '../../components/form/Input';
-import { useToast } from '../../hooks/useToast';
-import { PaymentMethod } from '../../types/order.types';
-import { Address } from '../../types/profile.types';
-import { AddressService } from '../../services/address.service';
+import { useOrders } from '../../../hooks/useOrders';
+import { CartSummary } from '../../../components/data/CartSummary';
+import { AddressSelection } from '../../../components/form/AddressSelection';
+import { PaymentMethodSelection } from '../../../components/form/PaymentMethodSelection';
+import { Card } from '../../../components/common/Card';
+import { Button } from '../../../components/form/Button';
+import { Input } from '../../../components/form/Input';
+import { useToast } from '../../../hooks/useToast';
+import { PaymentMethod } from '../../../types/order.types';
+import { Address } from '../../../types/profile.types';
+import { AddressService } from '../../../services/address.service';
 import { Link } from 'react-router-dom';
 
 interface CheckoutProps {

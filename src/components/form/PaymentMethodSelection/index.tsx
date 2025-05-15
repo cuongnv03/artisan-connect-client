@@ -1,6 +1,6 @@
 import React from 'react';
-import { PaymentMethod } from '../../types/order.types';
-import { Card } from '../../components/common/Card';
+import { PaymentMethod } from '../../../types/order.types';
+import { Card } from '../../common/Card';
 import {
   CreditCardIcon,
   BanknotesIcon,

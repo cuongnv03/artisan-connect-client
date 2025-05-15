@@ -41,7 +41,7 @@ import ProductDetail from '../screens/Product/Detail';
 import OrdersList from '../screens/Order/List';
 import OrderDetail from '../screens/Order/Detail';
 import Checkout from '../screens/Order/Checkout';
-import OrderConfirmation from '../screens/Order/OrderConfirmation';
+import OrderConfirmation from '../screens/Order/Confirmation';
 
 // Messages
 import MessagesList from '../screens/Messages/List';

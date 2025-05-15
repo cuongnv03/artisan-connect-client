@@ -11,7 +11,7 @@ import { Dropdown } from '../../../components/form/Dropdown';
 import { useAuth } from '../../../context/AuthContext';
 import { UserRole } from '../../../types/user.types';
 import { OrderStatusBadge } from '../OrderStatusBadge';
-import { PaginationControls } from '../PaginationControls';
+import { PaginationControls } from '../../../components/common/PaginationControls';
 
 const OrdersList: React.FC = () => {
   const { state } = useAuth();
