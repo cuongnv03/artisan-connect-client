@@ -3,14 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../form/Button';
 import { Avatar } from '../common/Avatar';
-import {
-  Bars3Icon,
-  BellIcon,
-  ChatBubbleLeftEllipsisIcon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
-import { NotificationBadge } from '../data/NotificationBadge';
-import { MessageNotificationBadge } from '../data/MessageNotificationBadge/MessageNotificationBadge';
+import { Bars3Icon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -89,20 +82,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           <div className="flex items-center space-x-1 sm:space-x-4">
             {isAuthenticated ? (
               <>
-                {/* <Link
-                  to="/messages"
-                  className="p-2 text-gray-500 rounded-full hover:text-accent hover:bg-gray-100"
-                >
-                  <MessageNotificationBadge />
-                </Link> */}
-
-                <Link
-                  to="/notifications"
-                  className="p-2 text-gray-500 rounded-full hover:text-accent hover:bg-gray-100"
-                >
-                  <NotificationBadge asButton={false} />
-                </Link>
-
                 <div className="relative ml-3">
                   <button
                     type="button"

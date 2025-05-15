@@ -65,12 +65,6 @@ export const getCustomerNavItems = (): NavItem[] => [
     special: true,
   },
   {
-    name: 'Notifications',
-    path: '/notifications',
-    icon: HeartIcon,
-    activeIcon: HeartIconSolid,
-  },
-  {
     name: 'Profile',
     path: '/profile',
     icon: UserIcon,
@@ -112,12 +106,6 @@ export const getArtisanNavItems = (): NavItem[] => [
     icon: InboxIcon,
     activeIcon: InboxIconSolid,
     badge: 5,
-  },
-  {
-    name: 'Messages',
-    path: '/messages',
-    icon: ChatBubbleLeftIcon,
-    activeIcon: ChatBubbleLeftIconSolid,
   },
   {
     name: 'Profile',

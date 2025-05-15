@@ -43,13 +43,6 @@ import OrderDetail from '../screens/Order/Detail';
 import Checkout from '../screens/Order/Checkout';
 import OrderConfirmation from '../screens/Order/Confirmation';
 
-// Messages
-import MessagesList from '../screens/Messages/List';
-import MessageDetail from '../screens/Messages/Detail';
-
-// Notifications
-import NotificationsPage from '@/screens/Notification';
-
 // Settings
 import SettingsPage from '../screens/Settings';
 
@@ -81,7 +74,6 @@ const AppRoutes: React.FC = () => {
           {/* Common routes */}
           <Route path="/feed" element={<NewsFeed />} />
           <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* Profile routes */}
           <Route path="/profile" element={<Profile />} />
@@ -167,9 +159,6 @@ const AppRoutes: React.FC = () => {
             element={<OrderConfirmation />}
           />
 
-          {/* Message routes */}
-          {/* <Route path="/messages" element={<MessagesList />} />
-          <Route path="/messages/:id" element={<MessageDetail />} /> */}
           {/* Admin routes */}
           <Route
             path="/admin/*"
