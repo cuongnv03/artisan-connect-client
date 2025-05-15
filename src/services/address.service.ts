@@ -3,7 +3,7 @@ import {
   Address,
   CreateAddressRequest,
   UpdateAddressRequest,
-} from '../types/api.types';
+} from '../types/profile.types';
 
 export const AddressService = {
   getAddresses: async (): Promise<Address[]> => {

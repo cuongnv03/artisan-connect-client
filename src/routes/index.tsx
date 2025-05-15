@@ -5,55 +5,57 @@ import { MainLayout } from '../components/layout/MainLayout';
 import { AuthLayout } from '../components/layout/AuthLayout';
 
 // Auth pages
-import Login from '../features/auth/components/Login';
-import Register from '../features/auth/components/Register';
-import ForgotPassword from '../features/auth/components/ForgotPassword';
-import ResetPassword from '../features/auth/components/ResetPassword';
-import VerifyEmail from '../features/auth/components/VerifyEmail';
+import Login from '../screens/Auth/Login';
+import Register from '../screens/Auth/Register';
+import ForgotPassword from '../screens/Auth/ForgotPassword';
+import ResetPassword from '../screens/Auth/ResetPassword';
+import VerifyEmail from '../screens/Auth/VerifyEmail';
 
 // Homepage
-import HomePage from '../features/home/components/HomePage';
+import HomePage from '../screens/Home';
 
 // Feed & Discovery pages
-import { NewsFeed } from '../features/feed/components/NewsFeed';
-import DiscoverPage from '../features/discover/components/DiscoverPage';
+import { NewsFeed } from '../screens/Home/Feed';
+import DiscoverPage from '@/screens/Discover';
 
 // Post pages
-import PostDetail from '../features/post/components/PostDetail';
-import PostEditor from '../features/post/components/PostEditor';
+import PostDetail from '@/screens/Post/Detail';
+import PostEditor from '@/screens/Post/Editor';
 
 // Profile pages
-import Profile from '../features/profile/components/Profile';
-import ChangePassword from '../features/profile/components/ChangePassword';
+import Profile from '../screens/Profile';
+import ChangePassword from '../screens/Profile/ChangePassword';
 
 // Artisan pages
-import ArtisanProfile from '../features/artisan/components/ArtisanProfile';
-import ArtisanDashboard from '../features/artisan/components/ArtisanDashboard';
-import ArtisanUpgrade from '../features/artisan/components/ArtisanUpgrade';
+import ArtisanProfile from '../screens/Artisan/Profile';
+import ArtisanDashboard from '../screens/Artisan/Dashboard';
+import ArtisanUpgrade from '../screens/Artisan/Upgrade';
 
 // Product pages
-import ProductsManage from '../features/product/components/ProductsManage';
-import ProductCreate from '../features/product/components/ProductCreate';
-import ProductCategories from '../features/product/components/ProductCategories';
-import ProductDetail from '../features/product/components/ProductDetail';
+import ProductsManage from '../screens/Product/Manage';
+import ProductCreate from '../screens/Product/Create';
+import ProductCategories from '../screens/Product/Categories';
+import ProductDetail from '../screens/Product/Detail';
 
 // Order pages
-import OrdersList from '../features/order/components/OrdersList';
-import OrderDetail from '../features/order/components/OrderDetail';
+import OrdersList from '../screens/Order/List';
+import OrderDetail from '../screens/Order/Detail';
+import Checkout from '../screens/Order/Checkout';
+import OrderConfirmation from '../screens/Order/OrderConfirmation';
 
 // Messages
-import MessagesList from '../features/message/components/MessagesList';
-import MessageDetail from '../features/message/components/MessageDetail';
+import MessagesList from '../screens/Messages/List';
+import MessageDetail from '../screens/Messages/Detail';
 
 // Notifications
-import NotificationsPage from '../features/notification/components/NotificationsPage';
+import NotificationsPage from '@/screens/Notification';
 
 // Settings
-import SettingsPage from '../features/settings/components/SettingsPage';
+import SettingsPage from '../screens/Settings';
 
 // Error pages
-import NotFound from '../components/common/NotFound';
-import Unauthorized from '../components/common/Unauthorized';
+import NotFound from '../components/feedback/NotFound';
+import Unauthorized from '../components/feedback/Unauthorized';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -79,18 +81,15 @@ const AppRoutes: React.FC = () => {
           {/* Common routes */}
           <Route path="/feed" element={<NewsFeed />} />
           <Route path="/discover" element={<DiscoverPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
+          {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
           <Route path="/settings" element={<SettingsPage />} />
-
           {/* Profile routes */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/change-password" element={<ChangePassword />} />
-
           {/* Post routes */}
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/post/create" element={<PostEditor />} />
           <Route path="/post/edit/:id" element={<PostEditor />} />
-
           {/* Artisan routes */}
           <Route
             path="/artisan/profile"
@@ -110,7 +109,6 @@ const AppRoutes: React.FC = () => {
           />
           <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} />
           <Route path="/artisan/:id" element={<ArtisanProfile />} />
-
           {/* Product routes - artisan only */}
           <Route
             path="/products/manage"
@@ -144,10 +142,8 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
           {/* Product detail - public but in protected layout */}
           <Route path="/product/:id" element={<ProductDetail />} />
-
           {/* Order routes - artisan only */}
           <Route
             path="/orders"
@@ -165,11 +161,15 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route
+            path="/order-confirmation/:id"
+            element={<OrderConfirmation />}
+          />
 
           {/* Message routes */}
-          <Route path="/messages" element={<MessagesList />} />
-          <Route path="/messages/:id" element={<MessageDetail />} />
-
+          {/* <Route path="/messages" element={<MessagesList />} />
+          <Route path="/messages/:id" element={<MessageDetail />} /> */}
           {/* Admin routes */}
           <Route
             path="/admin/*"

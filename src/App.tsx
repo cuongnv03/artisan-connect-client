@@ -1,8 +1,9 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { AuthProvider } from './store/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { MessageProvider } from './context/MessageContext';
 import AppRoutes from './routes';
-import './index.css';
+import './styles/index.css';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -18,7 +19,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppRoutes />
+        <MessageProvider>
+          <AppRoutes />
+        </MessageProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

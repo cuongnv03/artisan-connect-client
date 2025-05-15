@@ -1,0 +1,29 @@
+/* Light theme (default) */
+:root {
+  --background-primary: var(--color-gray-50);
+  --background-secondary: white;
+  --text-primary: var(--color-gray-900);
+  --text-secondary: var(--color-gray-700);
+  --text-tertiary: var(--color-gray-500);
+  --border-color: var(--color-gray-200);
+}
+
+/* Dark theme */
+[data-theme='dark'] {
+  --background-primary: var(--color-gray-900);
+  --background-secondary: var(--color-gray-800);
+  --text-primary: white;
+  --text-secondary: var(--color-gray-300);
+  --text-tertiary: var(--color-gray-400);
+  --border-color: var(--color-gray-700);
+}
+
+/* Artisan theme */
+[data-theme='artisan'] {
+  --background-primary: #f8f7f4;
+  --background-secondary: white;
+  --text-primary: #3c3c3c;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9e9e9e;
+  --border-color: #eeebe5;
+}

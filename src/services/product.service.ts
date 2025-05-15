@@ -83,4 +83,21 @@ export const ProductService = {
     });
     return response.data.data;
   },
+
+  deleteProduct: async (id: string): Promise<void> => {
+    await api.delete(`/products/${id}`);
+  },
+
+  getPriceHistory: async (id: string): Promise<any[]> => {
+    const response = await api.get(`/products/${id}/price-history`);
+    return response.data.data;
+  },
+
+  updatePrice: async (
+    id: string,
+    data: { price: number; changeNote?: string },
+  ): Promise<Product> => {
+    const response = await api.patch(`/products/${id}/price`, data);
+    return response.data.data;
+  },
 };

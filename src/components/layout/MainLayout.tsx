@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navbar } from './Navbar';
+import { Navbar } from '../navigation/Navbar';
 import { Footer } from './Footer';
-import { Sidebar } from './Sidebar';
-import { MobileNav } from './MobileNav';
-import { useAuth } from '../../store/AuthContext';
+import { Sidebar } from '../navigation/Sidebar';
+import { MobileNav } from '../navigation/MobileNav';
+import { useAuth } from '../../context/AuthContext';
 
 export const MainLayout: React.FC = () => {
   const { state } = useAuth();
