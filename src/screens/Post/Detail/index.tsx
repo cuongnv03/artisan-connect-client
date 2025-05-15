@@ -123,7 +123,7 @@ const PostDetail: React.FC = () => {
     );
   }
 
-  if (!post) {
+  if (isError || !post) {
     return (
       <Alert type="error" variant="subtle">
         Post not found
@@ -226,7 +226,13 @@ const PostDetail: React.FC = () => {
             )}
 
             {/* Post Content */}
-            <PostContent content={post.content} />
+            {post.content && Array.isArray(post.content) ? (
+              <PostContent content={post.content} />
+            ) : (
+              <div className="py-4 text-gray-500">
+                Post content not available
+              </div>
+            )}
 
             {/* Featured Products */}
             {post.productMentions && post.productMentions.length > 0 && (

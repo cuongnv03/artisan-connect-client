@@ -3,114 +3,103 @@ import { Link } from 'react-router-dom';
 import { ContentBlock, BlockType } from '../../../types/post.types';
 
 interface PostContentProps {
-  content: ContentBlock[];
+  content: ContentBlock[] | any;
 }
 
 export const PostContent: React.FC<PostContentProps> = ({ content }) => {
-  const renderBlock = (block: ContentBlock) => {
-    switch (block.type) {
+  // Ensure content is an array
+  const safeContent = Array.isArray(content) ? content : [];
+
+  const renderBlock = (block: any) => {
+    if (!block || typeof block !== 'object') {
+      return <div className="p-2 bg-gray-100 rounded">Invalid block</div>;
+    }
+
+    const blockType = block.type || 'unknown';
+
+    // Handle different block types based on the actual structure
+    switch (blockType) {
       case BlockType.PARAGRAPH:
+      case 'paragraph':
         return (
-          <div
-            className="prose prose-lg max-w-none"
-            dangerouslySetInnerHTML={{ __html: block.data.text }}
-          />
+          <div className="prose prose-lg max-w-none my-4">
+            {block.content || ''}
+          </div>
         );
 
       case BlockType.HEADING:
-        const HeadingTag =
-          `h${block.data.level}` as keyof JSX.IntrinsicElements;
+      case 'heading': {
+        const level = block.level || 2;
+        const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
         return (
-          <HeadingTag
-            className={`font-bold text-gray-900 mb-4 ${
-              block.data.level === 2 ? 'text-2xl' : 'text-xl'
-            }`}
-          >
-            {block.data.text}
+          <HeadingTag className="font-bold text-gray-900 mb-4">
+            {block.content || 'Untitled Heading'}
           </HeadingTag>
         );
+      }
 
       case BlockType.IMAGE:
+      case 'image':
         return (
           <figure className="my-8">
-            <img
-              src={block.data.url}
-              alt={block.data.caption || ''}
-              className="w-full h-auto rounded-lg"
-            />
-            {block.data.caption && (
+            {block.url ? (
+              <img
+                src={block.url}
+                alt={block.caption || ''}
+                className="w-full h-auto rounded-lg"
+              />
+            ) : (
+              <div className="bg-gray-200 w-full h-48 rounded-lg flex items-center justify-center">
+                <span className="text-gray-500">Image not available</span>
+              </div>
+            )}
+            {block.caption && (
               <figcaption className="mt-2 text-center text-sm text-gray-500">
-                {block.data.caption}
+                {block.caption}
               </figcaption>
             )}
           </figure>
         );
 
       case BlockType.GALLERY:
+      case 'gallery': {
+        const images = block.images || [];
         return (
           <div className="my-8">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {block.data.images.map((image: any, index: number) => (
+              {images.map((image: any, index: number) => (
                 <div
                   key={index}
                   className="aspect-square rounded-lg overflow-hidden"
                 >
                   <img
-                    src={image.url}
+                    src={image.url || ''}
                     alt={image.caption || `Gallery image ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition-transform"
                   />
                 </div>
               ))}
             </div>
-            {block.data.caption && (
+            {block.caption && (
               <p className="mt-2 text-center text-sm text-gray-500">
-                {block.data.caption}
+                {block.caption}
               </p>
             )}
           </div>
         );
-
-      case BlockType.VIDEO:
-        return (
-          <div className="my-8">
-            <div className="aspect-video rounded-lg overflow-hidden">
-              {block.data.provider === 'youtube' ? (
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${block.data.videoId}`}
-                  title="YouTube video"
-                  allowFullScreen
-                  className="border-0"
-                ></iframe>
-              ) : (
-                <video
-                  src={block.data.url}
-                  controls
-                  className="w-full h-full"
-                  poster={block.data.poster}
-                />
-              )}
-            </div>
-            {block.data.caption && (
-              <p className="mt-2 text-center text-sm text-gray-500">
-                {block.data.caption}
-              </p>
-            )}
-          </div>
-        );
+      }
 
       case BlockType.QUOTE:
+      case 'quote':
         return (
           <blockquote className="border-l-4 border-accent pl-4 my-6 italic text-gray-700">
-            <p className="text-lg">{block.data.text}</p>
-            {block.data.author && (
+            <p className="text-lg">{block.content || ''}</p>
+            {block.author && (
               <footer className="mt-2 text-sm text-gray-500">
-                — {block.data.author}
-                {block.data.source && (
+                — {block.author}
+                {block.source && (
                   <span>
-                    , <cite>{block.data.source}</cite>
+                    , <cite>{block.source}</cite>
                   </span>
                 )}
               </footer>
@@ -119,10 +108,14 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
         );
 
       case BlockType.LIST:
-        if (block.data.style === 'ordered') {
+      case 'list': {
+        const items = block.items || [];
+        const listStyle = block.style || 'unordered';
+
+        if (listStyle === 'ordered') {
           return (
             <ol className="list-decimal pl-6 my-4 space-y-2">
-              {block.data.items.map((item: string, index: number) => (
+              {items.map((item: string, index: number) => (
                 <li key={index}>{item}</li>
               ))}
             </ol>
@@ -130,82 +123,75 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
         } else {
           return (
             <ul className="list-disc pl-6 my-4 space-y-2">
-              {block.data.items.map((item: string, index: number) => (
+              {items.map((item: string, index: number) => (
                 <li key={index}>{item}</li>
               ))}
             </ul>
           );
         }
+      }
 
-      case BlockType.PRODUCT:
+      case 'features': {
+        // Handle the custom 'features' block type
+        const featureItems = block.items || [];
         return (
-          <div className="my-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div className="flex items-center">
-              {block.data.image && (
-                <img
-                  src={block.data.image}
-                  alt={block.data.title}
-                  className="w-20 h-20 object-cover rounded-md"
-                />
-              )}
-              <div className={block.data.image ? 'ml-4' : ''}>
-                <h4 className="font-medium text-gray-900">
-                  {block.data.title}
-                </h4>
-                <p className="text-sm text-gray-500">
-                  {block.data.description}
-                </p>
-                <div className="mt-2">
-                  <Link
-                    to={`/product/${block.data.productId}`}
-                    className="text-sm font-medium text-accent hover:text-accent-dark"
-                  >
-                    View Product →
-                  </Link>
-                </div>
-              </div>
-            </div>
+          <div className="my-6 bg-gray-50 p-4 rounded-lg">
+            <h3 className="font-medium text-gray-900 mb-3">Features:</h3>
+            <ul className="list-disc pl-6 space-y-2">
+              {featureItems.map((item: string, index: number) => (
+                <li key={index} className="text-gray-700">
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         );
+      }
 
       case BlockType.DIVIDER:
+      case 'divider':
         return <hr className="my-6 border-gray-200" />;
 
-      case BlockType.HTML:
+      default:
         return (
-          <div
-            className="my-6"
-            dangerouslySetInnerHTML={{ __html: block.data.html }}
-          />
-        );
-
-      case BlockType.EMBED:
-        return (
-          <div className="my-6">
-            <div
-              className="rounded-lg overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: block.data.embed }}
-            />
-            {block.data.caption && (
-              <p className="mt-2 text-center text-sm text-gray-500">
-                {block.data.caption}
-              </p>
-            )}
+          <div className="p-4 border border-gray-200 rounded-md bg-gray-50 my-4">
+            <p className="text-gray-500">Block type: {blockType}</p>
+            <pre className="mt-2 text-xs text-gray-400 overflow-auto">
+              {JSON.stringify(block, null, 2)}
+            </pre>
           </div>
         );
-
-      default:
-        return <p>Unsupported block type: {block.type}</p>;
     }
   };
 
+  if (safeContent.length === 0) {
+    return (
+      <div className="py-8 px-4 text-center bg-gray-50 rounded-lg">
+        <p className="text-gray-500">No content available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="post-content">
-      {content.map((block) => (
-        <div key={block.id} className="mb-4">
-          {renderBlock(block)}
+      {safeContent.map((block: any, index: number) => (
+        <div key={block.id || `block-${index}`} className="mb-4">
+          {(() => {
+            try {
+              return renderBlock(block);
+            } catch (error) {
+              console.error(`Error rendering block ${index}:`, error);
+              return (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600">
+                  Error rendering content block
+                </div>
+              );
+            }
+          })()}
         </div>
       ))}
     </div>
   );
 };
+
+export default PostContent;
