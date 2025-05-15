@@ -89,18 +89,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           <div className="flex items-center space-x-1 sm:space-x-4">
             {isAuthenticated ? (
               <>
-                <Link
+                {/* <Link
                   to="/messages"
                   className="p-2 text-gray-500 rounded-full hover:text-accent hover:bg-gray-100"
                 >
                   <MessageNotificationBadge />
-                </Link>
+                </Link> */}
 
                 <Link
                   to="/notifications"
                   className="p-2 text-gray-500 rounded-full hover:text-accent hover:bg-gray-100"
                 >
-                  <NotificationBadge />
+                  <NotificationBadge asButton={false} />
                 </Link>
 
                 <div className="relative ml-3">

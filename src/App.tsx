@@ -1,8 +1,8 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AuthProvider } from './context/AuthContext';
-import { MessageProvider } from './context/MessageContext';
 import AppRoutes from './routes';
+import { MessageProvider } from './context/MessageContext';
 import './styles/index.css';
 
 // Create React Query client
@@ -19,9 +19,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MessageProvider>
-          <AppRoutes />
-        </MessageProvider>
+        <AppRoutes />
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -81,7 +81,7 @@ const AppRoutes: React.FC = () => {
           {/* Common routes */}
           <Route path="/feed" element={<NewsFeed />} />
           <Route path="/discover" element={<DiscoverPage />} />
-          {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* Profile routes */}
           <Route path="/profile" element={<Profile />} />
