@@ -47,11 +47,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <img
-                className="h-8 w-auto"
-                src="/logo.png"
-                alt="Artisan Connect"
-              />
               <span className="ml-2 text-lg font-semibold text-gray-900 hidden sm:block">
                 Artisan Connect
               </span>

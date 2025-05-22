@@ -83,6 +83,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/post/create" element={<PostEditor />} />
           <Route path="/post/edit/:id" element={<PostEditor />} />
           {/* Artisan routes */}
+          <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} />
+          <Route path="/artisan/:id" element={<ArtisanProfile />} />
           <Route
             path="/artisan/profile"
             element={
@@ -99,8 +101,6 @@ const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="/artisan/upgrade" element={<ArtisanUpgrade />} />
-          <Route path="/artisan/:id" element={<ArtisanProfile />} />
           {/* Product routes - artisan only */}
           <Route
             path="/products/manage"

@@ -140,15 +140,15 @@ export const ArtisanService = {
     return response.data.data;
   },
 
-  getArtisanById: async (id: string): Promise<UserWithArtisanProfile> => {
-    const response = await api.get(`/artisans/${id}`);
+  getArtisanById: async (id: string): Promise<ArtisanProfileWithUser> => {
+    const response = await api.get(`/artisan-profiles/${id}`);
     return response.data.data;
   },
 
-  getArtisanByUsername: async (
-    username: string,
-  ): Promise<UserWithArtisanProfile> => {
-    const response = await api.get(`/artisans/username/${username}`);
+  getArtisanByUserId: async (
+    userId: string,
+  ): Promise<ArtisanProfileWithUser> => {
+    const response = await api.get(`/artisan-profiles/user/${userId}`);
     return response.data.data;
   },
 

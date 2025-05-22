@@ -1,4 +1,3 @@
-// src/features/feed/components/NewsFeed.tsx
 import React, { useState, useEffect } from 'react';
 import { useQuery } from 'react-query';
 import { PostCard } from '../../../components/data/PostCard';
