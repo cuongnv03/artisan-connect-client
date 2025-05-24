@@ -30,14 +30,10 @@ export interface User extends BaseEntity {
   followingCount: number;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-}
-
 export interface AuthResponse {
   user: User;
-  tokens: AuthTokens;
+  accessToken: string;
+  refreshToken?: string;
 }
 
 export interface LoginRequest {

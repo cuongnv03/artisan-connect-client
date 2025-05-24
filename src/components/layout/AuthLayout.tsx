@@ -26,9 +26,11 @@ export const AuthLayout: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">AC</span>
-          </div>
+          <a href="/" className="flex items-center">
+            <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">AC</span>
+            </div>
+          </a>
         </div>
         <h1 className="mt-6 text-center text-3xl font-bold text-gray-900">
           Artisan Connect

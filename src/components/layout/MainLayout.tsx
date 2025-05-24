@@ -33,7 +33,7 @@ export const MainLayout: React.FC = () => {
         )}
 
         <main
-          className={`flex-1 ${isAuthenticated ? 'md:ml-64' : ''} ${
+          className={`flex-1 ${isAuthenticated ? 'md:ml-8' : ''} ${
             isAuthenticated ? 'pb-16 md:pb-0' : ''
           }`}
         >

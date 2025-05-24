@@ -110,12 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
             const response = await authService.refreshToken(refreshToken);
-            localStorage.setItem('accessToken', response.tokens.accessToken);
-            if (response.tokens.refreshToken) {
-              localStorage.setItem(
-                'refreshToken',
-                response.tokens.refreshToken,
-              );
+            localStorage.setItem('accessToken', response.accessToken);
+            if (response.refreshToken) {
+              localStorage.setItem('refreshToken', response.refreshToken);
             }
             dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
           } else {
@@ -145,21 +142,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'AUTH_START' });
 
     try {
+      console.log('Attempting login with:', { emailOrUsername, rememberMe });
+
       const response = await authService.login({
         emailOrUsername,
         password,
         rememberMe,
       });
 
-      localStorage.setItem('accessToken', response.tokens.accessToken);
-      if (response.tokens.refreshToken) {
-        localStorage.setItem('refreshToken', response.tokens.refreshToken);
+      console.log('Login response:', response);
+
+      localStorage.setItem('accessToken', response.accessToken);
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
       }
 
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
     } catch (error: any) {
+      console.log('Login error:', error);
       const errorMessage =
-        error.response?.data?.message || 'Đăng nhập thất bại';
+        error.response?.data?.message || error.message || 'Đăng nhập thất bại';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });
       throw error;
     }
@@ -177,9 +179,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const response = await authService.register(data);
 
-      localStorage.setItem('accessToken', response.tokens.accessToken);
-      if (response.tokens.refreshToken) {
-        localStorage.setItem('refreshToken', response.tokens.refreshToken);
+      localStorage.setItem('accessToken', response.accessToken);
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
       }
 
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
@@ -204,25 +206,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        state,
-        login,
-        register,
-        logout,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    state,
+    login,
+    register,
+    logout,
+    clearError,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

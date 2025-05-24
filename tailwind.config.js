@@ -72,6 +72,10 @@ export default {
           900: '#43302b',
           950: '#292017',
         },
+        // Add border color
+        border: '#e5e7eb', // gray-200
+        background: '#ffffff',
+        foreground: '#111827', // gray-900
       },
       fontFamily: {
         display: ['Inter', 'ui-sans-serif', 'system-ui'],

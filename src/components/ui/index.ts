@@ -8,3 +8,4 @@ export { Avatar } from './Avatar';
 export { Badge } from './Badge';
 export { Dropdown, Select } from './Dropdown';
 export { Pagination } from './Pagination';
+export { Tabs } from './Tabs';

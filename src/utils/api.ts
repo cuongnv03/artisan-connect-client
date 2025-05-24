@@ -32,8 +32,9 @@ class ApiClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
+        // console.log('API Response:', response); // Debug log
+
         // Server trả về format: { success: true, data: T, message: string }
-        // Ta sẽ trả về response.data.data (chính là data cần thiết)
         if (
           response.data &&
           response.data.success &&
@@ -41,10 +42,14 @@ class ApiClient {
         ) {
           return response.data.data;
         }
+
         // Fallback nếu server không trả về theo format chuẩn
         return response.data;
       },
       async (error: AxiosError) => {
+        // console.log('API Error:', error); // Debug log
+        // console.log('Error Response:', error.response); // Debug log
+
         const originalRequest = error.config as any;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -64,7 +69,6 @@ class ApiClient {
               },
             );
 
-            // Handle refresh token response
             const newTokenData = response.data.success
               ? response.data.data
               : response.data;
@@ -122,7 +126,6 @@ class ApiClient {
     return await this.client.delete(url);
   }
 
-  // Upload file method
   async upload<T>(url: string, formData: FormData): Promise<T> {
     return await this.client.post(url, formData, {
       headers: {
