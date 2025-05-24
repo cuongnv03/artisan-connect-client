@@ -1,83 +1,64 @@
-import api from './api';
+import { apiClient } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/api';
 import {
-  PostWithUser,
-  PostPaginationResult,
-  PostQueryOptions,
-} from '../types/post.types';
+  Post,
+  CreatePostRequest,
+  UpdatePostRequest,
+  GetPostsQuery,
+} from '../types/post';
+import { PaginatedResponse } from '../types/common';
 
-export const PostService = {
-  getPosts: async (
-    options: PostQueryOptions,
-  ): Promise<PostPaginationResult> => {
-    const response = await api.get('/posts', { params: options });
-    return response.data.data;
+export const postService = {
+  async getPosts(query: GetPostsQuery = {}): Promise<PaginatedResponse<Post>> {
+    return await apiClient.get<PaginatedResponse<Post>>(
+      API_ENDPOINTS.POSTS.BASE,
+      query,
+    );
   },
 
-  getPostById: async (id: string): Promise<PostWithUser> => {
-    const response = await api.get(`/posts/${id}`);
-    return response.data.data;
+  async getPost(id: string): Promise<Post> {
+    return await apiClient.get<Post>(API_ENDPOINTS.POSTS.BY_ID(id));
   },
 
-  getPostBySlug: async (slug: string): Promise<PostWithUser> => {
-    const response = await api.get(`/posts/slug/${slug}`);
-    return response.data.data;
+  async getPostBySlug(slug: string): Promise<Post> {
+    return await apiClient.get<Post>(API_ENDPOINTS.POSTS.BY_SLUG(slug));
   },
 
-  likePost: async (postId: string): Promise<void> => {
-    await api.post(`/social/like`, { postId });
+  async createPost(data: CreatePostRequest): Promise<Post> {
+    return await apiClient.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
   },
 
-  unlikePost: async (postId: string): Promise<void> => {
-    await api.delete(`/social/like`, { data: { postId } });
+  async updatePost(id: string, data: UpdatePostRequest): Promise<Post> {
+    return await apiClient.patch<Post>(API_ENDPOINTS.POSTS.BY_ID(id), data);
   },
 
-  savePost: async (postId: string): Promise<void> => {
-    await api.post(`/saved-posts`, { postId });
+  async deletePost(id: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.POSTS.BY_ID(id));
   },
 
-  unsavePost: async (postId: string): Promise<void> => {
-    await api.delete(`/saved-posts/${postId}`);
+  async publishPost(id: string): Promise<Post> {
+    return await apiClient.post<Post>(API_ENDPOINTS.POSTS.PUBLISH(id));
   },
 
-  getMyPosts: async (
-    options: Omit<PostQueryOptions, 'userId'>,
-  ): Promise<PostPaginationResult> => {
-    const response = await api.get('/posts/user/me', { params: options });
-    return response.data.data.posts;
+  async archivePost(id: string): Promise<Post> {
+    return await apiClient.post<Post>(API_ENDPOINTS.POSTS.ARCHIVE(id));
   },
 
-  getFollowedPosts: async (
-    options: Omit<PostQueryOptions, 'followedOnly'>,
-  ): Promise<PostPaginationResult> => {
-    const response = await api.get('/posts/feed/followed', { params: options });
-    return response.data.data;
+  async getMyPosts(
+    query: GetPostsQuery = {},
+  ): Promise<PaginatedResponse<Post>> {
+    return await apiClient.get<PaginatedResponse<Post>>(
+      API_ENDPOINTS.POSTS.MY_POSTS,
+      query,
+    );
   },
 
-  createPost: async (data: CreatePostDto): Promise<PostWithUser> => {
-    const response = await api.post('/posts', data);
-    return response.data.data;
-  },
-
-  updatePost: async (
-    id: string,
-    data: UpdatePostDto,
-  ): Promise<PostWithUser> => {
-    const response = await api.patch(`/posts/${id}`, data);
-    return response.data.data;
-  },
-
-  getMyProducts: async (
-    options: Omit<PostQueryOptions, 'userId'> = {},
-  ): Promise<PostPaginationResult> => {
-    const response = await api.get('/posts/user/me', { params: options });
-    return response.data.data.posts;
-  },
-
-  getProductsByIds: async (ids: string[]): Promise<any[]> => {
-    if (ids.length === 0) return [];
-    const response = await api.get('/products/batch', {
-      params: { ids: ids.join(',') },
-    });
-    return response.data.data;
+  async getFollowedPosts(
+    query: GetPostsQuery = {},
+  ): Promise<PaginatedResponse<Post>> {
+    return await apiClient.get<PaginatedResponse<Post>>(
+      API_ENDPOINTS.POSTS.FEED,
+      query,
+    );
   },
 };

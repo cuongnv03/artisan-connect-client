@@ -1,102 +1,66 @@
 import { useState, useCallback } from 'react';
 
-type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface ToastOptions {
-  type?: ToastType;
-  title?: string;
-  duration?: number;
-  action?: React.ReactNode;
-  position?:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
-}
-
-interface Toast {
+export interface Toast {
   id: string;
-  message: string;
   type: ToastType;
   title?: string;
-  duration: number;
-  isVisible: boolean;
-  position:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
-  action?: React.ReactNode;
+  message: string;
+  duration?: number;
 }
 
 export const useToast = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message: string, options?: ToastOptions) => {
-    const id = `toast-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       id,
-      message,
-      type: options?.type || 'info',
-      title: options?.title,
-      duration: options?.duration || 5000,
-      isVisible: true,
-      position: options?.position || 'bottom-right',
-      action: options?.action,
+      duration: 5000,
+      ...toast,
     };
 
-    setToasts((prevToasts) => [...prevToasts, newToast]);
+    setToasts((prev) => [...prev, newToast]);
+
+    // Auto remove toast after duration
+    if (newToast.duration && newToast.duration > 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, newToast.duration);
+    }
 
     return id;
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    setToasts((prevToasts) =>
-      prevToasts.map((toast) =>
-        toast.id === id ? { ...toast, isVisible: false } : toast,
-      ),
-    );
-
-    // Remove the toast from state after animation completes
-    setTimeout(() => {
-      setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-    }, 300);
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const clearAllToasts = useCallback(() => {
-    setToasts([]);
-  }, []);
-
-  // Convenience methods for different toast types
   const success = useCallback(
-    (message: string, options?: Omit<ToastOptions, 'type'>) => {
-      return addToast(message, { ...options, type: 'success' });
+    (message: string, title?: string) => {
+      return addToast({ type: 'success', message, title });
     },
     [addToast],
   );
 
   const error = useCallback(
-    (message: string, options?: Omit<ToastOptions, 'type'>) => {
-      return addToast(message, { ...options, type: 'error' });
+    (message: string, title?: string) => {
+      return addToast({ type: 'error', message, title });
     },
     [addToast],
   );
 
   const warning = useCallback(
-    (message: string, options?: Omit<ToastOptions, 'type'>) => {
-      return addToast(message, { ...options, type: 'warning' });
+    (message: string, title?: string) => {
+      return addToast({ type: 'warning', message, title });
     },
     [addToast],
   );
 
   const info = useCallback(
-    (message: string, options?: Omit<ToastOptions, 'type'>) => {
-      return addToast(message, { ...options, type: 'info' });
+    (message: string, title?: string) => {
+      return addToast({ type: 'info', message, title });
     },
     [addToast],
   );
@@ -105,7 +69,6 @@ export const useToast = () => {
     toasts,
     addToast,
     removeToast,
-    clearAllToasts,
     success,
     error,
     warning,

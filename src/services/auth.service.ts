@@ -1,52 +1,63 @@
-import api from './api';
+import { apiClient } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/api';
 import {
+  User,
+  AuthResponse,
   LoginRequest,
   RegisterRequest,
-  AuthResponse,
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
-} from '../types/api.types';
+} from '../types/auth';
 
-export const AuthService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', data);
-    return response.data.data;
+export const authService = {
+  async login(data: LoginRequest): Promise<AuthResponse> {
+    return await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, data);
   },
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post('/auth/register', data);
-    return response.data.data;
+  async register(data: RegisterRequest): Promise<AuthResponse> {
+    return await apiClient.post<AuthResponse>(
+      API_ENDPOINTS.AUTH.REGISTER,
+      data,
+    );
   },
 
-  logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+  async logout(): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   },
 
-  forgotPassword: async (data: ForgotPasswordRequest): Promise<void> => {
-    await api.post('/auth/forgot-password', data);
+  async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, data);
   },
 
-  resetPassword: async (data: ResetPasswordRequest): Promise<void> => {
-    await api.post('/auth/reset-password', data);
+  async resetPassword(data: ResetPasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, data);
   },
 
-  changePassword: async (data: ChangePasswordRequest): Promise<void> => {
-    await api.post('/auth/change-password', data);
+  async changePassword(data: ChangePasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
   },
 
-  verifyEmail: async (token: string): Promise<void> => {
-    await api.get(`/auth/verify-email/${token}`);
+  async verifyEmail(token: string): Promise<void> {
+    await apiClient.get(`${API_ENDPOINTS.AUTH.VERIFY_EMAIL}/${token}`);
   },
 
-  getCurrentUser: async (): Promise<any> => {
-    const response = await api.get('/auth/me');
-    return response.data.data;
+  async sendVerificationEmail(): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.SEND_VERIFICATION_EMAIL);
   },
 
-  sendVerificationEmail: async (): Promise<void> => {
-    await api.post('/auth/send-verification-email');
+  async getCurrentUser(): Promise<User> {
+    return await apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
+  },
+
+  async refreshToken(refreshToken: string): Promise<AuthResponse> {
+    return await apiClient.post<AuthResponse>(
+      API_ENDPOINTS.AUTH.REFRESH_TOKEN,
+      {
+        refreshToken,
+      },
+    );
   },
 };

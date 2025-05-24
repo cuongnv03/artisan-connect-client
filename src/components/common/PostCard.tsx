@@ -1,0 +1,237 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { Post } from '../../types';
+import { Avatar } from '../ui/Avatar';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
+import {
+  HeartIcon,
+  ChatBubbleOvalLeftIcon,
+  ShareIcon,
+  BookmarkIcon,
+  EllipsisHorizontalIcon,
+} from '@heroicons/react/24/outline';
+import {
+  HeartIcon as HeartIconSolid,
+  BookmarkIcon as BookmarkIconSolid,
+} from '@heroicons/react/24/solid';
+
+interface PostCardProps {
+  post: Post;
+  showAuthor?: boolean;
+  compact?: boolean;
+}
+
+export const PostCard: React.FC<PostCardProps> = ({
+  post,
+  showAuthor = true,
+  compact = false,
+}) => {
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const [isSaved, setIsSaved] = useState(post.isSaved || false);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+
+  const handleLike = async () => {
+    try {
+      // TODO: Call API to toggle like
+      setIsLiked(!isLiked);
+      setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      // TODO: Call API to toggle save
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error('Error toggling save:', error);
+    }
+  };
+
+  const getPostTypeDisplay = (type: string) => {
+    const types = {
+      STORY: 'Câu chuyện',
+      TUTORIAL: 'Hướng dẫn',
+      PRODUCT_SHOWCASE: 'Sản phẩm',
+      BEHIND_THE_SCENES: 'Hậu trường',
+      EVENT: 'Sự kiện',
+      GENERAL: 'Chung',
+    };
+    return types[type as keyof typeof types] || type;
+  };
+
+  const getPostTypeColor = (type: string) => {
+    const colors = {
+      STORY: 'primary',
+      TUTORIAL: 'info',
+      PRODUCT_SHOWCASE: 'success',
+      BEHIND_THE_SCENES: 'warning',
+      EVENT: 'danger',
+      GENERAL: 'default',
+    };
+    return (colors[type as keyof typeof colors] as any) || 'default';
+  };
+
+  const renderContent = () => {
+    if (!post.content || post.content.length === 0) {
+      return <p className="text-gray-600">{post.summary}</p>;
+    }
+
+    // Render first few content blocks
+    return post.content.slice(0, 2).map((block, index) => {
+      switch (block.type) {
+        case 'PARAGRAPH':
+          return (
+            <p key={index} className="text-gray-700 mb-2">
+              {block.content?.substring(0, compact ? 100 : 200)}
+              {block.content &&
+                block.content.length > (compact ? 100 : 200) &&
+                '...'}
+            </p>
+          );
+        case 'IMAGE':
+          return (
+            <div key={index} className="mb-2">
+              <img
+                src={block.metadata?.url}
+                alt={block.metadata?.caption || ''}
+                className="rounded-lg w-full h-48 object-cover"
+              />
+            </div>
+          );
+        default:
+          return null;
+      }
+    });
+  };
+
+  return (
+    <article className="card p-6 hover:shadow-md transition-shadow">
+      {/* Author info */}
+      {showAuthor && post.user && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <Link to={`/profile/${post.user.id}`} className="flex items-center">
+              <Avatar
+                src={post.user.avatarUrl}
+                alt={`${post.user.firstName} ${post.user.lastName}`}
+                size="md"
+              />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {post.user.firstName} {post.user.lastName}
+                </p>
+                <div className="flex items-center text-xs text-gray-500">
+                  <span>
+                    {formatDistanceToNow(new Date(post.createdAt), {
+                      addSuffix: true,
+                      locale: vi,
+                    })}
+                  </span>
+                  <span className="mx-1">•</span>
+                  <Badge variant={getPostTypeColor(post.type)} size="sm">
+                    {getPostTypeDisplay(post.type)}
+                  </Badge>
+                </div>
+              </div>
+            </Link>
+          </div>
+
+          <Button variant="ghost" size="sm">
+            <EllipsisHorizontalIcon className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
+
+      {/* Cover image */}
+      {post.coverImage && (
+        <div className="mb-4">
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className="w-full h-64 object-cover rounded-lg"
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="mb-4">
+        <Link to={`/posts/${post.slug || post.id}`}>
+          <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-accent transition-colors">
+            {post.title}
+          </h2>
+        </Link>
+
+        {post.summary && (
+          <p className="text-gray-600 mb-3">
+            {compact ? post.summary.substring(0, 150) : post.summary}
+            {compact && post.summary.length > 150 && '...'}
+          </p>
+        )}
+
+        {renderContent()}
+      </div>
+
+      {/* Tags */}
+      {post.tags && post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {post.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" size="sm">
+              #{tag}
+            </Badge>
+          ))}
+          {post.tags.length > 3 && (
+            <Badge variant="secondary" size="sm">
+              +{post.tags.length - 3}
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleLike}
+            className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors"
+          >
+            {isLiked ? (
+              <HeartIconSolid className="w-5 h-5 text-red-500" />
+            ) : (
+              <HeartIcon className="w-5 h-5" />
+            )}
+            <span className="text-sm">{likeCount}</span>
+          </button>
+
+          <Link
+            to={`/posts/${post.slug || post.id}#comments`}
+            className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
+          >
+            <ChatBubbleOvalLeftIcon className="w-5 h-5" />
+            <span className="text-sm">{post.commentCount}</span>
+          </Link>
+
+          <button className="flex items-center space-x-2 text-gray-500 hover:text-green-500 transition-colors">
+            <ShareIcon className="w-5 h-5" />
+            <span className="text-sm">Chia sẻ</span>
+          </button>
+        </div>
+
+        <button
+          onClick={handleSave}
+          className="text-gray-500 hover:text-yellow-500 transition-colors"
+        >
+          {isSaved ? (
+            <BookmarkIconSolid className="w-5 h-5 text-yellow-500" />
+          ) : (
+            <BookmarkIcon className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+    </article>
+  );
+};

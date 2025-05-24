@@ -1,66 +1,45 @@
-import api from './api';
+import { apiClient } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/api';
+import { CartItem, CartSummary, CartValidation } from '../types/order';
 
-export interface CartItem {
-  id: string;
-  userId: string;
-  productId: string;
-  quantity: number;
-  createdAt: Date;
-  updatedAt: Date;
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    discountPrice?: number | null;
-    images: string[];
-    sellerId: string;
-    seller?: {
-      id: string;
-      username: string;
-      firstName: string;
-      lastName: string;
-      artisanProfile?: {
-        shopName: string;
-      } | null;
-    };
-  };
-}
-
-export interface Cart {
-  items: CartItem[];
-  totalItems: number;
-  subtotal: number;
-}
-
-export const CartService = {
-  getCart: async (): Promise<Cart> => {
-    const response = await api.get('/cart');
-    return response.data.data;
+export const cartService = {
+  async getCart(): Promise<CartItem[]> {
+    return await apiClient.get<CartItem[]>(API_ENDPOINTS.CART.BASE);
   },
 
-  addItem: async (productId: string, quantity: number): Promise<Cart> => {
-    const response = await api.post('/cart', { productId, quantity });
-    return response.data.data;
+  async getCartSummary(): Promise<CartSummary> {
+    return await apiClient.get<CartSummary>(API_ENDPOINTS.CART.SUMMARY);
   },
 
-  updateCartItem: async (
-    productId: string,
-    quantity: number,
-  ): Promise<CartItem> => {
-    const response = await api.patch(`/cart/${productId}`, { quantity });
-    return response.data.data;
+  async getCartCount(): Promise<number> {
+    const response = await apiClient.get<{ count: number }>(
+      API_ENDPOINTS.CART.COUNT,
+    );
+    return response.count;
   },
 
-  removeFromCart: async (productId: string): Promise<void> => {
-    await api.delete(`/cart/${productId}`);
+  async addToCart(productId: string, quantity: number): Promise<CartItem> {
+    return await apiClient.post<CartItem>(API_ENDPOINTS.CART.BASE, {
+      productId,
+      quantity,
+    });
   },
 
-  clearCart: async (): Promise<void> => {
-    await api.delete('/cart');
+  async updateCartItem(productId: string, quantity: number): Promise<CartItem> {
+    return await apiClient.patch<CartItem>(API_ENDPOINTS.CART.ITEM(productId), {
+      quantity,
+    });
   },
 
-  validateCart: async (): Promise<{ valid: boolean; message?: string }> => {
-    const response = await api.get('/cart/validate');
-    return response.data.data;
+  async removeFromCart(productId: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.CART.ITEM(productId));
+  },
+
+  async clearCart(): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.CART.BASE);
+  },
+
+  async validateCart(): Promise<CartValidation> {
+    return await apiClient.get<CartValidation>(API_ENDPOINTS.CART.VALIDATE);
   },
 };

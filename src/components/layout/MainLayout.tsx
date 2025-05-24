@@ -1,38 +1,49 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Navbar } from '../navigation/Navbar';
+import { useAuth } from '../../contexts/AuthContext';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
-import { Sidebar } from '../navigation/Sidebar';
-import { MobileNav } from '../navigation/MobileNav';
-import { useAuth } from '../../context/AuthContext';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 export const MainLayout: React.FC = () => {
   const { state } = useAuth();
-  const { isAuthenticated, user } = state;
+  const { isAuthenticated, isLoading } = state;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Determine if sidebar should be shown
-  const showSidebar = isAuthenticated;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar onMenuClick={() => setSidebarOpen(true)} />
+    <div className="min-h-screen bg-gray-50">
+      <Header onMobileMenuToggle={() => setSidebarOpen(true)} />
 
-      <div className="flex flex-1">
-        {showSidebar && <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />}
+      <div className="flex">
+        {isAuthenticated && (
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        )}
 
         <main
-          className={`flex-1 pt-16 pb-16 md:pb-0 ${
-            showSidebar ? 'md:pl-0' : ''
+          className={`flex-1 ${isAuthenticated ? 'md:ml-64' : ''} ${
+            isAuthenticated ? 'pb-16 md:pb-0' : ''
           }`}
         >
-          <div className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="p-4 md:p-6 lg:p-8">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {isAuthenticated && <MobileNav />}
+      {isAuthenticated && <MobileNavigation />}
       {!isAuthenticated && <Footer />}
     </div>
   );

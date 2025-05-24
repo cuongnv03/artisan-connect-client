@@ -1,120 +1,96 @@
 import { useState, useCallback, ChangeEvent } from 'react';
 
-interface FormErrors {
-  [key: string]: string;
-}
-
-interface FormOptions<T> {
+interface UseFormOptions<T> {
   initialValues: T;
-  validate?: (values: T) => FormErrors;
+  validate?: (values: T) => Record<string, string>;
   onSubmit?: (values: T) => void | Promise<void>;
 }
 
 export function useForm<T extends Record<string, any>>(
-  options: FormOptions<T>,
+  options: UseFormOptions<T>,
 ) {
   const { initialValues, validate, onSubmit } = options;
 
   const [values, setValues] = useState<T>(initialValues);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitCount, setSubmitCount] = useState(0);
 
-  // Reset form to initial values
-  const resetForm = useCallback(() => {
-    setValues(initialValues);
-    setErrors({});
-    setTouched({});
-    setIsSubmitting(false);
-  }, [initialValues]);
-
-  // Set a specific field value
-  const setFieldValue = useCallback((name: keyof T, value: any) => {
-    setValues((prevValues) => ({ ...prevValues, [name]: value }));
-  }, []);
-
-  // Set a specific field error
-  const setFieldError = useCallback((name: string, error: string) => {
-    setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
-  }, []);
-
-  // Mark a field as touched
-  const setFieldTouched = useCallback((name: string, isTouched = true) => {
-    setTouched((prevTouched) => ({ ...prevTouched, [name]: isTouched }));
-  }, []);
-
-  // Handle change for regular inputs
   const handleChange = useCallback(
     (
       e: ChangeEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >,
     ) => {
-      const { name, type, value, checked } = e.target as HTMLInputElement;
+      const { name, value, type } = e.target;
+      const checked = (e.target as HTMLInputElement).checked;
 
-      setValues((prevValues) => ({
-        ...prevValues,
+      setValues((prev) => ({
+        ...prev,
         [name]: type === 'checkbox' ? checked : value,
       }));
+
+      // Clear error when user starts typing
+      if (errors[name]) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: '',
+        }));
+      }
     },
-    [],
+    [errors],
   );
 
-  // Handle blur to mark field as touched
   const handleBlur = useCallback(
     (
       e: ChangeEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >,
     ) => {
       const { name } = e.target;
-      setTouched((prevTouched) => ({ ...prevTouched, [name]: true }));
+      setTouched((prev) => ({
+        ...prev,
+        [name]: true,
+      }));
 
-      // Validate field on blur if validate function exists
+      // Validate field on blur
       if (validate) {
         const validationErrors = validate(values);
-        setErrors((prevErrors) => ({
-          ...prevErrors,
-          [name]: validationErrors[name] || '',
-        }));
+        if (validationErrors[name]) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: validationErrors[name],
+          }));
+        }
       }
     },
     [validate, values],
   );
 
-  // Validate all fields
-  const validateForm = useCallback(() => {
-    if (!validate) return {};
-
-    const validationErrors = validate(values);
-    setErrors(validationErrors);
-    return validationErrors;
-  }, [validate, values]);
-
-  // Handle form submission
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-
-      // Increment submit count
-      setSubmitCount((c) => c + 1);
+      if (e) {
+        e.preventDefault();
+      }
 
       // Mark all fields as touched
-      const touchedFields = Object.keys(values).reduce((acc, key) => {
+      const allTouched = Object.keys(values).reduce((acc, key) => {
         acc[key] = true;
         return acc;
       }, {} as Record<string, boolean>);
+      setTouched(allTouched);
 
-      setTouched(touchedFields);
+      // Validate
+      let validationErrors: Record<string, string> = {};
+      if (validate) {
+        validationErrors = validate(values);
+        setErrors(validationErrors);
+      }
 
-      // Validate form
-      const validationErrors = validateForm();
-      const isValid = Object.keys(validationErrors).length === 0;
-
-      if (isValid && onSubmit) {
+      // Submit if no errors
+      if (Object.keys(validationErrors).length === 0 && onSubmit) {
+        setIsSubmitting(true);
         try {
-          setIsSubmitting(true);
           await onSubmit(values);
         } catch (error) {
           console.error('Form submission error:', error);
@@ -123,22 +99,40 @@ export function useForm<T extends Record<string, any>>(
         }
       }
     },
-    [validateForm, onSubmit, values],
+    [values, validate, onSubmit],
   );
+
+  const setFieldValue = useCallback((name: keyof T, value: any) => {
+    setValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
+
+  const setFieldError = useCallback((name: string, error: string) => {
+    setErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+  }, []);
+
+  const resetForm = useCallback(() => {
+    setValues(initialValues);
+    setErrors({});
+    setTouched({});
+    setIsSubmitting(false);
+  }, [initialValues]);
 
   return {
     values,
     errors,
     touched,
     isSubmitting,
-    submitCount,
     handleChange,
     handleBlur,
     handleSubmit,
     setFieldValue,
     setFieldError,
-    setFieldTouched,
     resetForm,
-    validateForm,
   };
 }

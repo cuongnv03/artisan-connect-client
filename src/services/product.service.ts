@@ -1,103 +1,109 @@
-import api from './api';
-import { PaginatedResponse } from '../types/api.types';
+import { apiClient } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/api';
+import {
+  Product,
+  Category,
+  CreateProductRequest,
+  UpdateProductRequest,
+  GetProductsQuery,
+  SearchProductsQuery,
+} from '../types/product';
+import { PaginatedResponse } from '../types/common';
 
-export interface Product {
-  id: string;
-  sellerId: string;
-  name: string;
-  slug?: string;
-  description?: string;
-  price: number;
-  discountPrice?: number;
-  quantity: number;
-  sku?: string;
-  status: string;
-  images: string[];
-  tags: string[];
-  isCustomizable: boolean;
-  avgRating?: number;
-  reviewCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ProductQueryOptions {
-  page?: number;
-  limit?: number;
-  search?: string;
-  categoryId?: string;
-  tags?: string[];
-  minPrice?: number;
-  maxPrice?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export const ProductService = {
-  getProducts: async (
-    options: ProductQueryOptions = {},
-  ): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get('/products', { params: options });
-    return response.data.data;
+export const productService = {
+  async getProducts(
+    query: GetProductsQuery = {},
+  ): Promise<PaginatedResponse<Product>> {
+    return await apiClient.get<PaginatedResponse<Product>>(
+      API_ENDPOINTS.PRODUCTS.BASE,
+      query,
+    );
   },
 
-  getProductById: async (id: string): Promise<Product> => {
-    const response = await api.get(`/products/${id}`);
-    return response.data.data;
+  async searchProducts(
+    query: SearchProductsQuery,
+  ): Promise<PaginatedResponse<Product>> {
+    return await apiClient.get<PaginatedResponse<Product>>(
+      API_ENDPOINTS.PRODUCTS.SEARCH,
+      query,
+    );
   },
 
-  getProductBySlug: async (slug: string): Promise<Product> => {
-    const response = await api.get(`/products/slug/${slug}`);
-    return response.data.data;
+  async getProduct(id: string): Promise<Product> {
+    return await apiClient.get<Product>(API_ENDPOINTS.PRODUCTS.BY_ID(id));
   },
 
-  getMyProducts: async (
-    options: ProductQueryOptions = {},
-  ): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get('/products/me', { params: options });
-    return response.data.data;
+  async getProductBySlug(slug: string): Promise<Product> {
+    return await apiClient.get<Product>(API_ENDPOINTS.PRODUCTS.BY_SLUG(slug));
   },
 
-  getProductsByIds: async (ids: string[]): Promise<Product[]> => {
-    if (ids.length === 0) return [];
-    const response = await api.get('/products/batch', {
-      params: { ids: ids.join(',') },
-    });
-    return response.data.data;
+  async createProduct(data: CreateProductRequest): Promise<Product> {
+    return await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS.BASE, data);
   },
 
-  createProduct: async (data: FormData): Promise<Product> => {
-    const response = await api.post('/products', data, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data;
-  },
-
-  updateProduct: async (id: string, data: FormData): Promise<Product> => {
-    const response = await api.patch(`/products/${id}`, data, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data.data;
-  },
-
-  deleteProduct: async (id: string): Promise<void> => {
-    await api.delete(`/products/${id}`);
-  },
-
-  getPriceHistory: async (id: string): Promise<any[]> => {
-    const response = await api.get(`/products/${id}/price-history`);
-    return response.data.data;
-  },
-
-  updatePrice: async (
+  async updateProduct(
     id: string,
-    data: { price: number; changeNote?: string },
-  ): Promise<Product> => {
-    const response = await api.patch(`/products/${id}/price`, data);
-    return response.data.data;
+    data: UpdateProductRequest,
+  ): Promise<Product> {
+    return await apiClient.patch<Product>(
+      API_ENDPOINTS.PRODUCTS.BY_ID(id),
+      data,
+    );
+  },
+
+  async deleteProduct(id: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.PRODUCTS.BY_ID(id));
+  },
+
+  async getMyProducts(
+    query: GetProductsQuery = {},
+  ): Promise<PaginatedResponse<Product>> {
+    return await apiClient.get<PaginatedResponse<Product>>(
+      API_ENDPOINTS.PRODUCTS.MY_PRODUCTS,
+      query,
+    );
+  },
+
+  async getMyProductStats(): Promise<any> {
+    return await apiClient.get<any>(API_ENDPOINTS.PRODUCTS.MY_STATS);
+  },
+
+  async getPriceHistory(id: string): Promise<any[]> {
+    return await apiClient.get<any[]>(API_ENDPOINTS.PRODUCTS.PRICE_HISTORY(id));
+  },
+
+  async updatePrice(
+    id: string,
+    price: number,
+    changeNote?: string,
+  ): Promise<Product> {
+    return await apiClient.patch<Product>(
+      API_ENDPOINTS.PRODUCTS.UPDATE_PRICE(id),
+      {
+        price,
+        changeNote,
+      },
+    );
+  },
+
+  async publishProduct(id: string): Promise<Product> {
+    return await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS.PUBLISH(id));
+  },
+
+  async unpublishProduct(id: string): Promise<Product> {
+    return await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS.UNPUBLISH(id));
+  },
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    return await apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.BASE);
+  },
+
+  async getCategoryTree(): Promise<Category[]> {
+    return await apiClient.get<Category[]>(API_ENDPOINTS.CATEGORIES.TREE);
+  },
+
+  async getCategory(id: string): Promise<Category> {
+    return await apiClient.get<Category>(API_ENDPOINTS.CATEGORIES.BY_ID(id));
   },
 };

@@ -1,26 +1,19 @@
 import React from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { AuthProvider } from './context/AuthContext';
-import AppRoutes from './routes';
-import './styles/index.css';
-
-// Create React Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+import { RouterProvider } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { router } from './router';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <HelmetProvider>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthProvider>
-    </QueryClientProvider>
+    </HelmetProvider>
   );
 }
 

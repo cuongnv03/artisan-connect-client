@@ -4,33 +4,68 @@ import { Link } from 'react-router-dom';
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
+  const footerSections = [
+    {
+      title: 'Về Artisan Connect',
+      links: [
+        { name: 'Giới thiệu', href: '/about' },
+        { name: 'Câu chuyện', href: '/story' },
+        { name: 'Tuyển dụng', href: '/careers' },
+        { name: 'Báo chí', href: '/press' },
+      ],
+    },
+    {
+      title: 'Nghệ nhân',
+      links: [
+        { name: 'Trở thành nghệ nhân', href: '/become-artisan' },
+        { name: 'Hướng dẫn bán hàng', href: '/seller-guide' },
+        { name: 'Chính sách nghệ nhân', href: '/artisan-policy' },
+        { name: 'Hỗ trợ nghệ nhân', href: '/artisan-support' },
+      ],
+    },
+    {
+      title: 'Khách hàng',
+      links: [
+        { name: 'Hướng dẫn mua hàng', href: '/buyer-guide' },
+        { name: 'Chính sách đổi trả', href: '/return-policy' },
+        { name: 'Vận chuyển', href: '/shipping' },
+        { name: 'Thanh toán', href: '/payment' },
+      ],
+    },
+    {
+      title: 'Hỗ trợ',
+      links: [
+        { name: 'Trung tâm trợ giúp', href: '/help' },
+        { name: 'Liên hệ', href: '/contact' },
+        { name: 'Báo cáo vấn đề', href: '/report' },
+        { name: 'Câu hỏi thường gặp', href: '/faq' },
+      ],
+    },
+  ];
+
   return (
-    <footer className="bg-white border-t border-gray-200">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div className="space-y-8 xl:col-span-1">
+    <footer className="bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+          {/* Brand */}
+          <div className="lg:col-span-1">
             <div className="flex items-center">
-              <img
-                className="h-10 w-auto"
-                src="/logo.png"
-                alt="Artisan Connect"
-              />
-              <span className="ml-3 text-xl font-bold text-gray-900">
-                Artisan Connect
-              </span>
+              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">AC</span>
+              </div>
+              <span className="ml-2 text-xl font-bold">Artisan Connect</span>
             </div>
-            <p className="text-gray-500 text-base">
-              Connecting artisans with customers through stories and
-              craftsmanship.
+            <p className="mt-4 text-gray-400 text-sm">
+              Kết nối nghệ nhân với khách hàng thông qua những câu chuyện và tác
+              phẩm thủ công độc đáo.
             </p>
-            <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-accent">
+            <div className="mt-6 flex space-x-4">
+              <a href="#" className="text-gray-400 hover:text-white">
                 <span className="sr-only">Facebook</span>
                 <svg
                   className="h-6 w-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
-                  aria-hidden="true"
                 >
                   <path
                     fillRule="evenodd"
@@ -39,13 +74,12 @@ export const Footer: React.FC = () => {
                   />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-accent">
+              <a href="#" className="text-gray-400 hover:text-white">
                 <span className="sr-only">Instagram</span>
                 <svg
                   className="h-6 w-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
-                  aria-hidden="true"
                 >
                   <path
                     fillRule="evenodd"
@@ -54,154 +88,61 @@ export const Footer: React.FC = () => {
                   />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-accent">
-                <span className="sr-only">Twitter</span>
+              <a href="#" className="text-gray-400 hover:text-white">
+                <span className="sr-only">YouTube</span>
                 <svg
                   className="h-6 w-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
-                  aria-hidden="true"
                 >
-                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                 </svg>
               </a>
             </div>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">
-                  Solutions
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
+
+          {/* Footer sections */}
+          {footerSections.map((section) => (
+            <div key={section.title}>
+              <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">
+                {section.title}
+              </h3>
+              <ul className="space-y-3">
+                {section.links.map((link) => (
+                  <li key={link.name}>
                     <Link
-                      to="/artisan/upgrade"
-                      className="text-base text-gray-600 hover:text-accent"
+                      to={link.href}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
                     >
-                      Become an Artisan
+                      {link.name}
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      to="/products"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Discover Products
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/artisans"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Find Artisans
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">
-                  Support
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <Link
-                      to="/help"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Help Center
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/faq"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      FAQ
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/contact"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Contact Us
-                    </Link>
-                  </li>
-                </ul>
-              </div>
+                ))}
+              </ul>
             </div>
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">
-                  Company
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <Link
-                      to="/about"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      About
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/careers"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Careers
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/blog"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Blog
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-gray-500 tracking-wider uppercase">
-                  Legal
-                </h3>
-                <ul className="mt-4 space-y-4">
-                  <li>
-                    <Link
-                      to="/privacy"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Privacy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/terms"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Terms
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      to="/cookies"
-                      className="text-base text-gray-600 hover:text-accent"
-                    >
-                      Cookie Policy
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-        <div className="mt-12 border-t border-gray-200 pt-8">
-          <p className="text-base text-gray-400 text-center">
-            &copy; {currentYear} Artisan Connect. All rights reserved.
-          </p>
+
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex flex-wrap justify-center md:justify-start space-x-6 text-sm text-gray-400">
+              <Link to="/privacy" className="hover:text-white">
+                Chính sách bảo mật
+              </Link>
+              <Link to="/terms" className="hover:text-white">
+                Điều khoản sử dụng
+              </Link>
+              <Link to="/cookies" className="hover:text-white">
+                Chính sách Cookie
+              </Link>
+              <Link to="/sitemap" className="hover:text-white">
+                Sơ đồ trang
+              </Link>
+            </div>
+            <p className="mt-4 md:mt-0 text-sm text-gray-400">
+              © {currentYear} Artisan Connect. Tất cả quyền được bảo lưu.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

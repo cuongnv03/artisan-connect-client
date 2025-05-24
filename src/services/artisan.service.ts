@@ -1,163 +1,159 @@
-import api from './api';
-import { PaginatedResponse } from '../types/api.types';
+import { apiClient } from '../utils/api';
+import { API_ENDPOINTS } from '../constants/api';
 import {
   ArtisanProfile,
-  ArtisanProfileWithUser,
-  CreateArtisanProfileDto,
-  UpdateArtisanProfileDto,
-  GenerateTemplateDto,
-  TemplateResult,
-  ArtisanUpgradeRequestDto,
-  UpgradeRequest,
-  UpgradeRequestWithUser,
-} from '../types/artisan.types';
-import { UserWithArtisanProfile } from '../types/user.types';
+  ArtisanUpgradeRequest,
+  CreateArtisanProfileRequest,
+  UpdateArtisanProfileRequest,
+  UpgradeRequestData,
+  SearchArtisansQuery,
+} from '../types/artisan';
+import { PaginatedResponse } from '../types/common';
+import { User } from '../types/auth';
 
-export interface ArtisanQueryOptions {
-  search?: string;
-  categoryId?: string;
-  specialties?: string[];
-  isVerified?: boolean;
-  sortBy?: 'rating' | 'followerCount' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
-  page?: number;
-  limit?: number;
-}
-
-export const ArtisanService = {
-  // Get current user's artisan profile
-  getMyProfile: async (): Promise<ArtisanProfileWithUser> => {
-    const response = await api.get('/artisan-profiles');
-    return response.data.data;
+export const artisanService = {
+  async searchArtisans(
+    query: SearchArtisansQuery,
+  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
+    return await apiClient.get<
+      PaginatedResponse<ArtisanProfile & { user: User }>
+    >(API_ENDPOINTS.ARTISANS.SEARCH, query);
   },
 
-  // Get artisan profile by ID
-  getProfileById: async (id: string): Promise<ArtisanProfileWithUser> => {
-    const response = await api.get(`/artisan-profiles/${id}`);
-    return response.data.data;
+  async getTopArtisans(
+    limit = 10,
+  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
+    return await apiClient.get<
+      PaginatedResponse<ArtisanProfile & { user: User }>
+    >(API_ENDPOINTS.ARTISANS.TOP, { limit });
   },
 
-  // Get artisan profile by user ID
-  getProfileByUserId: async (
+  async getFeaturedArtisans(): Promise<(ArtisanProfile & { user: User })[]> {
+    return await apiClient.get<(ArtisanProfile & { user: User })[]>(
+      API_ENDPOINTS.ARTISANS.FEATURED,
+    );
+  },
+
+  async getArtisansBySpecialty(
+    specialty: string,
+    page = 1,
+    limit = 20,
+  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
+    return await apiClient.get<
+      PaginatedResponse<ArtisanProfile & { user: User }>
+    >(API_ENDPOINTS.ARTISANS.SPECIALTY(specialty), { page, limit });
+  },
+
+  async getArtisanProfile(
+    id: string,
+  ): Promise<ArtisanProfile & { user: User }> {
+    return await apiClient.get<ArtisanProfile & { user: User }>(
+      API_ENDPOINTS.ARTISANS.PROFILE_BY_ID(id),
+    );
+  },
+
+  async getArtisanProfileByUserId(
     userId: string,
-  ): Promise<ArtisanProfileWithUser> => {
-    const response = await api.get(`/artisan-profiles/user/${userId}`);
-    return response.data.data;
+  ): Promise<ArtisanProfile & { user: User }> {
+    return await apiClient.get<ArtisanProfile & { user: User }>(
+      API_ENDPOINTS.ARTISANS.PROFILE_BY_USER(userId),
+    );
   },
 
-  // Create artisan profile
-  createProfile: async (
-    data: CreateArtisanProfileDto,
-  ): Promise<ArtisanProfileWithUser> => {
-    const response = await api.post('/artisan-profiles', data);
-    return response.data.data;
+  async getMyArtisanProfile(): Promise<ArtisanProfile> {
+    return await apiClient.get<ArtisanProfile>(
+      `${API_ENDPOINTS.ARTISANS.PROFILE}/me`,
+    );
   },
 
-  // Update artisan profile
-  updateProfile: async (
-    data: UpdateArtisanProfileDto,
-  ): Promise<ArtisanProfileWithUser> => {
-    const response = await api.patch('/artisan-profiles', data);
-    return response.data.data;
-  },
-
-  // Generate template
-  generateTemplate: async (
-    data: GenerateTemplateDto,
-  ): Promise<TemplateResult> => {
-    const response = await api.post(
-      '/artisan-profiles/generate-template',
+  async createArtisanProfile(
+    data: CreateArtisanProfileRequest,
+  ): Promise<ArtisanProfile> {
+    return await apiClient.post<ArtisanProfile>(
+      API_ENDPOINTS.ARTISANS.PROFILE,
       data,
     );
-    return response.data.data;
   },
 
-  // Get default templates
-  getDefaultTemplates: async (): Promise<any[]> => {
-    const response = await api.get('/artisan-profiles/templates');
-    return response.data.data;
-  },
-
-  // Request upgrade to artisan
-  requestUpgrade: async (
-    data: ArtisanUpgradeRequestDto,
-  ): Promise<UpgradeRequest> => {
-    const response = await api.post('/artisan-profiles/upgrade-request', data);
-    return response.data.data;
-  },
-
-  // Get upgrade request status
-  getUpgradeRequestStatus: async (): Promise<any> => {
-    const response = await api.get('/artisan-profiles/upgrade-request/status');
-    return response.data.data;
-  },
-
-  // Get all upgrade requests (admin only)
-  getUpgradeRequests: async (
-    status?: string,
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<PaginatedResponse<UpgradeRequestWithUser>> => {
-    const params = new URLSearchParams();
-    if (status) params.append('status', status);
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-
-    const response = await api.get(
-      `/artisan-profiles/upgrade-requests?${params.toString()}`,
+  async updateArtisanProfile(
+    data: UpdateArtisanProfileRequest,
+  ): Promise<ArtisanProfile> {
+    return await apiClient.patch<ArtisanProfile>(
+      API_ENDPOINTS.ARTISANS.PROFILE,
+      data,
     );
-    return response.data.data;
   },
 
-  // Approve upgrade request (admin only)
-  approveUpgradeRequest: async (
-    id: string,
-    adminNotes?: string,
-  ): Promise<UpgradeRequest> => {
-    const response = await api.post(
-      `/artisan-profiles/upgrade-requests/${id}/approve`,
-      { adminNotes },
+  async deleteArtisanProfile(): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.ARTISANS.PROFILE);
+  },
+
+  // Upgrade requests
+  async requestUpgrade(
+    data: UpgradeRequestData,
+  ): Promise<ArtisanUpgradeRequest> {
+    return await apiClient.post<ArtisanUpgradeRequest>(
+      API_ENDPOINTS.ARTISANS.UPGRADE_REQUEST,
+      data,
     );
-    return response.data.data;
   },
 
-  // Reject upgrade request (admin only)
-  rejectUpgradeRequest: async (
-    id: string,
-    adminNotes: string,
-  ): Promise<UpgradeRequest> => {
-    const response = await api.post(
-      `/artisan-profiles/upgrade-requests/${id}/reject`,
-      { adminNotes },
+  async getUpgradeRequestStatus(): Promise<ArtisanUpgradeRequest> {
+    return await apiClient.get<ArtisanUpgradeRequest>(
+      API_ENDPOINTS.ARTISANS.UPGRADE_REQUEST_STATUS,
     );
-    return response.data.data;
   },
 
-  getArtisans: async (
-    options: ArtisanQueryOptions = {},
-  ): Promise<PaginatedResponse<UserWithArtisanProfile>> => {
-    const response = await api.get('/artisans', { params: options });
-    return response.data.data;
+  async updateUpgradeRequest(
+    data: UpgradeRequestData,
+  ): Promise<ArtisanUpgradeRequest> {
+    return await apiClient.patch<ArtisanUpgradeRequest>(
+      API_ENDPOINTS.ARTISANS.UPGRADE_REQUEST,
+      data,
+    );
   },
 
-  getArtisanById: async (id: string): Promise<ArtisanProfileWithUser> => {
-    const response = await api.get(`/artisan-profiles/${id}`);
-    return response.data.data;
+  // Templates
+  async getAvailableTemplates(): Promise<any[]> {
+    return await apiClient.get<any[]>(API_ENDPOINTS.ARTISANS.TEMPLATES);
   },
 
-  getArtisanByUserId: async (
-    userId: string,
-  ): Promise<ArtisanProfileWithUser> => {
-    const response = await api.get(`/artisan-profiles/user/${userId}`);
-    return response.data.data;
+  async customizeTemplate(data: any): Promise<any> {
+    return await apiClient.post<any>(
+      API_ENDPOINTS.ARTISANS.TEMPLATE_CUSTOMIZE,
+      data,
+    );
   },
 
-  getPopularArtisans: async (
-    limit: number = 5,
-  ): Promise<UserWithArtisanProfile[]> => {
-    const response = await api.get('/artisans/popular', {
-      params: { limit },
+  async getArtisanStats(): Promise<any> {
+    return await apiClient.get<any>(API_ENDPOINTS.ARTISANS.STATS);
+  },
+
+  // Admin methods
+  async getUpgradeRequests(
+    page = 1,
+    limit = 20,
+  ): Promise<PaginatedResponse<ArtisanUpgradeRequest & { user: User }>> {
+    return await apiClient.get<
+      PaginatedResponse<ArtisanUpgradeRequest & { user: User }>
+    >(API_ENDPOINTS.ARTISANS.ADMIN.UPGRADE_REQUESTS, { page, limit });
+  },
+
+  async approveUpgradeRequest(id: string, adminNotes?: string): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ARTISANS.ADMIN.APPROVE_UPGRADE(id), {
+      adminNotes,
     });
-    return response.data.data;
+  },
+
+  async rejectUpgradeRequest(id: string, adminNotes?: string): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.ARTISANS.ADMIN.REJECT_UPGRADE(id), {
+      adminNotes,
+    });
+  },
+
+  async verifyArtisan(profileId: string, isVerified: boolean): Promise<void> {
+    await apiClient.patch(API_ENDPOINTS.ARTISANS.ADMIN.VERIFY(profileId), {
+      isVerified,
+    });
   },
 };

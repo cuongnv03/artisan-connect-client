@@ -1,56 +1,103 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
+        // Vietnamese-inspired color palette
         primary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          50: '#fef7f0',
+          100: '#feeed8',
+          200: '#fcdab0',
+          300: '#f9c17d',
+          400: '#f59e42',
+          500: '#f2811d',
+          600: '#e36613',
+          700: '#bd4d12',
+          800: '#983e16',
+          900: '#7c3415',
+          950: '#431909',
         },
         accent: {
-          light: '#c7d2fe',
-          DEFAULT: '#6366f1',
-          dark: '#4338ca',
+          DEFAULT: '#d4292f',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#ef4444',
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+          950: '#450a0a',
+          dark: '#b91c1c',
         },
-        artisan: {
-          // beige: '#F5F5DC',
-          // clay: '#D2691E',
-          // wood: '#8B4513',
-          // gold: '#FFD700',
-          // silver: '#C0C0C0',
-          // emerald: '#50C878',
-          clay: '#b65c3c', // Terracotta
-          navy: '#344055', // Deep navy
-          sage: '#76877d', // Muted sage
-          cream: '#f7f3e9', // Natural paper
+        gold: {
+          50: '#fffdf2',
+          100: '#fffadb',
+          200: '#fff3b8',
+          300: '#ffe98a',
+          400: '#ffd95b',
+          500: '#ffc233',
+          600: '#f2a316',
+          700: '#cc7f0b',
+          800: '#a1640c',
+          900: '#84530d',
+          950: '#4a2c02',
+        },
+        jade: {
+          50: '#f0fdf9',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a',
+          950: '#042f2e',
+        },
+        brown: {
+          50: '#fdf8f6',
+          100: '#f2e8e5',
+          200: '#eaddd7',
+          300: '#e0cec7',
+          400: '#d2bab0',
+          500: '#bfa094',
+          600: '#a18072',
+          700: '#977669',
+          800: '#846358',
+          900: '#43302b',
+          950: '#292017',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Merriweather', 'serif'],
-        display: ['Playfair Display', 'serif'],
-        handwritten: ['Dancing Script', 'cursive'],
+        display: ['Inter', 'ui-sans-serif', 'system-ui'],
+        body: ['Inter', 'ui-sans-serif', 'system-ui'],
+        vietnamese: ['Inter', 'ui-sans-serif', 'system-ui'],
       },
-      boxShadow: {
-        soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
       },
-      borderRadius: {
-        xl: '1rem',
-        '2xl': '1.5rem',
+      spacing: {
+        18: '4.5rem',
+        88: '22rem',
+        112: '28rem',
+        128: '32rem',
+      },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
+        'slide-down': 'slideDown 0.3s ease-out',
+        'scale-up': 'scaleUp 0.2s ease-out',
+        shimmer: 'shimmer 2s infinite',
+        'bounce-gentle': 'bounceGentle 1s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -58,11 +105,45 @@ module.exports = {
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        slideDown: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        scaleUp: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        bounceGentle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
+      },
+      boxShadow: {
+        soft: '0 2px 15px 0 rgba(0, 0, 0, 0.08)',
+        medium: '0 4px 25px 0 rgba(0, 0, 0, 0.1)',
+        large: '0 10px 40px 0 rgba(0, 0, 0, 0.15)',
+        accent: '0 4px 14px 0 rgba(212, 41, 47, 0.25)',
+        gold: '0 4px 14px 0 rgba(255, 194, 51, 0.25)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      screens: {
+        xs: '475px',
+        '3xl': '1600px',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
 };
