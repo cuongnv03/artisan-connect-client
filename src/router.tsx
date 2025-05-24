@@ -27,16 +27,32 @@ import { ProductDetailPage } from './pages/shop/ProductDetailPage';
 import { CategoryPage } from './pages/shop/CategoryPage';
 import { SearchPage } from './pages/shop/SearchPage';
 
+// Profile pages
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { EditProfilePage } from './pages/profile/EditProfilePage';
+import { AddressPage } from './pages/profile/AddressPage';
+import { SettingsPage } from './pages/profile/SettingsPage';
+
+// Cart & Orders
 import { CartPage } from './pages/cart/CartPage';
+import { CheckoutPage } from './pages/cart/CheckoutPage';
 import { OrdersPage } from './pages/orders/OrdersPage';
+import { OrderDetailPage } from './pages/orders/OrderDetailPage';
+import { TrackingPage } from './pages/orders/TrackingPage';
+
+// Messages
 import { MessagesPage } from './pages/messages/MessagesPage';
+import { ConversationPage } from './pages/messages/ConversationPage';
+
+// Notifications
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 
 // Artisan pages
 import { UpgradeRequestPage } from './pages/artisan/UpgradeRequestPage';
-import { ArtisanDashboardPage } from './pages/artisan/DashboardPage';
-import { ArtisanCustomizePage } from './pages/artisan/CustomizePage';
+import { DashboardPage as ArtisanDashboardPage } from './pages/artisan/DashboardPage';
+import { CustomizePage as ArtisanCustomizePage } from './pages/artisan/CustomizePage';
+import { ProductsPage as ArtisanProductsPage } from './pages/artisan/ProductsPage';
+import { AnalyticsPage as ArtisanAnalyticsPage } from './pages/artisan/AnalyticsPage';
 
 // Admin pages
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
@@ -46,9 +62,11 @@ import { ArtisanRequestsPage } from './pages/admin/ArtisanRequestsPage';
 // Error pages
 import { NotFoundPage } from './pages/error/NotFoundPage';
 import { UnauthorizedPage } from './pages/error/UnauthorizedPage';
+import { ServerErrorPage } from './pages/error/ServerErrorPage';
 
 // Protected Route component
 import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { UserRole } from './types/auth';
 
 export const router = createBrowserRouter(
   [
@@ -68,6 +86,8 @@ export const router = createBrowserRouter(
             </ProtectedRoute>
           ),
         },
+
+        // Discover routes
         {
           path: 'discover',
           children: [
@@ -97,6 +117,8 @@ export const router = createBrowserRouter(
             },
           ],
         },
+
+        // Posts routes
         {
           path: 'create-post',
           element: (
@@ -134,6 +156,8 @@ export const router = createBrowserRouter(
             },
           ],
         },
+
+        // Shop routes
         {
           path: 'shop',
           children: [
@@ -161,16 +185,10 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            {
-              path: 'product/:productId',
-              element: (
-                <ProtectedRoute>
-                  <ProductDetailPage />
-                </ProtectedRoute>
-              ),
-            },
           ],
         },
+
+        // Product routes
         {
           path: 'products/:productId',
           element: (
@@ -179,77 +197,190 @@ export const router = createBrowserRouter(
             </ProtectedRoute>
           ),
         },
-        // {
-        //   path: 'profile',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <ProfilePage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'cart',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <CartPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'orders',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <OrdersPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'messages',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <MessagesPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'notifications',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <NotificationsPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'upgrade-to-artisan',
-        //   element: (
-        //     <ProtectedRoute allowedRoles={['CUSTOMER']}>
-        //       <UpgradeRequestPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'artisan',
-        //   children: [
-        //     {
-        //       path: 'dashboard',
-        //       element: (
-        //         <ProtectedRoute allowedRoles={['ARTISAN']}>
-        //           <ArtisanDashboardPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'customize',
-        //       element: (
-        //         <ProtectedRoute allowedRoles={['ARTISAN']}>
-        //           <ArtisanCustomizePage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+
+        // Profile routes
+        {
+          path: 'profile',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':userId',
+              element: (
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'edit',
+              element: (
+                <ProtectedRoute>
+                  <EditProfilePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'addresses',
+              element: (
+                <ProtectedRoute>
+                  <AddressPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+
+        // Settings
+        {
+          path: 'settings',
+          element: (
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          ),
+        },
+
+        // Cart & Checkout
+        {
+          path: 'cart',
+          element: (
+            <ProtectedRoute>
+              <CartPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'checkout',
+          element: (
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          ),
+        },
+
+        // Orders
+        {
+          path: 'orders',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <OrdersPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':orderId',
+              element: (
+                <ProtectedRoute>
+                  <OrderDetailPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'tracking/:trackingNumber',
+              element: (
+                <ProtectedRoute>
+                  <TrackingPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+
+        // Messages
+        {
+          path: 'messages',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <MessagesPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':userId',
+              element: (
+                <ProtectedRoute>
+                  <ConversationPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+
+        // Notifications
+        {
+          path: 'notifications',
+          element: (
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          ),
+        },
+
+        // Artisan upgrade request
+        {
+          path: 'upgrade-to-artisan',
+          element: (
+            <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+              <UpgradeRequestPage />
+            </ProtectedRoute>
+          ),
+        },
+
+        // Artisan routes
+        {
+          path: 'artisan',
+          children: [
+            {
+              path: 'dashboard',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanDashboardPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'customize',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanCustomizePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'products',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanProductsPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'analytics',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanAnalyticsPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
       ],
     },
+
+    // Auth routes
     {
       path: '/auth',
       element: <AuthLayout />,
@@ -276,29 +407,36 @@ export const router = createBrowserRouter(
         },
       ],
     },
-    // {
-    //   path: '/admin',
-    //   element: <AdminLayout />,
-    //   children: [
-    //     {
-    //       index: true,
-    //       element: <Navigate to="/admin/dashboard" replace />,
-    //     },
-    //     {
-    //       path: 'dashboard',
-    //       element: <AdminDashboardPage />,
-    //     },
-    //     {
-    //       path: 'users',
-    //       element: <UsersManagementPage />,
-    //     },
-    //     {
-    //       path: 'artisan-requests',
-    //       element: <ArtisanRequestsPage />,
-    //     },
-    //   ],
-    // },
-    // Redirects
+
+    // Admin routes
+    {
+      path: '/admin',
+      element: (
+        <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+          <AdminLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        {
+          index: true,
+          element: <Navigate to="/admin/dashboard" replace />,
+        },
+        {
+          path: 'dashboard',
+          element: <AdminDashboardPage />,
+        },
+        {
+          path: 'users',
+          element: <UsersManagementPage />,
+        },
+        {
+          path: 'artisan-requests',
+          element: <ArtisanRequestsPage />,
+        },
+      ],
+    },
+
+    // Redirects for legacy routes
     {
       path: '/login',
       element: <Navigate to="/auth/login" replace />,
@@ -307,19 +445,25 @@ export const router = createBrowserRouter(
       path: '/register',
       element: <Navigate to="/auth/register" replace />,
     },
-    // Error pages
-    // {
-    //   path: '/unauthorized',
-    //   element: <UnauthorizedPage />,
-    // },
-    // {
-    //   path: '*',
-    //   element: <NotFoundPage />,
-    // },
+
+    // Error routes
+    {
+      path: '/unauthorized',
+      element: <UnauthorizedPage />,
+    },
+    {
+      path: '/server-error',
+      element: <ServerErrorPage />,
+    },
+    {
+      path: '*',
+      element: <NotFoundPage />,
+    },
   ],
   {
     future: {
       v7_startTransition: true,
+      v7_relativeSplatPath: true,
     },
   },
 );
