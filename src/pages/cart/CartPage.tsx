@@ -112,7 +112,7 @@ export const CartPage: React.FC = () => {
 
   if (!cartItems.length) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <EmptyState
           icon={<ShoppingCartIcon className="w-16 h-16" />}
           title="Giỏ hàng trống"

@@ -420,7 +420,7 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Profile Header */}
       <Card className="p-6 mb-8">
         {/* Cover Image */}

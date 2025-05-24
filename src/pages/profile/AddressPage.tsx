@@ -136,7 +136,7 @@ export const AddressPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý địa chỉ</h1>

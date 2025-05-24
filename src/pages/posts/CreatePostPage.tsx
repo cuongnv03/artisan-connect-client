@@ -155,7 +155,7 @@ export const CreatePostPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Tạo bài viết mới

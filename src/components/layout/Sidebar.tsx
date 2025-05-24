@@ -118,8 +118,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {
           name: 'Bảng điều khiển',
           href: '/artisan/dashboard',
-          icon: ChartBarIcon,
-          activeIcon: ChartBarIcon,
+          icon: CreditCardIcon,
+          activeIcon: CreditCardIcon,
           description: 'Thống kê và phân tích',
         },
         {
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         },
         {
           name: 'Quản lý sản phẩm',
-          href: '/products',
+          href: '/artisan/products',
           icon: TagIcon,
           activeIcon: TagIcon,
           description: 'Sản phẩm của bạn',
@@ -149,6 +149,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           icon: ClipboardDocumentListIcon,
           activeIcon: ClipboardDocumentListIconSolid,
           description: 'Đơn hàng bán và mua',
+        },
+        {
+          name: 'Phân tích',
+          href: '/artisan/analytics',
+          icon: ChartBarIcon,
+          activeIcon: ChartBarIcon,
+          description: 'Phân tích hiệu suất bán hàng',
         },
         {
           name: 'Tùy chỉnh trang',
@@ -254,14 +261,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={`
-          fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out pt-16
-          md:translate-x-0 md:static md:z-auto
+          fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
+          md:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-hidden">
             {navigationItems.map((item) => {
               const isActive = isActiveLink(item.href);
               const IconComponent = isActive ? item.activeIcon : item.icon;
@@ -303,7 +310,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </nav>
 
           {/* User info */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-t border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 {user?.avatarUrl ? (

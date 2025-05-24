@@ -270,7 +270,7 @@ export const ConversationPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto h-screen flex flex-col">
+    <div className="max-w-7xl mx-auto h-screen flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
