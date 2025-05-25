@@ -27,7 +27,7 @@ export const AuthLayout: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <a href="/" className="flex items-center">
-            <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">AC</span>
             </div>
           </a>

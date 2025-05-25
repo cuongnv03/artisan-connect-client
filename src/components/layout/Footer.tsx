@@ -50,7 +50,7 @@ export const Footer: React.FC = () => {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">AC</span>
               </div>
               <span className="ml-2 text-xl font-bold">Artisan Connect</span>

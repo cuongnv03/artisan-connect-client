@@ -164,7 +164,7 @@ export const MessagesPage: React.FC = () => {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="rounded-lg border-gray-300 text-sm focus:border-accent focus:ring-accent"
+              className="rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-primary"
             >
               <option value="all">Tất cả</option>
               <option value="unread">Chưa đọc</option>

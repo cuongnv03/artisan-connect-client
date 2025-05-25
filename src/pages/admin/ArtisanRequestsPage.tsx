@@ -512,7 +512,7 @@ export const ArtisanRequestsPage: React.FC = () => {
             </label>
             <textarea
               rows={4}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Nhập ghi chú cho quyết định của bạn..."
               value={actionModal.adminNotes}
               onChange={(e) =>

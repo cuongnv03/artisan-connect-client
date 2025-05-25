@@ -274,7 +274,7 @@ export const CheckoutPage: React.FC = () => {
                     key={address.id}
                     className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
                       values.addressId === address.id
-                        ? 'border-accent bg-accent/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -313,7 +313,7 @@ export const CheckoutPage: React.FC = () => {
                       </div>
 
                       {values.addressId === address.id && (
-                        <CheckCircleIcon className="w-5 h-5 text-accent" />
+                        <CheckCircleIcon className="w-5 h-5 text-primary" />
                       )}
                     </div>
                   </label>
@@ -339,7 +339,7 @@ export const CheckoutPage: React.FC = () => {
                   key={method}
                   className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
                     values.paymentMethod === method
-                      ? 'border-accent bg-accent/5'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -358,7 +358,7 @@ export const CheckoutPage: React.FC = () => {
                     </span>
 
                     {values.paymentMethod === method && (
-                      <CheckCircleIcon className="w-5 h-5 text-accent" />
+                      <CheckCircleIcon className="w-5 h-5 text-primary" />
                     )}
                   </div>
                 </label>
@@ -379,7 +379,7 @@ export const CheckoutPage: React.FC = () => {
             <textarea
               name="notes"
               rows={3}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Ghi chú cho người bán (tùy chọn)"
               value={values.notes}
               onChange={handleChange}
@@ -437,7 +437,7 @@ export const CheckoutPage: React.FC = () => {
 
               <div className="flex justify-between text-lg font-semibold">
                 <span>Tổng cộng</span>
-                <span className="text-accent">
+                <span className="text-primary">
                   {formatPrice(cartSummary.estimatedTotal)}
                 </span>
               </div>
@@ -487,7 +487,7 @@ export const CheckoutPage: React.FC = () => {
               placeholder="1234 5678 9012 3456"
               value={paymentForm.values.cardNumber}
               onChange={paymentForm.handleChange}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               maxLength={19}
             />
             {paymentForm.errors.cardNumber && (
@@ -508,7 +508,7 @@ export const CheckoutPage: React.FC = () => {
                 placeholder="12/25"
                 value={paymentForm.values.expiryDate}
                 onChange={paymentForm.handleChange}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 maxLength={5}
               />
               {paymentForm.errors.expiryDate && (
@@ -528,7 +528,7 @@ export const CheckoutPage: React.FC = () => {
                 placeholder="123"
                 value={paymentForm.values.cvv}
                 onChange={paymentForm.handleChange}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 maxLength={4}
               />
               {paymentForm.errors.cvv && (
@@ -549,7 +549,7 @@ export const CheckoutPage: React.FC = () => {
               placeholder="NGUYEN VAN A"
               value={paymentForm.values.cardHolder}
               onChange={paymentForm.handleChange}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             />
             {paymentForm.errors.cardHolder && (
               <p className="mt-1 text-sm text-red-600">

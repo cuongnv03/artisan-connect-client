@@ -91,7 +91,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
           ${
             isDragActive
-              ? 'border-accent bg-accent/5'
+              ? 'border-primary bg-primary/5'
               : 'border-gray-300 hover:border-gray-400'
           }
         `}
@@ -102,11 +102,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           <PhotoIcon className="w-12 h-12 text-gray-400 mb-3" />
 
           {isDragActive ? (
-            <p className="text-accent font-medium">Thả files vào đây...</p>
+            <p className="text-primary font-medium">Thả files vào đây...</p>
           ) : (
             <div>
               <p className="text-gray-600 mb-1">
-                <span className="font-medium text-accent">Nhấp để chọn</span>{' '}
+                <span className="font-medium text-primary">Nhấp để chọn</span>{' '}
                 hoặc kéo thả files
               </p>
               <p className="text-sm text-gray-500">

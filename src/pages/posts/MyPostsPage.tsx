@@ -271,7 +271,7 @@ export const MyPostsPage: React.FC = () => {
                       <div className="flex-1">
                         <Link
                           to={`/posts/${post.id}`}
-                          className="text-lg font-semibold text-gray-900 hover:text-accent line-clamp-2"
+                          className="text-lg font-semibold text-gray-900 hover:text-primary line-clamp-2"
                         >
                           {post.title}
                         </Link>

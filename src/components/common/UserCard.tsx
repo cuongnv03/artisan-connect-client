@@ -60,7 +60,7 @@ export const UserCard: React.FC<UserCardProps> = ({
             <div className="ml-3">
               <Link
                 to={`/profile/${user.id}`}
-                className="font-semibold text-gray-900 hover:text-accent"
+                className="font-semibold text-gray-900 hover:text-primary"
               >
                 {user.firstName} {user.lastName}
               </Link>

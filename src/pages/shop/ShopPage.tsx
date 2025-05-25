@@ -171,7 +171,7 @@ export const ShopPage: React.FC = () => {
               className="group p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow text-center"
             >
               <div className="text-3xl mb-2">{category.icon}</div>
-              <h3 className="font-medium text-gray-900 group-hover:text-accent">
+              <h3 className="font-medium text-gray-900 group-hover:text-primary">
                 {category.name}
               </h3>
             </Link>
@@ -188,7 +188,7 @@ export const ShopPage: React.FC = () => {
               variant={
                 filters[filter.key] === filter.value ? 'primary' : 'secondary'
               }
-              className="cursor-pointer hover:bg-accent hover:text-white transition-colors px-4 py-2"
+              className="cursor-pointer hover:bg-primary hover:text-white transition-colors px-4 py-2"
               onClick={() =>
                 handleFilterChange({
                   ...filters,
@@ -231,7 +231,7 @@ export const ShopPage: React.FC = () => {
               onClick={() => setViewMode('grid')}
               className={`p-2 ${
                 viewMode === 'grid'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -241,7 +241,7 @@ export const ShopPage: React.FC = () => {
               onClick={() => setViewMode('list')}
               className={`p-2 ${
                 viewMode === 'list'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >

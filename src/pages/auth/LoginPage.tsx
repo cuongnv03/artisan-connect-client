@@ -123,7 +123,7 @@ export const LoginPage: React.FC = () => {
               type="checkbox"
               checked={values.rememberMe}
               onChange={handleChange}
-              className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded"
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
             />
             <label
               htmlFor="rememberMe"
@@ -135,7 +135,7 @@ export const LoginPage: React.FC = () => {
 
           <Link
             to="/auth/forgot-password"
-            className="text-sm text-accent hover:text-accent-dark"
+            className="text-sm text-primary hover:text-primary-dark"
           >
             Quên mật khẩu?
           </Link>
@@ -166,7 +166,7 @@ export const LoginPage: React.FC = () => {
             Chưa có tài khoản?{' '}
             <Link
               to="/auth/register"
-              className="font-medium text-accent hover:text-accent-dark"
+              className="font-medium text-primary hover:text-primary-dark"
             >
               Đăng ký ngay
             </Link>

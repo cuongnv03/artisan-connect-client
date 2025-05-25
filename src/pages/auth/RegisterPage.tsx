@@ -233,19 +233,22 @@ export const RegisterPage: React.FC = () => {
               type="checkbox"
               checked={values.agreeToTerms}
               onChange={handleChange}
-              className="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded"
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
             />
           </div>
           <div className="ml-3 text-sm">
             <label htmlFor="agreeToTerms" className="text-gray-700">
               Tôi đồng ý với{' '}
-              <Link to="/terms" className="text-accent hover:text-accent-dark">
+              <Link
+                to="/terms"
+                className="text-primary hover:text-primary-dark"
+              >
                 Điều khoản sử dụng
               </Link>{' '}
               và{' '}
               <Link
                 to="/privacy"
-                className="text-accent hover:text-accent-dark"
+                className="text-primary hover:text-primary-dark"
               >
                 Chính sách bảo mật
               </Link>
@@ -271,7 +274,7 @@ export const RegisterPage: React.FC = () => {
           Đã có tài khoản?{' '}
           <Link
             to="/auth/login"
-            className="font-medium text-accent hover:text-accent-dark"
+            className="font-medium text-primary hover:text-primary-dark"
           >
             Đăng nhập ngay
           </Link>

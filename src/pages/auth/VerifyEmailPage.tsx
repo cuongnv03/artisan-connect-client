@@ -75,7 +75,7 @@ export const VerifyEmailPage: React.FC = () => {
               Hoặc{' '}
               <Link
                 to="/contact"
-                className="text-accent hover:text-accent-dark"
+                className="text-primary hover:text-primary-dark"
               >
                 liên hệ hỗ trợ
               </Link>

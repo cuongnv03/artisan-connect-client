@@ -227,7 +227,7 @@ export const SettingsPage: React.FC = () => {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
 
@@ -242,7 +242,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
 
@@ -258,7 +258,7 @@ export const SettingsPage: React.FC = () => {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
 
@@ -273,7 +273,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
             </div>
@@ -305,7 +305,7 @@ export const SettingsPage: React.FC = () => {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
 
@@ -321,7 +321,7 @@ export const SettingsPage: React.FC = () => {
                 <input
                   type="checkbox"
                   defaultChecked
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-accent focus:ring-accent"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </div>
             </div>

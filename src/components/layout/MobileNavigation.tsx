@@ -73,12 +73,12 @@ export const MobileNavigation: React.FC = () => {
               to={item.href}
               className={`
                 flex flex-col items-center justify-center space-y-1 px-1
-                ${isActive ? 'text-accent' : 'text-gray-500'}
+                ${isActive ? 'text-primary' : 'text-gray-500'}
                 ${item.special ? 'relative' : ''}
               `}
             >
               {item.special ? (
-                <div className="bg-accent text-white p-3 rounded-full shadow-lg -mt-6">
+                <div className="bg-primary text-white p-3 rounded-full shadow-lg -mt-6">
                   <IconComponent className="h-6 w-6" />
                 </div>
               ) : (

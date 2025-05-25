@@ -384,7 +384,7 @@ export const CustomizePage: React.FC = () => {
                   onClick={() => handleConfigChange('fontFamily', font.value)}
                   className={`p-4 border rounded-lg text-left transition-colors ${
                     currentConfig.fontFamily === font.value
-                      ? 'border-accent bg-accent/5'
+                      ? 'border-primary bg-primary/5'
                       : 'hover:border-gray-400'
                   }`}
                   style={{ fontFamily: font.value }}
@@ -415,7 +415,7 @@ export const CustomizePage: React.FC = () => {
                   onClick={() => handleConfigChange('layout', layout.value)}
                   className={`p-4 border rounded-lg text-left transition-colors ${
                     currentConfig.layout === layout.value
-                      ? 'border-accent bg-accent/5'
+                      ? 'border-primary bg-primary/5'
                       : 'hover:border-gray-400'
                   }`}
                 >

@@ -44,7 +44,7 @@ export const UnauthorizedPage: React.FC = () => {
                 <div className="text-center">
                   <Link
                     to="/auth/register"
-                    className="text-sm text-accent hover:text-accent-dark"
+                    className="text-sm text-primary hover:text-primary-dark"
                   >
                     Chưa có tài khoản? Đăng ký ngay
                   </Link>

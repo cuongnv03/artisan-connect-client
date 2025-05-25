@@ -4,21 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Vietnamese-inspired color palette
         primary: {
-          50: '#fef7f0',
-          100: '#feeed8',
-          200: '#fcdab0',
-          300: '#f9c17d',
-          400: '#f59e42',
-          500: '#f2811d',
-          600: '#e36613',
-          700: '#bd4d12',
-          800: '#983e16',
-          900: '#7c3415',
-          950: '#431909',
-        },
-        accent: {
           DEFAULT: '#d4292f',
           50: '#fef2f2',
           100: '#fee2e2',
@@ -33,6 +19,19 @@ export default {
           950: '#450a0a',
           dark: '#b91c1c',
         },
+        secondary: {
+          DEFAULT: '#ffc233',
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#ffc233',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
         gold: {
           50: '#fffdf2',
           100: '#fffadb',
@@ -45,6 +44,19 @@ export default {
           800: '#a1640c',
           900: '#84530d',
           950: '#4a2c02',
+        },
+        yellow: {
+          50: '#fef7f0',
+          100: '#feeed8',
+          200: '#fcdab0',
+          300: '#f9c17d',
+          400: '#f59e42',
+          500: '#f2811d',
+          600: '#e36613',
+          700: '#bd4d12',
+          800: '#983e16',
+          900: '#7c3415',
+          950: '#431909',
         },
         jade: {
           50: '#f0fdf9',
@@ -78,22 +90,9 @@ export default {
         foreground: '#111827', // gray-900
       },
       fontFamily: {
-        display: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         body: ['Inter', 'ui-sans-serif', 'system-ui'],
         vietnamese: ['Inter', 'ui-sans-serif', 'system-ui'],
-      },
-      fontSize: {
-        '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
-      },
-      spacing: {
-        18: '4.5rem',
-        88: '22rem',
-        112: '28rem',
-        128: '32rem',
-      },
-      maxWidth: {
-        '8xl': '88rem',
-        '9xl': '96rem',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

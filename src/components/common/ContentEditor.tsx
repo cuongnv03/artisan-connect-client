@@ -114,7 +114,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       case BlockType.QUOTE:
         return (
           <div key={block.id} className={commonClasses}>
-            <div className="border-l-4 border-accent bg-gray-50 p-4 rounded-r-lg">
+            <div className="border-l-4 border-primary bg-gray-50 p-4 rounded-r-lg">
               <textarea
                 className="w-full bg-transparent border-none resize-none focus:outline-none placeholder-gray-400 italic"
                 rows={2}
@@ -174,7 +174,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
               {((block.metadata?.items as string[]) || ['']).map(
                 (item, itemIndex) => (
                   <div key={itemIndex} className="flex items-center gap-2">
-                    <span className="text-accent">•</span>
+                    <span className="text-primary">•</span>
                     <input
                       type="text"
                       className="flex-1 border-none focus:outline-none placeholder-gray-400"
@@ -219,7 +219,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                     metadata: { ...block.metadata, items },
                   });
                 }}
-                className="text-accent hover:text-accent-dark text-sm"
+                className="text-primary hover:text-primary-dark text-sm"
               >
                 + Thêm mục
               </button>

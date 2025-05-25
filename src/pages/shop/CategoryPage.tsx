@@ -204,7 +204,7 @@ export const CategoryPage: React.FC = () => {
     <div className="max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
-        <Link to="/shop" className="hover:text-accent">
+        <Link to="/shop" className="hover:text-primary">
           Cửa hàng
         </Link>
         <ChevronLeftIcon className="w-4 h-4 rotate-180" />
@@ -243,7 +243,7 @@ export const CategoryPage: React.FC = () => {
                 to={`/shop/category/${subcategory.slug}`}
                 className="group p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
               >
-                <h3 className="font-medium text-gray-900 group-hover:text-accent">
+                <h3 className="font-medium text-gray-900 group-hover:text-primary">
                   {subcategory.name}
                 </h3>
               </Link>
@@ -276,7 +276,7 @@ export const CategoryPage: React.FC = () => {
               onClick={() => setViewMode('grid')}
               className={`p-2 ${
                 viewMode === 'grid'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -286,7 +286,7 @@ export const CategoryPage: React.FC = () => {
               onClick={() => setViewMode('list')}
               className={`p-2 ${
                 viewMode === 'list'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >

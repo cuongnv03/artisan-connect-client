@@ -257,7 +257,7 @@ export const SearchPage: React.FC = () => {
                   >
                     <button
                       onClick={() => handleSearch(query)}
-                      className="flex-1 text-left text-gray-700 hover:text-accent"
+                      className="flex-1 text-left text-gray-700 hover:text-primary"
                     >
                       <MagnifyingGlassIcon className="w-4 h-4 inline mr-2" />
                       {query}
@@ -284,7 +284,7 @@ export const SearchPage: React.FC = () => {
                 <Badge
                   key={query}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-accent hover:text-white transition-colors"
+                  className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
                   onClick={() => handleSearch(query)}
                 >
                   {query}
@@ -323,7 +323,7 @@ export const SearchPage: React.FC = () => {
                       ? 'primary'
                       : 'secondary'
                   }
-                  className="cursor-pointer hover:bg-accent hover:text-white transition-colors"
+                  className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
                   onClick={() =>
                     handleFilterChange({
                       minPrice: range.value.min,
@@ -357,7 +357,7 @@ export const SearchPage: React.FC = () => {
                   onClick={() => setViewMode('grid')}
                   className={`p-2 ${
                     viewMode === 'grid'
-                      ? 'bg-accent text-white'
+                      ? 'bg-primary text-white'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -367,7 +367,7 @@ export const SearchPage: React.FC = () => {
                   onClick={() => setViewMode('list')}
                   className={`p-2 ${
                     viewMode === 'list'
-                      ? 'bg-accent text-white'
+                      ? 'bg-primary text-white'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >

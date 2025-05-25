@@ -235,7 +235,7 @@ export const OrderDetailPage: React.FC = () => {
                   <div className="flex-1">
                     <Link
                       to={`/products/${item.product.slug || item.product.id}`}
-                      className="font-medium text-gray-900 hover:text-accent"
+                      className="font-medium text-gray-900 hover:text-primary"
                     >
                       {item.product.name}
                     </Link>
@@ -353,7 +353,7 @@ export const OrderDetailPage: React.FC = () => {
 
               <div className="flex justify-between text-lg font-semibold">
                 <span>Tổng cộng</span>
-                <span className="text-accent">
+                <span className="text-primary">
                   {formatPrice(order.totalAmount)}
                 </span>
               </div>

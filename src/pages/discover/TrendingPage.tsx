@@ -126,7 +126,7 @@ export const TrendingPage: React.FC = () => {
         <div className="space-y-6">
           {trendingData.posts.map((post, index) => (
             <div key={post.id} className="relative">
-              <div className="absolute -left-6 top-4 w-8 h-8 bg-accent text-white rounded-full flex items-center justify-center text-sm font-bold z-10">
+              <div className="absolute -left-6 top-4 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold z-10">
                 {index + 1}
               </div>
               <PostCard post={post} compact />
@@ -143,7 +143,7 @@ export const TrendingPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {trendingData.products.map((product, index) => (
             <div key={product.id} className="relative">
-              <div className="absolute top-2 left-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold z-10">
+              <div className="absolute top-2 left-2 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold z-10">
                 {index + 1}
               </div>
               <ProductCard product={product} />
@@ -160,7 +160,7 @@ export const TrendingPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {trendingData.artisans.map((artisan, index) => (
             <div key={artisan.id} className="relative">
-              <div className="absolute top-2 left-2 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-xs font-bold z-10">
+              <div className="absolute top-2 left-2 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold z-10">
                 {index + 1}
               </div>
               <ArtisanCard artisan={artisan} />
@@ -176,7 +176,7 @@ export const TrendingPage: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <FireIcon className="w-8 h-8 text-accent" />
+          <FireIcon className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-gray-900">Xu hướng</h1>
         </div>
         <p className="text-lg text-gray-600 mb-6">
@@ -222,7 +222,7 @@ export const TrendingPage: React.FC = () => {
             {/* Trending Hashtags */}
             <Card className="p-6">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                <ArrowTrendingUpIcon className="w-5 h-5 mr-2 text-accent" />
+                <ArrowTrendingUpIcon className="w-5 h-5 mr-2 text-primary" />
                 Hashtags xu hướng
               </h3>
               <div className="space-y-3">
@@ -235,7 +235,7 @@ export const TrendingPage: React.FC = () => {
                       <span className="text-gray-500 mr-2">#{index + 1}</span>
                       <Link
                         to={`/discover?q=%23${hashtag.tag}`}
-                        className="text-accent hover:text-accent-dark font-medium"
+                        className="text-primary hover:text-primary-dark font-medium"
                       >
                         #{hashtag.tag}
                       </Link>
@@ -266,7 +266,7 @@ export const TrendingPage: React.FC = () => {
             {/* Trending Keywords */}
             <Card className="p-6">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-                <FireIcon className="w-5 h-5 mr-2 text-accent" />
+                <FireIcon className="w-5 h-5 mr-2 text-primary" />
                 Từ khóa hot
               </h3>
               <div className="space-y-3">
@@ -279,7 +279,7 @@ export const TrendingPage: React.FC = () => {
                       <span className="text-gray-500 mr-2">#{index + 1}</span>
                       <Link
                         to={`/discover?q=${keyword.keyword}`}
-                        className="text-gray-700 hover:text-accent font-medium"
+                        className="text-gray-700 hover:text-primary font-medium"
                       >
                         {keyword.keyword}
                       </Link>
@@ -345,7 +345,7 @@ export const TrendingPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-white text-white hover:bg-white hover:text-accent"
+                  className="border-white text-white hover:bg-white hover:text-primary"
                 >
                   Tạo bài viết
                 </Button>

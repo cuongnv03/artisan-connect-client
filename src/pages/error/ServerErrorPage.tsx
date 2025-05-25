@@ -39,7 +39,7 @@ export const ServerErrorPage: React.FC = () => {
             <div className="text-center">
               <Link
                 to="/home"
-                className="inline-flex items-center text-sm text-accent hover:text-accent-dark"
+                className="inline-flex items-center text-sm text-primary hover:text-primary-dark"
               >
                 <HomeIcon className="w-4 h-4 mr-1" />
                 Về trang chủ
@@ -56,7 +56,7 @@ export const ServerErrorPage: React.FC = () => {
               Nếu sự cố vẫn tiếp tục, vui lòng liên hệ{' '}
               <a
                 href="mailto:support@artisanconnect.vn"
-                className="text-accent hover:text-accent-dark"
+                className="text-primary hover:text-primary-dark"
               >
                 support@artisanconnect.vn
               </a>

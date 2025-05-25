@@ -291,7 +291,7 @@ export const DiscoverPage: React.FC = () => {
               <Badge
                 key={category}
                 variant="secondary"
-                className="cursor-pointer hover:bg-accent hover:text-white transition-colors px-4 py-2"
+                className="cursor-pointer hover:bg-primary hover:text-white transition-colors px-4 py-2"
                 onClick={() => handleSearch(category)}
               >
                 {category}
@@ -310,7 +310,7 @@ export const DiscoverPage: React.FC = () => {
               onClick={() => handleTabChange(tab.key as SearchType)}
               className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? 'bg-white text-accent shadow-sm'
+                  ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >

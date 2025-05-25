@@ -239,7 +239,7 @@ export const ProductsPage: React.FC = () => {
                     <div>
                       {product.discountPrice ? (
                         <div className="flex items-center space-x-2">
-                          <span className="text-lg font-bold text-accent">
+                          <span className="text-lg font-bold text-primary">
                             {formatPrice(product.discountPrice)}
                           </span>
                           <span className="text-sm text-gray-500 line-through">
@@ -247,7 +247,7 @@ export const ProductsPage: React.FC = () => {
                           </span>
                         </div>
                       ) : (
-                        <span className="text-lg font-bold text-accent">
+                        <span className="text-lg font-bold text-primary">
                           {formatPrice(product.price)}
                         </span>
                       )}

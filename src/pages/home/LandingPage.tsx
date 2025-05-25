@@ -92,7 +92,7 @@ export const LandingPage: React.FC = () => {
         <div className="relative container-responsive py-20 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-shadow">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
                 Kết nối
                 <span className="block text-gold-300">Nghệ nhân Việt</span>
               </h1>
@@ -103,17 +103,18 @@ export const LandingPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/auth/register">
                   <Button
+                    variant="white"
                     size="lg"
-                    className="bg-white text-accent hover:bg-gray-50 shadow-lg"
+                    className="  shadow-lg font-semibold"
                   >
                     Bắt đầu ngay
                   </Button>
                 </Link>
                 <Link to="/auth/login">
                   <Button
-                    variant="outline"
+                    variant="whiteOutline"
                     size="lg"
-                    className="border-white text-white hover:bg-white hover:text-accent"
+                    className="border-2 font-semibold"
                   >
                     Đăng nhập
                   </Button>
@@ -125,24 +126,24 @@ export const LandingPage: React.FC = () => {
                 <div className="space-y-4">
                   <img
                     className="rounded-lg shadow-lg transform rotate-3 hover:rotate-6 transition-transform"
-                    src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop"
+                    src="https://media.istockphoto.com/id/639487044/photo/hands-of-a-potter-creating-an-earthen-jar.webp?a=1&b=1&s=612x612&w=0&k=20&c=QnEwIt2GyTFvMlG5TFt7KSyMcHBqNhjcf4Lcsn7juEg="
                     alt="Nghệ nhân làm gốm"
                   />
                   <img
                     className="rounded-lg shadow-lg transform -rotate-2 hover:-rotate-6 transition-transform"
-                    src="https://images.unsplash.com/photo-1544306094-1df1cd4eaf96?w=300&h=300&fit=crop"
+                    src="https://images.unsplash.com/photo-1632224238847-33625482f0c1?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Sản phẩm thủ công"
                   />
                 </div>
                 <div className="space-y-4 pt-8">
                   <img
                     className="rounded-lg shadow-lg transform -rotate-3 hover:-rotate-6 transition-transform"
-                    src="https://images.unsplash.com/photo-1565022840345-45da5b2e9eb2?w=300&h=300&fit=crop"
+                    src="https://images.unsplash.com/photo-1734873741744-759ea0a3b3e5?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Nghề thêu truyền thống"
                   />
                   <img
                     className="rounded-lg shadow-lg transform rotate-2 hover:rotate-6 transition-transform"
-                    src="https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=300&h=400&fit=crop"
+                    src="https://images.unsplash.com/photo-1677146337118-501fbedfe23c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Làng nghề Việt Nam"
                   />
                 </div>
@@ -171,8 +172,8 @@ export const LandingPage: React.FC = () => {
                 key={index}
                 className="card p-6 text-center hover:shadow-lg transition-shadow"
               >
-                <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <feature.icon className="w-8 h-8 text-accent" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">
                   {feature.title}
@@ -191,25 +192,25 @@ export const LandingPage: React.FC = () => {
         <div className="container-responsive">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                 1000+
               </div>
               <div className="text-gray-600">Nghệ nhân</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                 50K+
               </div>
               <div className="text-gray-600">Sản phẩm</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                 200K+
               </div>
               <div className="text-gray-600">Khách hàng</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">
                 63
               </div>
               <div className="text-gray-600">Tỉnh thành</div>
@@ -258,9 +259,9 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-accent text-white">
+      <section className="py-20 bg-primary text-white rounded-xl mx-4 my-6">
         <div className="container-responsive text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Sẵn sàng khám phá?
           </h2>
           <p className="text-xl mb-8 text-gray-100">
@@ -268,18 +269,15 @@ export const LandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth/register">
-              <Button
-                size="lg"
-                className="bg-white text-accent hover:bg-gray-50"
-              >
+              <Button variant="white" size="lg" className="font-semibold">
                 Đăng ký miễn phí
               </Button>
             </Link>
             <Link to="/discover">
               <Button
-                variant="outline"
+                variant="whiteOutline"
                 size="lg"
-                className="border-white text-white hover:bg-white hover:text-accent"
+                className="border-2 font-semibold"
               >
                 Khám phá ngay
               </Button>

@@ -170,7 +170,7 @@ export const AddressPage: React.FC = () => {
                       {address.fullName}
                     </h3>
                     {address.isDefault && (
-                      <span className="px-2 py-1 text-xs bg-accent text-white rounded-full">
+                      <span className="px-2 py-1 text-xs bg-primary text-white rounded-full">
                         Mặc định
                       </span>
                     )}
@@ -299,7 +299,7 @@ export const AddressPage: React.FC = () => {
               name="isDefault"
               checked={values.isDefault}
               onChange={handleChange}
-              className="rounded border-gray-300 text-accent focus:ring-accent"
+              className="rounded border-gray-300 text-primary focus:ring-primary"
             />
             <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700">
               Đặt làm địa chỉ mặc định

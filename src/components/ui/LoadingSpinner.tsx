@@ -17,7 +17,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div
-      className={`animate-spin rounded-full border-2 border-gray-300 border-t-accent ${sizeClasses[size]} ${className}`}
+      className={`animate-spin rounded-full border-2 border-gray-300 border-t-primary ${sizeClasses[size]} ${className}`}
     />
   );
 };

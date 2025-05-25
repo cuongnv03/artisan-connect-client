@@ -87,7 +87,7 @@ export const ForgotPasswordPage: React.FC = () => {
       <div className="mt-6 text-center">
         <Link
           to="/auth/login"
-          className="flex items-center justify-center text-sm text-accent hover:text-accent-dark"
+          className="flex items-center justify-center text-sm text-primary hover:text-primary-dark"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
           Quay lại đăng nhập

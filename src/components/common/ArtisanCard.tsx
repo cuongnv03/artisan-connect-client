@@ -43,7 +43,7 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
     <Card className="hover:shadow-lg transition-shadow">
       {/* Cover Image */}
       {artisan.shopBannerUrl && (
-        <div className="h-32 bg-gradient-to-r from-accent to-accent-dark rounded-t-lg relative overflow-hidden">
+        <div className="h-32 bg-gradient-to-r from-primary to-primary-dark rounded-t-lg relative overflow-hidden">
           <img
             src={artisan.shopBannerUrl}
             alt={artisan.shopName}
@@ -68,7 +68,7 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
               <div className="flex items-center">
                 <Link
                   to={`/artisans/${artisan.id}`}
-                  className="font-semibold text-gray-900 hover:text-accent"
+                  className="font-semibold text-gray-900 hover:text-primary"
                 >
                   {artisan.user.firstName} {artisan.user.lastName}
                 </Link>
@@ -125,7 +125,7 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
               <span>{artisan.experience} năm kinh nghiệm</span>
             )}
           </div>
-          <div className="text-accent font-medium">
+          <div className="text-primary font-medium">
             {formatPrice(artisan.totalSales)}
           </div>
         </div>

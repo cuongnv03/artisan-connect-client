@@ -198,7 +198,7 @@ export const ConversationPage: React.FC = () => {
           >
             <div
               className={`px-4 py-2 rounded-lg ${
-                isOwn ? 'bg-accent text-white' : 'bg-gray-100 text-gray-900'
+                isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
               }`}
             >
               {message.type === MessageType.IMAGE ? (
@@ -400,7 +400,7 @@ export const ConversationPage: React.FC = () => {
             <textarea
               name="content"
               rows={1}
-              className="block w-full rounded-lg border-gray-300 resize-none focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 resize-none focus:border-primary focus:ring-primary"
               placeholder="Nhập tin nhắn..."
               value={values.content}
               onChange={handleChange}

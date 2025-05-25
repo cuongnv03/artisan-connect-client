@@ -116,7 +116,7 @@ export const Select: React.FC<SelectProps> = ({
   const trigger = (
     <button
       type="button"
-      className={`relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left border border-gray-300 shadow-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent ${
+      className={`relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left border border-gray-300 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
         disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''
       } ${className}`}
       disabled={disabled}

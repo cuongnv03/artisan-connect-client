@@ -287,7 +287,7 @@ export const ProductDetailPage: React.FC = () => {
     <div className="max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
-        <Link to="/shop" className="hover:text-accent">
+        <Link to="/shop" className="hover:text-primary">
           Cửa hàng
         </Link>
         <ChevronLeftIcon className="w-4 h-4 rotate-180" />
@@ -317,7 +317,7 @@ export const ProductDetailPage: React.FC = () => {
               <div className="ml-3 flex-1">
                 <Link
                   to={`/profile/${product.seller.id}`}
-                  className="font-medium text-gray-900 hover:text-accent"
+                  className="font-medium text-gray-900 hover:text-primary"
                 >
                   {product.seller.firstName} {product.seller.lastName}
                 </Link>
@@ -358,7 +358,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex items-center gap-4">
               {product.discountPrice ? (
                 <>
-                  <span className="text-3xl font-bold text-accent">
+                  <span className="text-3xl font-bold text-primary">
                     {formatPrice(product.discountPrice)}
                   </span>
                   <span className="text-lg text-gray-500 line-through">
@@ -367,7 +367,7 @@ export const ProductDetailPage: React.FC = () => {
                   <Badge variant="danger">-{discountPercentage}%</Badge>
                 </>
               ) : (
-                <span className="text-3xl font-bold text-accent">
+                <span className="text-3xl font-bold text-primary">
                   {formatPrice(product.price)}
                 </span>
               )}
@@ -645,7 +645,7 @@ export const ProductDetailPage: React.FC = () => {
             <input
               type="number"
               name="requestedPrice"
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               value={quoteValues.requestedPrice}
               onChange={handleQuoteChange}
             />
@@ -658,7 +658,7 @@ export const ProductDetailPage: React.FC = () => {
             <textarea
               name="specifications"
               rows={3}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Mô tả yêu cầu tùy chỉnh..."
               value={quoteValues.specifications}
               onChange={handleQuoteChange}
@@ -672,7 +672,7 @@ export const ProductDetailPage: React.FC = () => {
             <textarea
               name="customerMessage"
               rows={3}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Lời nhắn gửi nghệ nhân..."
               value={quoteValues.customerMessage}
               onChange={handleQuoteChange}
@@ -733,7 +733,7 @@ export const ProductDetailPage: React.FC = () => {
             <input
               type="text"
               name="title"
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Tóm tắt đánh giá của bạn..."
               value={reviewValues.title}
               onChange={handleReviewChange}
@@ -747,7 +747,7 @@ export const ProductDetailPage: React.FC = () => {
             <textarea
               name="comment"
               rows={4}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
               value={reviewValues.comment}
               onChange={handleReviewChange}

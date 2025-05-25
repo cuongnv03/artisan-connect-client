@@ -88,7 +88,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-gradient-vietnamese text-white rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold mb-2">
+              <h1 className="text-2xl font-bold mb-2 text-white">
                 {getGreeting()}, {user?.firstName}! 👋
               </h1>
               <p className="text-gray-100">

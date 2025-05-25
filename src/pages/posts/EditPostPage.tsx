@@ -256,7 +256,7 @@ export const EditPostPage: React.FC = () => {
               <textarea
                 name="summary"
                 rows={3}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Viết tóm tắt ngắn gọn về bài viết..."
                 value={values.summary}
                 onChange={handleChange}
@@ -287,7 +287,7 @@ export const EditPostPage: React.FC = () => {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                  className="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                   placeholder="Thêm thẻ..."
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}

@@ -144,7 +144,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Product Name */}
         <Link
           to={`/products/${product.slug || product.id}`}
-          className="block font-medium text-gray-900 hover:text-accent transition-colors mb-2"
+          className="block font-medium text-gray-900 hover:text-primary transition-colors mb-2"
         >
           <h3 className="line-clamp-2">{product.name}</h3>
         </Link>
@@ -190,7 +190,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-center space-x-2">
             {product.discountPrice ? (
               <>
-                <span className="text-lg font-bold text-accent">
+                <span className="text-lg font-bold text-primary">
                   {formatPrice(product.discountPrice)}
                 </span>
                 <span className="text-sm text-gray-500 line-through">
@@ -198,7 +198,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 </span>
               </>
             ) : (
-              <span className="text-lg font-bold text-accent">
+              <span className="text-lg font-bold text-primary">
                 {formatPrice(product.price)}
               </span>
             )}

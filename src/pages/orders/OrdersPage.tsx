@@ -143,7 +143,7 @@ export const OrdersPage: React.FC = () => {
         </div>
 
         <div className="text-right">
-          <p className="text-lg font-semibold text-accent">
+          <p className="text-lg font-semibold text-primary">
             {formatPrice(order.totalAmount)}
           </p>
           <p className="text-sm text-gray-500">{order.items.length} sản phẩm</p>

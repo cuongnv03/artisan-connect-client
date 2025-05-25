@@ -161,7 +161,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Content */}
       <div className="mb-4">
         <Link to={`/posts/${post.slug || post.id}`}>
-          <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-accent transition-colors">
+          <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-primary transition-colors">
             {post.title}
           </h2>
         </Link>

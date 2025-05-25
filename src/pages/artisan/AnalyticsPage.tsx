@@ -206,7 +206,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <div className="w-32 bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-accent h-2 rounded-full"
+                      className="bg-primary h-2 rounded-full"
                       style={{
                         width: `${
                           (day.views /

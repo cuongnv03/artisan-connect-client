@@ -76,7 +76,7 @@ export const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
           <div className="ml-4 flex-shrink-0 flex">
             <button
               type="button"
-              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
               onClick={() => onRemove(toast.id)}
             >
               <span className="sr-only">Đóng</span>

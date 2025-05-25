@@ -177,7 +177,7 @@ export const CartPage: React.FC = () => {
                           to={`/products/${
                             item.product.slug || item.product.id
                           }`}
-                          className="font-medium text-gray-900 hover:text-accent"
+                          className="font-medium text-gray-900 hover:text-primary"
                         >
                           {item.product.name}
                         </Link>
@@ -235,7 +235,7 @@ export const CartPage: React.FC = () => {
 
                       {/* Price */}
                       <div className="text-right">
-                        <div className="text-lg font-semibold text-accent">
+                        <div className="text-lg font-semibold text-primary">
                           {formatPrice(item.price * item.quantity)}
                         </div>
                         {item.quantity > 1 && (
@@ -281,7 +281,7 @@ export const CartPage: React.FC = () => {
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Tổng cộng</span>
-                  <span className="text-accent">
+                  <span className="text-primary">
                     {formatPrice(cartSummary.estimatedTotal)}
                   </span>
                 </div>

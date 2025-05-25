@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center ml-2 md:ml-0">
-              <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">AC</span>
               </div>
               <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                   </div>
                   <input
                     type="text"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                     placeholder="Tìm kiếm nghệ nhân, sản phẩm, bài viết..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                 <div className="relative">
                   <button
                     type="button"
-                    className="flex items-center p-1 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+                    className="flex items-center p-1 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   >
                     <div className="flex items-center">
@@ -205,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                         {user?.role === 'CUSTOMER' && (
                           <Link
                             to="/upgrade-to-artisan"
-                            className="block px-4 py-2 text-sm text-accent hover:bg-gray-100"
+                            className="block px-4 py-2 text-sm text-primary hover:bg-gray-100"
                             onClick={() => setIsProfileMenuOpen(false)}
                           >
                             Trở thành nghệ nhân

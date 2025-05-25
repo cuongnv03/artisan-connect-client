@@ -220,7 +220,7 @@ export const PostDetailPage: React.FC = () => {
         return (
           <blockquote
             key={index}
-            className="border-l-4 border-accent bg-gray-50 p-4 rounded-r-lg mb-4 italic text-gray-700"
+            className="border-l-4 border-primary bg-gray-50 p-4 rounded-r-lg mb-4 italic text-gray-700"
           >
             {block.content}
           </blockquote>
@@ -491,7 +491,7 @@ export const PostDetailPage: React.FC = () => {
               <textarea
                 name="content"
                 rows={3}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Viết bình luận của bạn..."
                 value={commentValues.content}
                 onChange={handleCommentChange}
@@ -541,10 +541,10 @@ export const PostDetailPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-center space-x-4 mt-2 text-sm">
-                    <button className="text-gray-500 hover:text-accent">
+                    <button className="text-gray-500 hover:text-primary">
                       Thích ({comment.likeCount})
                     </button>
-                    <button className="text-gray-500 hover:text-accent">
+                    <button className="text-gray-500 hover:text-primary">
                       Trả lời
                     </button>
                   </div>

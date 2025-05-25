@@ -190,7 +190,7 @@ export const UpgradeRequestPage: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         <Card className="p-8 text-center">
           <div className="mb-6">
-            <StarIcon className="w-16 h-16 text-accent mx-auto mb-4" />
+            <StarIcon className="w-16 h-16 text-primary mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Yêu cầu nâng cấp nghệ nhân
             </h1>
@@ -263,7 +263,7 @@ export const UpgradeRequestPage: React.FC = () => {
     <div className="max-w-3xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <StarIcon className="w-16 h-16 text-accent mx-auto mb-4" />
+        <StarIcon className="w-16 h-16 text-primary mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Trở thành nghệ nhân
         </h1>
@@ -273,7 +273,7 @@ export const UpgradeRequestPage: React.FC = () => {
       </div>
 
       {/* Benefits */}
-      <Card className="p-6 mb-8 bg-gradient-to-r from-accent/5 to-secondary/5">
+      <Card className="p-6 mb-8 bg-gradient-to-r from-primary/5 to-secondary/5">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           Quyền lợi nghệ nhân
         </h2>
@@ -329,7 +329,7 @@ export const UpgradeRequestPage: React.FC = () => {
               <textarea
                 name="shopDescription"
                 rows={4}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Giới thiệu về cửa hàng, sản phẩm chính, phong cách... (tối thiểu 50 ký tự)"
                 value={values.shopDescription}
                 onChange={handleChange}
@@ -426,7 +426,7 @@ export const UpgradeRequestPage: React.FC = () => {
               <textarea
                 name="reason"
                 rows={5}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Chia sẻ về passion, mục tiêu và kế hoạch phát triển của bạn... (tối thiểu 100 ký tự)"
                 value={values.reason}
                 onChange={handleChange}

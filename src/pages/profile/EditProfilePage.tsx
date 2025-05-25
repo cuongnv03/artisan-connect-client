@@ -274,7 +274,7 @@ export const EditProfilePage: React.FC = () => {
               <textarea
                 name="bio"
                 rows={3}
-                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="Viết vài dòng về bản thân..."
                 value={values.bio}
                 onChange={handleChange}
@@ -323,7 +323,7 @@ export const EditProfilePage: React.FC = () => {
                   name="gender"
                   value={values.gender}
                   onChange={handleChange}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-accent focus:ring-accent"
+                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 >
                   <option value="">Chọn giới tính</option>
                   <option value="MALE">Nam</option>

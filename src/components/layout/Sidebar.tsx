@@ -281,7 +281,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                     ${
                       isActive
-                        ? 'bg-accent text-white'
+                        ? 'bg-primary text-white'
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                     }
                   `}
@@ -296,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                       ml-2 px-2 py-0.5 text-xs rounded-full
                       ${
                         isActive
-                          ? 'bg-white text-accent'
+                          ? 'bg-white text-primary'
                           : 'bg-red-500 text-white'
                       }
                     `}
