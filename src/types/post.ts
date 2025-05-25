@@ -55,6 +55,7 @@ export interface Post extends SoftDeleteEntity {
   user?: User;
   isLiked?: boolean;
   isSaved?: boolean;
+  canEdit?: boolean;
 }
 
 export interface PostAnalytics extends BaseEntity {
@@ -71,17 +72,31 @@ export interface CreatePostRequest {
   summary?: string;
   content: ContentBlock[];
   type: PostType;
+  status?: PostStatus;
   thumbnailUrl?: string;
   coverImage?: string;
   mediaUrls?: string[];
   tags?: string[];
+  publishNow?: boolean;
 }
 
 export interface UpdatePostRequest extends Partial<CreatePostRequest> {}
 
 export interface GetPostsQuery extends PaginationParams {
   userId?: string;
-  type?: PostType;
-  status?: string;
+  type?: PostType | PostType[];
+  status?: PostStatus | PostStatus[];
   tags?: string[];
+  search?: string;
+  followedOnly?: boolean;
+}
+
+export interface PostPaginationResult {
+  data: Post[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }

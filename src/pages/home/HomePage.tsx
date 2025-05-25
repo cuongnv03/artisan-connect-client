@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToastContext } from '../../contexts/ToastContext';
 import { postService } from '../../services/post.service';
-import { Post, PaginatedResponse } from '../../types';
+import { Post, PostPaginationResult } from '../../types';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Button } from '../../components/ui/Button';
 import { PostCard } from '../../components/common/PostCard';
+import { EmptyState } from '../../components/common/EmptyState';
 import {
   PlusIcon,
   SparklesIcon,
   UserGroupIcon,
   HeartIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
 export const HomePage: React.FC = () => {
   const { state } = useAuth();
   const { user } = state;
+  const { error: showError } = useToastContext();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
     loadPosts();
@@ -28,18 +36,50 @@ export const HomePage: React.FC = () => {
   const loadPosts = async (pageNum = 1, reset = true) => {
     try {
       if (pageNum === 1) {
-        setLoading(true);
+        if (reset) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
+        }
       } else {
         setLoadingMore(true);
       }
 
-      const response: PaginatedResponse<Post> =
-        await postService.getFollowedPosts({
+      let response: PostPaginationResult;
+      try {
+        response = await postService.getFollowedPosts({
           page: pageNum,
           limit: 10,
           sortBy: 'publishedAt',
           sortOrder: 'desc',
         });
+
+        if (pageNum === 1 && response.data.length === 0) {
+          setShowFallback(true);
+          response = await postService.getPosts({
+            page: pageNum,
+            limit: 10,
+            sortBy: 'publishedAt',
+            sortOrder: 'desc',
+            status: 'PUBLISHED',
+          });
+        } else {
+          setShowFallback(false);
+        }
+      } catch (followedError) {
+        // Fallback to general posts if followed posts fail
+        console.warn(
+          'Failed to load followed posts, falling back to general posts',
+        );
+        setShowFallback(true);
+        response = await postService.getPosts({
+          page: pageNum,
+          limit: 10,
+          sortBy: 'publishedAt',
+          sortOrder: 'desc',
+          status: 'PUBLISHED',
+        });
+      }
 
       if (reset) {
         setPosts(response.data);
@@ -48,19 +88,26 @@ export const HomePage: React.FC = () => {
       }
 
       setHasMore(pageNum < response.meta.totalPages);
-      setPage(pageNum);
-    } catch (error) {
-      console.error('Error loading posts:', error);
+      setCurrentPage(pageNum);
+      setTotalPages(response.meta.totalPages);
+    } catch (err: any) {
+      console.error('Error loading posts:', err);
+      showError(err.message || 'Không thể tải bảng tin');
     } finally {
       setLoading(false);
       setLoadingMore(false);
+      setRefreshing(false);
     }
   };
 
   const loadMore = () => {
-    if (!loadingMore && hasMore) {
-      loadPosts(page + 1, false);
+    if (!loadingMore && hasMore && currentPage < totalPages) {
+      loadPosts(currentPage + 1, false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadPosts(1, false);
   };
 
   const getGreeting = () => {
@@ -92,14 +139,48 @@ export const HomePage: React.FC = () => {
                 {getGreeting()}, {user?.firstName}! 👋
               </h1>
               <p className="text-gray-100">
-                Khám phá những câu chuyện mới từ cộng đồng nghệ nhân
+                {showFallback
+                  ? 'Khám phá những câu chuyện từ cộng đồng nghệ nhân'
+                  : 'Những câu chuyện mới từ những người bạn theo dõi'}
               </p>
             </div>
-            <div className="hidden md:block">
+            <div className="hidden md:flex items-center space-x-2">
+              <Button
+                variant="whiteOutline"
+                size="sm"
+                onClick={handleRefresh}
+                loading={refreshing}
+                leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+              >
+                Làm mới
+              </Button>
               <SparklesIcon className="w-16 h-16 text-gold-300 opacity-80" />
             </div>
           </div>
         </div>
+
+        {/* Feed Type Indicator */}
+        {showFallback && (
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <UserGroupIcon className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  Bạn chưa theo dõi ai. Đang hiển thị bài viết phổ biến từ cộng
+                  đồng.{' '}
+                  <a
+                    href="/discover"
+                    className="font-medium underline hover:text-blue-600"
+                  >
+                    Khám phá nghệ nhân
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -125,7 +206,11 @@ export const HomePage: React.FC = () => {
           >
             <div className="text-left">
               <div className="font-medium">Khám phá</div>
-              <div className="text-sm text-gray-500">Tìm nghệ nhân mới</div>
+              <div className="text-sm text-gray-500">
+                {showFallback
+                  ? 'Tìm nghệ nhân để theo dõi'
+                  : 'Tìm nghệ nhân mới'}
+              </div>
             </div>
           </Button>
 
@@ -146,40 +231,68 @@ export const HomePage: React.FC = () => {
       {/* Posts Feed */}
       <div className="space-y-6">
         {posts.length === 0 ? (
-          <div className="text-center py-12">
-            <UserGroupIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Chưa có bài viết nào
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Hãy theo dõi các nghệ nhân để xem những câu chuyện thú vị từ họ
-            </p>
-            <Button onClick={() => (window.location.href = '/discover')}>
-              Khám phá nghệ nhân
-            </Button>
-          </div>
+          <EmptyState
+            icon={<UserGroupIcon className="w-16 h-16" />}
+            title="Chưa có bài viết nào"
+            description={
+              showFallback
+                ? 'Hiện tại chưa có bài viết nào trong cộng đồng. Hãy là người đầu tiên chia sẻ!'
+                : 'Những người bạn theo dõi chưa có bài viết mới. Hãy khám phá thêm nghệ nhân!'
+            }
+            action={{
+              label: showFallback
+                ? 'Tạo bài viết đầu tiên'
+                : 'Khám phá nghệ nhân',
+              onClick: () =>
+                (window.location.href = showFallback
+                  ? '/create-post'
+                  : '/discover'),
+            }}
+          />
         ) : (
           <>
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+            {posts.map((post, index) => (
+              <PostCard
+                key={`${post.id}-${index}`}
+                post={post}
+                showAuthor={true}
+              />
             ))}
 
             {/* Load More */}
-            {hasMore && (
+            {hasMore && currentPage < totalPages && (
               <div className="text-center py-6">
                 <Button
                   variant="outline"
                   onClick={loadMore}
                   loading={loadingMore}
                 >
-                  Xem thêm bài viết
+                  {loadingMore ? 'Đang tải...' : 'Xem thêm bài viết'}
                 </Button>
               </div>
             )}
 
             {!hasMore && posts.length > 0 && (
-              <div className="text-center py-6 text-gray-500">
-                🎉 Bạn đã xem hết tất cả bài viết mới
+              <div className="text-center py-6">
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-600">
+                  <SparklesIcon className="w-5 h-5 mr-2" />
+                  <span className="text-sm">
+                    {showFallback
+                      ? 'Bạn đã xem hết tất cả bài viết'
+                      : 'Bạn đã xem hết bài viết mới từ những người bạn theo dõi'}
+                  </span>
+                </div>
+                {!showFallback && (
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => (window.location.href = '/discover')}
+                      leftIcon={<UserGroupIcon className="w-4 h-4" />}
+                    >
+                      Khám phá thêm nghệ nhân
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </>

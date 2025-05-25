@@ -36,6 +36,13 @@ interface CommentFormData {
   content: string;
 }
 
+// Helper function để check UUID
+const isUUID = (str: string): boolean => {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 export const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
@@ -53,20 +60,35 @@ export const PostDetailPage: React.FC = () => {
   useEffect(() => {
     if (postId) {
       loadPost();
-      loadComments();
     }
   }, [postId]);
+
+  useEffect(() => {
+    if (post?.id) {
+      loadComments();
+    }
+  }, [post?.id]);
 
   const loadPost = async () => {
     if (!postId) return;
 
     try {
-      const postData = await postService.getPost(postId);
+      let postData: Post;
+
+      // Determine if postId is UUID or slug
+      if (isUUID(postId)) {
+        postData = await postService.getPost(postId);
+      } else {
+        // It's a slug
+        postData = await postService.getPostBySlug(postId);
+      }
+
       setPost(postData);
       setIsLiked(postData.isLiked || false);
       setIsSaved(postData.isSaved || false);
       setLikeCount(postData.likeCount);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Error loading post:', err);
       error('Không thể tải bài viết');
       navigate('/posts');
     } finally {
@@ -75,39 +97,40 @@ export const PostDetailPage: React.FC = () => {
   };
 
   const loadComments = async () => {
-    if (!postId) return;
+    if (!post?.id) return;
 
     setCommentsLoading(true);
     try {
-      const commentsResult = await socialService.getPostComments(postId);
+      const commentsResult = await socialService.getPostComments(post.id);
       setComments(commentsResult.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading comments:', err);
+      // Don't show error toast for comments, just log it
     } finally {
       setCommentsLoading(false);
     }
   };
 
   const handleLike = async () => {
-    if (!postId) return;
+    if (!post?.id) return;
 
     try {
-      await socialService.toggleLike({ postId });
+      await socialService.toggleLike({ postId: post.id });
       setIsLiked(!isLiked);
       setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-    } catch (err) {
+    } catch (err: any) {
       error('Không thể thích bài viết');
     }
   };
 
   const handleSave = async () => {
-    if (!postId) return;
+    if (!post?.id) return;
 
     try {
-      await socialService.toggleSavePost(postId);
+      await socialService.toggleSavePost(post.id);
       setIsSaved(!isSaved);
       success(isSaved ? 'Đã bỏ lưu bài viết' : 'Đã lưu bài viết');
-    } catch (err) {
+    } catch (err: any) {
       error('Không thể lưu bài viết');
     }
   };
@@ -135,29 +158,29 @@ export const PostDetailPage: React.FC = () => {
   };
 
   const handleDeletePost = async () => {
-    if (!postId) return;
+    if (!post?.id) return;
 
     try {
-      await postService.deletePost(postId);
+      await postService.deletePost(post.id);
       success('Đã xóa bài viết');
       navigate('/posts/my-posts');
-    } catch (err) {
+    } catch (err: any) {
       error('Không thể xóa bài viết');
     }
   };
 
   const handleCommentSubmit = async (values: CommentFormData) => {
-    if (!postId) return;
+    if (!post?.id) return;
 
     try {
       await socialService.createComment({
-        postId,
+        postId: post.id,
         content: values.content,
       });
       resetForm();
       await loadComments();
       success('Đã thêm bình luận');
-    } catch (err) {
+    } catch (err: any) {
       error('Không thể thêm bình luận');
     }
   };
@@ -272,7 +295,7 @@ export const PostDetailPage: React.FC = () => {
             label: 'Chỉnh sửa',
             value: 'edit',
             icon: <PencilIcon className="w-4 h-4" />,
-            onClick: () => navigate(`/posts/${postId}/edit`),
+            onClick: () => navigate(`/posts/${post?.id}/edit`),
           },
           {
             label: 'Xóa',
