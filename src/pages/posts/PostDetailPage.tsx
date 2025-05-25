@@ -36,11 +36,178 @@ interface CommentFormData {
   content: string;
 }
 
+interface ReplyFormData {
+  content: string;
+}
+
 // Helper function để check UUID
 const isUUID = (str: string): boolean => {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(str);
+};
+
+// Comment Component với replies
+const CommentItem: React.FC<{
+  comment: Comment;
+  onReply: (commentId: string, content: string) => Promise<void>;
+  onLikeComment: (commentId: string) => Promise<void>;
+  depth?: number;
+}> = ({ comment, onReply, onLikeComment, depth = 0 }) => {
+  const { state: authState } = useAuth();
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [isLiked, setIsLiked] = useState(comment.isLiked || false);
+  const [likeCount, setLikeCount] = useState(comment.likeCount);
+  const [replies, setReplies] = useState<Comment[]>(comment.replies || []);
+  const [showReplies, setShowReplies] = useState(false);
+
+  const {
+    values: replyValues,
+    handleChange: handleReplyChange,
+    handleSubmit: onReplySubmit,
+    resetForm: resetReplyForm,
+    isSubmitting: isReplySubmitting,
+  } = useForm<ReplyFormData>({
+    initialValues: { content: '' },
+    onSubmit: async (values) => {
+      await onReply(comment.id, values.content);
+      resetReplyForm();
+      setShowReplyForm(false);
+    },
+  });
+
+  const handleLike = async () => {
+    try {
+      setIsLiked(!isLiked);
+      setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+      await onLikeComment(comment.id);
+    } catch (error) {
+      setIsLiked(isLiked);
+      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
+    }
+  };
+
+  const maxDepth = 3; // Giới hạn độ sâu reply
+  const canReply = depth < maxDepth;
+
+  return (
+    <div className={`${depth > 0 ? 'ml-8 mt-3' : ''}`}>
+      <div className="flex space-x-3">
+        <Avatar
+          src={comment.user.avatarUrl}
+          alt={`${comment.user.firstName} ${comment.user.lastName}`}
+          size={depth > 0 ? 'sm' : 'md'}
+        />
+        <div className="flex-1">
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-gray-900">
+                {comment.user.firstName} {comment.user.lastName}
+              </span>
+              <span className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(comment.createdAt), {
+                  addSuffix: true,
+                  locale: vi,
+                })}
+              </span>
+            </div>
+            <p className="text-gray-700">{comment.content}</p>
+          </div>
+
+          {/* Comment Actions */}
+          <div className="flex items-center space-x-4 mt-2 text-sm">
+            <button
+              onClick={handleLike}
+              className={`flex items-center space-x-1 ${
+                isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+              } transition-colors`}
+            >
+              {isLiked ? (
+                <HeartIconSolid className="w-4 h-4" />
+              ) : (
+                <HeartIcon className="w-4 h-4" />
+              )}
+              <span>{likeCount > 0 ? likeCount : 'Thích'}</span>
+            </button>
+
+            {canReply && (
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="text-gray-500 hover:text-primary transition-colors"
+              >
+                Trả lời
+              </button>
+            )}
+
+            {comment.replyCount > 0 && (
+              <button
+                onClick={() => setShowReplies(!showReplies)}
+                className="text-gray-500 hover:text-primary transition-colors"
+              >
+                {showReplies ? 'Ẩn' : 'Xem'} {comment.replyCount} phản hồi
+              </button>
+            )}
+          </div>
+
+          {/* Reply Form */}
+          {showReplyForm && (
+            <form onSubmit={onReplySubmit} className="mt-3">
+              <div className="flex space-x-2">
+                <Avatar
+                  src={authState.user?.avatarUrl}
+                  alt={`${authState.user?.firstName} ${authState.user?.lastName}`}
+                  size="sm"
+                />
+                <div className="flex-1">
+                  <textarea
+                    name="content"
+                    rows={2}
+                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm"
+                    placeholder="Viết phản hồi..."
+                    value={replyValues.content}
+                    onChange={handleReplyChange}
+                  />
+                  <div className="mt-2 flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowReplyForm(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      loading={isReplySubmitting}
+                      disabled={!replyValues.content.trim()}
+                    >
+                      Trả lời
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* Replies */}
+          {showReplies && replies.length > 0 && (
+            <div className="mt-3">
+              {replies.map((reply) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  onReply={onReply}
+                  onLikeComment={onLikeComment}
+                  depth={depth + 1}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const PostDetailPage: React.FC = () => {
@@ -84,8 +251,8 @@ export const PostDetailPage: React.FC = () => {
       }
 
       setPost(postData);
-      setIsLiked(postData.isLiked || false);
-      setIsSaved(postData.isSaved || false);
+      setIsLiked(Boolean(postData.isLiked));
+      setIsSaved(Boolean(postData.isSaved));
       setLikeCount(postData.likeCount);
     } catch (err: any) {
       console.error('Error loading post:', err);
@@ -102,7 +269,26 @@ export const PostDetailPage: React.FC = () => {
     setCommentsLoading(true);
     try {
       const commentsResult = await socialService.getPostComments(post.id);
-      setComments(commentsResult.data);
+
+      // Load replies for each comment
+      const commentsWithReplies = await Promise.all(
+        commentsResult.data.map(async (comment) => {
+          if (comment.replyCount > 0) {
+            try {
+              const repliesResult = await socialService.getCommentReplies(
+                comment.id,
+              );
+              return { ...comment, replies: repliesResult.data };
+            } catch (err) {
+              console.error('Error loading replies:', err);
+              return comment;
+            }
+          }
+          return comment;
+        }),
+      );
+
+      setComments(commentsWithReplies);
     } catch (err: any) {
       console.error('Error loading comments:', err);
       // Don't show error toast for comments, just log it
@@ -115,10 +301,16 @@ export const PostDetailPage: React.FC = () => {
     if (!post?.id) return;
 
     try {
+      // Optimistic update
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+
       await socialService.toggleLike({ postId: post.id });
-      setIsLiked(!isLiked);
-      setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
     } catch (err: any) {
+      // Revert on error
+      setIsLiked(!isLiked);
+      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
       error('Không thể thích bài viết');
     }
   };
@@ -127,21 +319,27 @@ export const PostDetailPage: React.FC = () => {
     if (!post?.id) return;
 
     try {
+      const newIsSaved = !isSaved;
+      setIsSaved(newIsSaved);
+
       await socialService.toggleSavePost(post.id);
       setIsSaved(!isSaved);
-      success(isSaved ? 'Đã bỏ lưu bài viết' : 'Đã lưu bài viết');
+      success(newIsSaved ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết');
     } catch (err: any) {
+      setIsSaved(!isSaved);
       error('Không thể lưu bài viết');
     }
   };
 
   const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/posts/${post?.slug || postId}`;
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: post?.title,
           text: post?.summary,
-          url: window.location.href,
+          url: shareUrl,
         });
       } catch (err) {
         // User cancelled sharing
@@ -149,7 +347,7 @@ export const PostDetailPage: React.FC = () => {
     } else {
       // Fallback to clipboard
       try {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         success('Đã sao chép liên kết');
       } catch (err) {
         error('Không thể sao chép liên kết');
@@ -182,6 +380,30 @@ export const PostDetailPage: React.FC = () => {
       success('Đã thêm bình luận');
     } catch (err: any) {
       error('Không thể thêm bình luận');
+    }
+  };
+
+  const handleReplyComment = async (parentId: string, content: string) => {
+    if (!post?.id) return;
+
+    try {
+      await socialService.createComment({
+        postId: post.id,
+        parentId,
+        content,
+      });
+      await loadComments();
+      success('Đã thêm phản hồi');
+    } catch (err) {
+      error('Không thể thêm phản hồi');
+    }
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      await socialService.toggleLike({ commentId });
+    } catch (err) {
+      error('Không thể thích bình luận');
     }
   };
 
@@ -342,6 +564,9 @@ export const PostDetailPage: React.FC = () => {
     );
   }
 
+  // Filter top-level comments (no parent)
+  const topLevelComments = comments.filter((comment) => !comment.parentId);
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Post Header */}
@@ -471,7 +696,7 @@ export const PostDetailPage: React.FC = () => {
 
             <div className="flex items-center space-x-2 text-gray-500">
               <ChatBubbleOvalLeftIcon className="w-6 h-6" />
-              <span>{comments.length}</span>
+              <span>{topLevelComments.length}</span>
             </div>
 
             <button
@@ -499,7 +724,7 @@ export const PostDetailPage: React.FC = () => {
       {/* Comments Section */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Bình luận ({comments.length})
+          Bình luận ({topLevelComments.length})
         </h3>
 
         {/* Add Comment */}
@@ -538,41 +763,15 @@ export const PostDetailPage: React.FC = () => {
           <div className="text-center py-4">
             <LoadingSpinner />
           </div>
-        ) : comments.length > 0 ? (
+        ) : topLevelComments.length > 0 ? (
           <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex space-x-3">
-                <Avatar
-                  src={comment.user.avatarUrl}
-                  alt={`${comment.user.firstName} ${comment.user.lastName}`}
-                  size="md"
-                />
-                <div className="flex-1">
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-gray-900">
-                        {comment.user.firstName} {comment.user.lastName}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(comment.createdAt), {
-                          addSuffix: true,
-                          locale: vi,
-                        })}
-                      </span>
-                    </div>
-                    <p className="text-gray-700">{comment.content}</p>
-                  </div>
-
-                  <div className="flex items-center space-x-4 mt-2 text-sm">
-                    <button className="text-gray-500 hover:text-primary">
-                      Thích ({comment.likeCount})
-                    </button>
-                    <button className="text-gray-500 hover:text-primary">
-                      Trả lời
-                    </button>
-                  </div>
-                </div>
-              </div>
+            {topLevelComments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onReply={handleReplyComment}
+                onLikeComment={handleLikeComment}
+              />
             ))}
           </div>
         ) : (

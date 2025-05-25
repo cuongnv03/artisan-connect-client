@@ -6,6 +6,8 @@ import { Post } from '../../types';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { useToastContext } from '../../contexts/ToastContext';
+import { socialService } from '../../services/social.service';
 import {
   HeartIcon,
   ChatBubbleOvalLeftIcon,
@@ -32,23 +34,83 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { success, error } = useToastContext();
 
   const handleLike = async () => {
+    if (isLiking) return; // Prevent double clicking
+
     try {
-      // TODO: Call API to toggle like
+      setIsLiking(true);
+
+      // Optimistically update UI
+      const newIsLiked = !isLiked;
+      setIsLiked(newIsLiked);
+      setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+
+      // Call API to toggle like
+      await socialService.toggleLike({ postId: post.id });
+    } catch (err: any) {
+      // Revert optimistic update on error
       setIsLiked(!isLiked);
-      setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-    } catch (error) {
-      console.error('Error toggling like:', error);
+      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
+
+      error(err.message || 'Không thể thích bài viết');
+      console.error('Error toggling like:', err);
+    } finally {
+      setIsLiking(false);
     }
   };
 
   const handleSave = async () => {
+    if (isSaving) return; // Prevent double clicking
+
     try {
-      // TODO: Call API to toggle save
+      setIsSaving(true);
+
+      // Optimistically update UI
+      const newIsSaved = !isSaved;
+      setIsSaved(newIsSaved);
+
+      // Call API to toggle save
+      await socialService.toggleSavePost(post.id);
+
+      success(newIsSaved ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết');
+    } catch (err: any) {
+      // Revert optimistic update on error
       setIsSaved(!isSaved);
-    } catch (error) {
-      console.error('Error toggling save:', error);
+
+      error(err.message || 'Không thể lưu bài viết');
+      console.error('Error toggling save:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/posts/${post.slug || post.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.summary,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled sharing
+        console.log('Share cancelled');
+      }
+    } else {
+      // Fallback to clipboard
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        success('Đã sao chép liên kết bài viết');
+      } catch (err) {
+        error('Không thể sao chép liên kết');
+      }
     }
   };
 
@@ -197,7 +259,10 @@ export const PostCard: React.FC<PostCardProps> = ({
         <div className="flex items-center space-x-4">
           <button
             onClick={handleLike}
-            className="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition-colors"
+            disabled={isLiking}
+            className={`flex items-center space-x-2 transition-colors ${
+              isLiking ? 'opacity-50 cursor-not-allowed' : ''
+            } ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
           >
             {isLiked ? (
               <HeartIconSolid className="w-5 h-5 text-red-500" />
@@ -215,7 +280,10 @@ export const PostCard: React.FC<PostCardProps> = ({
             <span className="text-sm">{post.commentCount}</span>
           </Link>
 
-          <button className="flex items-center space-x-2 text-gray-500 hover:text-green-500 transition-colors">
+          <button
+            onClick={handleShare}
+            className="flex items-center space-x-2 text-gray-500 hover:text-green-500 transition-colors"
+          >
             <ShareIcon className="w-5 h-5" />
             <span className="text-sm">Chia sẻ</span>
           </button>
@@ -223,7 +291,12 @@ export const PostCard: React.FC<PostCardProps> = ({
 
         <button
           onClick={handleSave}
-          className="text-gray-500 hover:text-yellow-500 transition-colors"
+          disabled={isSaving}
+          className={`transition-colors ${
+            isSaving ? 'opacity-50 cursor-not-allowed' : ''
+          } ${
+            isSaved ? 'text-yellow-500' : 'text-gray-500 hover:text-yellow-500'
+          }`}
         >
           {isSaved ? (
             <BookmarkIconSolid className="w-5 h-5 text-yellow-500" />
