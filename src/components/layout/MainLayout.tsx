@@ -27,15 +27,15 @@ export const MainLayout: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Header onMobileMenuToggle={() => setSidebarOpen(true)} />
 
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex min-h-[calc(100vh-4rem)]">
         {isAuthenticated && (
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         )}
 
         <main
-          className={`flex-1 overflow-y-auto ${
-            isAuthenticated ? 'md:ml-64' : ''
-          } ${isAuthenticated ? 'pb-16 md:pb-0' : ''}`}
+          className={`flex-1 ${isAuthenticated ? 'md:ml-64' : ''} ${
+            isAuthenticated ? 'pb-16 md:pb-0' : ''
+          }`}
         >
           <div className="p-4 md:p-6 lg:p-8">
             <Outlet />
