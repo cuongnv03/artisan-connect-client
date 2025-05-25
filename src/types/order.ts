@@ -78,10 +78,17 @@ export interface CartSummary {
 }
 
 export interface CartValidation {
-  valid: boolean;
-  issues?: Array<{
-    type: 'out_of_stock' | 'price_changed' | 'unavailable';
+  isValid: boolean;
+  errors: Array<{
+    type: string;
     productId: string;
+    productName: string;
+    message: string;
+  }>;
+  warnings: Array<{
+    type: string;
+    productId: string;
+    productName: string;
     message: string;
   }>;
 }
@@ -110,4 +117,14 @@ export interface QuoteRequest extends BaseEntity {
   product: Product;
   customer: User;
   artisan: User;
+}
+
+export interface QuoteStats {
+  totalQuotes: number;
+  pendingQuotes: number;
+  acceptedQuotes: number;
+  rejectedQuotes: number;
+  expiredQuotes: number;
+  averageNegotiationTime: number;
+  conversionRate: number;
 }

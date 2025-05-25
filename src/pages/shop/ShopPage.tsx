@@ -16,10 +16,21 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Pagination } from '../../components/ui/Pagination';
 import { useDebounce } from '../../hooks/useDebounce';
 import { productService } from '../../services/product.service';
-import { Product } from '../../types/product';
+import { Category, Product } from '../../types/product';
 import { PaginatedResponse } from '../../types/common';
 
 type ViewMode = 'grid' | 'list';
+
+const CATEGORY_ICONS: Record<string, string> = {
+  'gom-su': '🏺',
+  'theu-thua': '🧵',
+  'do-go': '🪵',
+  'tranh-ve': '🎨',
+  'do-da': '👜',
+  'trang-suc': '💍',
+  'dan-lat': '🧺',
+  'dieu-khac': '🗿',
+};
 
 export const ShopPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,42 +49,32 @@ export const ShopPage: React.FC = () => {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
 
   const debouncedQuery = useDebounce(searchQuery, 500);
   const navigate = useNavigate();
 
-  const categories = [
-    { label: 'Gốm sứ', value: 'gom-su' },
-    { label: 'Thêu thùa', value: 'theu-thua' },
-    { label: 'Đồ gỗ', value: 'do-go' },
-    { label: 'Tranh vẽ', value: 'tranh-ve' },
-    { label: 'Đồ da', value: 'do-da' },
-    { label: 'Trang sức', value: 'trang-suc' },
-    { label: 'Đan lát', value: 'dan-lat' },
-    { label: 'Điêu khắc', value: 'dieu-khac' },
-  ];
-
-  const categoryLinks = [
-    { name: 'Gốm sứ', slug: 'gom-su', icon: '🏺' },
-    { name: 'Thêu thùa', slug: 'theu-thua', icon: '🧵' },
-    { name: 'Đồ gỗ', slug: 'do-go', icon: '🪵' },
-    { name: 'Tranh vẽ', slug: 'tranh-ve', icon: '🎨' },
-    { name: 'Đồ da', slug: 'do-da', icon: '👜' },
-    { name: 'Trang sức', slug: 'trang-suc', icon: '💍' },
-  ];
-
-  const sortOptions = [
-    { label: 'Mới nhất', value: 'createdAt' },
-    { label: 'Bán chạy nhất', value: 'salesCount' },
-    { label: 'Đánh giá cao', value: 'avgRating' },
-    { label: 'Giá thấp đến cao', value: 'price_asc' },
-    { label: 'Giá cao đến thấp', value: 'price_desc' },
-    { label: 'Xem nhiều nhất', value: 'viewCount' },
-  ];
+  useEffect(() => {
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     loadProducts();
   }, [debouncedQuery, filters, currentPage]);
+
+  const loadCategories = async () => {
+    try {
+      const [categoriesData, treeData] = await Promise.all([
+        productService.getCategories(),
+        productService.getCategoryTree(),
+      ]);
+      setCategories(categoriesData);
+      setCategoryTree(treeData);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const loadProducts = async () => {
     setLoading(true);
@@ -121,6 +122,18 @@ export const ShopPage: React.FC = () => {
     }
   };
 
+  const categoryLinks = categoryTree.slice(0, 6).map((category) => ({
+    name: category.name,
+    slug: category.slug,
+    icon: CATEGORY_ICONS[category.slug] || '🎨',
+    productCount: category.productCount || 0,
+  }));
+
+  const categoryOptions = categories.map((cat) => ({
+    label: cat.name,
+    value: cat.id,
+  }));
+
   const handleSearch = (query: string) => {
     if (query.trim()) {
       navigate(`/shop/search?q=${encodeURIComponent(query)}`);
@@ -131,6 +144,15 @@ export const ShopPage: React.FC = () => {
     setFilters(newFilters);
     setCurrentPage(1);
   };
+
+  const sortOptions = [
+    { label: 'Mới nhất', value: 'createdAt' },
+    { label: 'Bán chạy nhất', value: 'salesCount' },
+    { label: 'Đánh giá cao', value: 'avgRating' },
+    { label: 'Giá thấp đến cao', value: 'price_asc' },
+    { label: 'Giá cao đến thấp', value: 'price_desc' },
+    { label: 'Xem nhiều nhất', value: 'viewCount' },
+  ];
 
   const quickFilters = [
     { label: 'Giảm giá', key: 'onSale', value: true },
@@ -257,7 +279,7 @@ export const ShopPage: React.FC = () => {
           <FilterPanel
             filters={filters}
             onFilterChange={handleFilterChange}
-            categoryOptions={categories}
+            categoryOptions={categoryOptions}
             sortOptions={sortOptions}
           />
         </div>

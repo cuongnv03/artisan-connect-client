@@ -47,7 +47,6 @@ const isUUID = (str: string): boolean => {
   return uuidRegex.test(str);
 };
 
-// Comment Component với replies
 const CommentItem: React.FC<{
   comment: Comment;
   onReply: (commentId: string, content: string) => Promise<void>;
@@ -56,10 +55,8 @@ const CommentItem: React.FC<{
 }> = ({ comment, onReply, onLikeComment, depth = 0 }) => {
   const { state: authState } = useAuth();
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [isLiked, setIsLiked] = useState(comment.isLiked || false);
-  const [likeCount, setLikeCount] = useState(comment.likeCount);
-  const [replies, setReplies] = useState<Comment[]>(comment.replies || []);
-  const [showReplies, setShowReplies] = useState(false);
+  const [showReplies, setShowReplies] = useState(true); // Show replies by default if they exist
+  const [isLiking, setIsLiking] = useState(false);
 
   const {
     values: replyValues,
@@ -77,18 +74,20 @@ const CommentItem: React.FC<{
   });
 
   const handleLike = async () => {
+    if (isLiking) return;
+
+    setIsLiking(true);
     try {
-      setIsLiked(!isLiked);
-      setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
       await onLikeComment(comment.id);
     } catch (error) {
-      setIsLiked(isLiked);
-      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
+      console.error('Error liking comment:', error);
+    } finally {
+      setIsLiking(false);
     }
   };
 
-  const maxDepth = 3; // Giới hạn độ sâu reply
-  const canReply = depth < maxDepth;
+  const maxDepth = 3;
+  const canReply = depth < maxDepth && authState.isAuthenticated;
 
   return (
     <div className={`${depth > 0 ? 'ml-8 mt-3' : ''}`}>
@@ -109,6 +108,9 @@ const CommentItem: React.FC<{
                   addSuffix: true,
                   locale: vi,
                 })}
+                {comment.isEdited && (
+                  <span className="ml-1 text-gray-400">(đã chỉnh sửa)</span>
+                )}
               </span>
             </div>
             <p className="text-gray-700">{comment.content}</p>
@@ -118,16 +120,21 @@ const CommentItem: React.FC<{
           <div className="flex items-center space-x-4 mt-2 text-sm">
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1 ${
-                isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-              } transition-colors`}
+              disabled={isLiking}
+              className={`flex items-center space-x-1 transition-colors ${
+                isLiking ? 'opacity-50 cursor-not-allowed' : ''
+              } ${
+                comment.isLiked
+                  ? 'text-red-500'
+                  : 'text-gray-500 hover:text-red-500'
+              }`}
             >
-              {isLiked ? (
+              {comment.isLiked ? (
                 <HeartIconSolid className="w-4 h-4" />
               ) : (
                 <HeartIcon className="w-4 h-4" />
               )}
-              <span>{likeCount > 0 ? likeCount : 'Thích'}</span>
+              <span>{comment.likeCount > 0 ? comment.likeCount : 'Thích'}</span>
             </button>
 
             {canReply && (
@@ -150,12 +157,12 @@ const CommentItem: React.FC<{
           </div>
 
           {/* Reply Form */}
-          {showReplyForm && (
+          {showReplyForm && authState.user && (
             <form onSubmit={onReplySubmit} className="mt-3">
               <div className="flex space-x-2">
                 <Avatar
-                  src={authState.user?.avatarUrl}
-                  alt={`${authState.user?.firstName} ${authState.user?.lastName}`}
+                  src={authState.user.avatarUrl}
+                  alt={`${authState.user.firstName} ${authState.user.lastName}`}
                   size="sm"
                 />
                 <div className="flex-1">
@@ -191,9 +198,9 @@ const CommentItem: React.FC<{
           )}
 
           {/* Replies */}
-          {showReplies && replies.length > 0 && (
+          {showReplies && comment.replies && comment.replies.length > 0 && (
             <div className="mt-3">
-              {replies.map((reply) => (
+              {comment.replies.map((reply) => (
                 <CommentItem
                   key={reply.id}
                   comment={reply}
@@ -223,6 +230,7 @@ export const PostDetailPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
     if (postId) {
@@ -268,50 +276,74 @@ export const PostDetailPage: React.FC = () => {
 
     setCommentsLoading(true);
     try {
-      const commentsResult = await socialService.getPostComments(post.id);
+      // Get top-level comments with proper query parameters
+      const commentsResult = await socialService.getPostComments(post.id, {
+        parentId: null, // Explicitly get top-level comments
+        page: 1,
+        limit: 50,
+        includeReplies: false, // Don't include nested replies in main call
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
 
-      // Load replies for each comment
+      // Load replies for each top-level comment that has replies
       const commentsWithReplies = await Promise.all(
         commentsResult.data.map(async (comment) => {
           if (comment.replyCount > 0) {
             try {
               const repliesResult = await socialService.getCommentReplies(
                 comment.id,
+                {
+                  page: 1,
+                  limit: 10,
+                  sortBy: 'createdAt',
+                  sortOrder: 'asc', // Show oldest replies first
+                },
               );
-              return { ...comment, replies: repliesResult.data };
+
+              return {
+                ...comment,
+                replies: repliesResult.data || [],
+              };
             } catch (err) {
-              console.error('Error loading replies:', err);
-              return comment;
+              console.error(
+                'Error loading replies for comment:',
+                comment.id,
+                err,
+              );
+              return { ...comment, replies: [] };
             }
           }
-          return comment;
+          return { ...comment, replies: [] };
         }),
       );
 
       setComments(commentsWithReplies);
     } catch (err: any) {
       console.error('Error loading comments:', err);
-      // Don't show error toast for comments, just log it
+      error('Không thể tải bình luận');
     } finally {
       setCommentsLoading(false);
     }
   };
 
   const handleLike = async () => {
-    if (!post?.id) return;
+    if (!post?.id || isLiking) return;
 
     try {
-      // Optimistic update
-      const newIsLiked = !isLiked;
-      setIsLiked(newIsLiked);
-      setLikeCount((prev) => (newIsLiked ? prev + 1 : prev - 1));
+      setIsLiking(true);
 
-      await socialService.toggleLike({ postId: post.id });
+      // Call API first to get actual result
+      const result = await socialService.toggleLike({ postId: post.id });
+
+      // Update state based on server response
+      setIsLiked(result.liked);
+      setLikeCount((prev) => (result.liked ? prev + 1 : prev - 1));
     } catch (err: any) {
-      // Revert on error
-      setIsLiked(!isLiked);
-      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
       error('Không thể thích bài viết');
+      console.error('Error toggling like:', err);
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -401,10 +433,41 @@ export const PostDetailPage: React.FC = () => {
 
   const handleLikeComment = async (commentId: string) => {
     try {
-      await socialService.toggleLike({ commentId });
+      const result = await socialService.toggleLike({ commentId });
+
+      // Update comment in state
+      setComments((prevComments) =>
+        updateCommentInTree(prevComments, commentId, (comment) => ({
+          ...comment,
+          isLiked: result.liked,
+          likeCount: result.liked
+            ? comment.likeCount + 1
+            : comment.likeCount - 1,
+        })),
+      );
     } catch (err) {
       error('Không thể thích bình luận');
     }
+  };
+
+  // Helper function để update comment trong tree structure
+  const updateCommentInTree = (
+    comments: Comment[],
+    commentId: string,
+    updateFn: (comment: Comment) => Comment,
+  ): Comment[] => {
+    return comments.map((comment) => {
+      if (comment.id === commentId) {
+        return updateFn(comment);
+      }
+      if (comment.replies && comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: updateCommentInTree(comment.replies, commentId, updateFn),
+        };
+      }
+      return comment;
+    });
   };
 
   const {

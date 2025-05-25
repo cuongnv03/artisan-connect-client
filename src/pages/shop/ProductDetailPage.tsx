@@ -20,9 +20,13 @@ import { useToastContext } from '../../contexts/ToastContext';
 import { productService } from '../../services/product.service';
 import { cartService } from '../../services/cart.service';
 import { reviewService } from '../../services/review.service';
-import { quoteService } from '../../services/quote.service';
+import {
+  CreateQuoteRequestData,
+  quoteService,
+} from '../../services/quote.service';
 import { Product } from '../../types/product';
 import { Review } from '../../types/product';
+import { QuoteStatus } from '../../types/order';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -31,12 +35,6 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ImageGallery } from '../../components/common/ImageGallery';
 import { Modal } from '../../components/ui/Modal';
 import { useForm } from '../../hooks/useForm';
-
-interface QuoteRequestData {
-  requestedPrice: number;
-  specifications: string;
-  customerMessage: string;
-}
 
 interface ReviewFormData {
   rating: number;
@@ -59,12 +57,15 @@ export const ProductDetailPage: React.FC = () => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [canReview, setCanReview] = useState(false);
 
   useEffect(() => {
     if (productId) {
       loadProduct();
       loadReviews();
       loadReviewStats();
+      checkReviewStatus();
     }
   }, [productId]);
 
@@ -72,13 +73,43 @@ export const ProductDetailPage: React.FC = () => {
     if (!productId) return;
 
     try {
-      const productData = await productService.getProduct(productId);
+      // Sử dụng slug nếu có, fallback to ID
+      const productData = productId.includes('-')
+        ? await productService.getProductBySlug(productId)
+        : await productService.getProduct(productId);
+
       setProduct(productData);
+
+      // Increment view count (fire and forget)
+      productService.viewProduct(productData.id).catch(() => {
+        // Ignore errors for view tracking
+      });
     } catch (err) {
       error('Không thể tải thông tin sản phẩm');
       navigate('/shop');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkReviewStatus = async () => {
+    if (!productId || !authState.user) return;
+
+    try {
+      // Check if user has reviewed this product
+      const existingReview = await reviewService.getReviewByUserAndProduct(
+        productId,
+      );
+      setHasReviewed(!!existingReview);
+
+      // Check if user can review (has purchased)
+      const reviewableProducts = await reviewService.getReviewableProducts();
+      const canReviewProduct = reviewableProducts.some(
+        (p) => p.productId === productId,
+      );
+      setCanReview(canReviewProduct);
+    } catch (err) {
+      console.error('Error checking review status:', err);
     }
   };
 
@@ -127,16 +158,19 @@ export const ProductDetailPage: React.FC = () => {
     navigate('/cart');
   };
 
-  const handleRequestQuote = async (values: QuoteRequestData) => {
+  const handleRequestQuote = async (values: CreateQuoteRequestData) => {
     if (!product) return;
 
     try {
-      await quoteService.createQuoteRequest({
+      const quoteData: CreateQuoteRequestData = {
         productId: product.id,
         requestedPrice: values.requestedPrice,
         specifications: values.specifications,
         customerMessage: values.customerMessage,
-      });
+        expiresInDays: values.expiresInDays || 7, // Default 7 days
+      };
+
+      await quoteService.createQuoteRequest(quoteData);
       success('Đã gửi yêu cầu báo giá');
       setShowQuoteModal(false);
       resetQuoteForm();
@@ -193,6 +227,29 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
+  // Conditional rendering based on review status
+  const renderReviewSection = () => {
+    if (isOwner) return null;
+
+    return (
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-900">
+          Đánh giá sản phẩm ({reviewStats?.totalReviews || 0})
+        </h2>
+
+        {hasReviewed ? (
+          <Badge variant="success">Bạn đã đánh giá</Badge>
+        ) : canReview ? (
+          <Button variant="outline" onClick={() => setShowReviewModal(true)}>
+            Viết đánh giá
+          </Button>
+        ) : (
+          <Badge variant="secondary">Mua hàng để đánh giá</Badge>
+        )}
+      </div>
+    );
+  };
+
   const {
     values: quoteValues,
     errors: quoteErrors,
@@ -201,11 +258,13 @@ export const ProductDetailPage: React.FC = () => {
     handleSubmit: onQuoteSubmit,
     resetForm: resetQuoteForm,
     isSubmitting: isQuoteSubmitting,
-  } = useForm<QuoteRequestData>({
+  } = useForm<CreateQuoteRequestData>({
     initialValues: {
+      productId: product?.id || '',
       requestedPrice: product?.price || 0,
       specifications: '',
       customerMessage: '',
+      expiresInDays: 7,
     },
     onSubmit: handleRequestQuote,
   });
@@ -520,16 +579,7 @@ export const ProductDetailPage: React.FC = () => {
 
       {/* Reviews Section */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Đánh giá sản phẩm ({reviewStats?.totalReviews || 0})
-          </h2>
-          {!isOwner && (
-            <Button variant="outline" onClick={() => setShowReviewModal(true)}>
-              Viết đánh giá
-            </Button>
-          )}
-        </div>
+        {renderReviewSection()}
 
         {/* Review Stats */}
         {reviewStats && (
@@ -645,10 +695,18 @@ export const ProductDetailPage: React.FC = () => {
             <input
               type="number"
               name="requestedPrice"
+              min="0"
+              step="1000"
               className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
               value={quoteValues.requestedPrice}
               onChange={handleQuoteChange}
+              placeholder={formatPrice(product?.price || 0)}
             />
+            {quoteErrors.requestedPrice && quoteTouched.requestedPrice && (
+              <p className="mt-1 text-sm text-red-600">
+                {quoteErrors.requestedPrice}
+              </p>
+            )}
           </div>
 
           <div>
@@ -658,11 +716,15 @@ export const ProductDetailPage: React.FC = () => {
             <textarea
               name="specifications"
               rows={3}
+              maxLength={2000}
               className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              placeholder="Mô tả yêu cầu tùy chỉnh..."
+              placeholder="Mô tả yêu cầu tùy chỉnh (tối đa 2000 ký tự)..."
               value={quoteValues.specifications}
               onChange={handleQuoteChange}
             />
+            <p className="mt-1 text-sm text-gray-500">
+              {(quoteValues.specifications || '').length}/2000 ký tự
+            </p>
           </div>
 
           <div>
@@ -672,11 +734,33 @@ export const ProductDetailPage: React.FC = () => {
             <textarea
               name="customerMessage"
               rows={3}
+              maxLength={1000}
               className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              placeholder="Lời nhắn gửi nghệ nhân..."
+              placeholder="Lời nhắn gửi nghệ nhân (tối đa 1000 ký tự)..."
               value={quoteValues.customerMessage}
               onChange={handleQuoteChange}
             />
+            <p className="mt-1 text-sm text-gray-500">
+              {(quoteValues.customerMessage || '').length}/1000 ký tự
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Thời hạn báo giá (ngày)
+            </label>
+            <select
+              name="expiresInDays"
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              value={quoteValues.expiresInDays}
+              onChange={handleQuoteChange}
+            >
+              <option value={1}>1 ngày</option>
+              <option value={3}>3 ngày</option>
+              <option value={7}>7 ngày (khuyến nghị)</option>
+              <option value={14}>14 ngày</option>
+              <option value={30}>30 ngày</option>
+            </select>
           </div>
 
           <div className="flex justify-end space-x-3">
@@ -684,11 +768,12 @@ export const ProductDetailPage: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => setShowQuoteModal(false)}
+              disabled={isQuoteSubmitting}
             >
               Hủy
             </Button>
             <Button type="submit" loading={isQuoteSubmitting}>
-              Gửi yêu cầu
+              Gửi yêu cầu báo giá
             </Button>
           </div>
         </form>

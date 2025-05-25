@@ -58,14 +58,7 @@ export const SearchPage: React.FC = () => {
     sortOrder: 'desc',
   });
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const [popularSearches] = useState([
-    'gốm sứ Bát Tràng',
-    'thêu tay',
-    'đồ gỗ mỹ nghệ',
-    'tranh vẽ',
-    'trang sức bạc',
-    'đồ da handmade',
-  ]);
+  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
 
   const debouncedQuery = useDebounce(searchQuery, 500);
 
@@ -86,6 +79,24 @@ export const SearchPage: React.FC = () => {
       setPagination({ total: 0, totalPages: 0, limit: 20 });
     }
   }, [debouncedQuery, filters, currentPage]);
+
+  useEffect(() => {
+    loadTrendingProducts();
+  }, []);
+
+  const loadTrendingProducts = async () => {
+    try {
+      // Load trending products
+      const trending = await productService.getProducts({
+        sortBy: 'viewCount',
+        sortOrder: 'desc',
+        limit: 6,
+      });
+      setTrendingProducts(trending.data);
+    } catch (error) {
+      console.error('Error loading trending products:', error);
+    }
+  };
 
   const updateURL = () => {
     const params: any = {};
@@ -206,6 +217,22 @@ export const SearchPage: React.FC = () => {
       filters[key as keyof SearchFilters],
   );
 
+  // Show trending when no search
+  const renderTrendingSection = () => (
+    <div>
+      <h3 className="font-semibold text-gray-900 mb-4">Sản phẩm thịnh hành</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {trendingProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            showSellerInfo={true}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
@@ -275,23 +302,7 @@ export const SearchPage: React.FC = () => {
           )}
 
           {/* Popular Searches */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">
-              Tìm kiếm phổ biến
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {popularSearches.map((query) => (
-                <Badge
-                  key={query}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
-                  onClick={() => handleSearch(query)}
-                >
-                  {query}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          {renderTrendingSection()}
         </div>
       )}
 

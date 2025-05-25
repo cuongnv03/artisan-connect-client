@@ -1,6 +1,6 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
-import { QuoteRequest, QuoteStatus } from '../types/order';
+import { QuoteRequest, QuoteStatus, QuoteStats } from '../types/order';
 import { PaginatedResponse } from '../types/common';
 
 export interface CreateQuoteRequestData {
@@ -62,8 +62,8 @@ export const quoteService = {
     return await apiClient.get<QuoteRequest>(API_ENDPOINTS.QUOTES.BY_ID(id));
   },
 
-  async getQuoteStats(query: GetQuoteStatsQuery = {}): Promise<any> {
-    return await apiClient.get<any>(API_ENDPOINTS.QUOTES.STATS, query);
+  async getQuoteStats(query: GetQuoteStatsQuery = {}): Promise<QuoteStats> {
+    return await apiClient.get<QuoteStats>(API_ENDPOINTS.QUOTES.STATS, query);
   },
 
   // Quote responses & negotiation
@@ -94,5 +94,18 @@ export const quoteService = {
       API_ENDPOINTS.QUOTES.CANCEL(id),
       data,
     );
+  },
+
+  async validateQuoteAccess(id: string): Promise<boolean> {
+    try {
+      await apiClient.get(`${API_ENDPOINTS.QUOTES.BY_ID(id)}/validate-access`);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async expireOldQuotes(): Promise<{ expired: number }> {
+    return await apiClient.post(`${API_ENDPOINTS.QUOTES.BASE}/expire`);
   },
 };

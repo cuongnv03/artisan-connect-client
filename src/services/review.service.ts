@@ -93,9 +93,32 @@ export const reviewService = {
     );
   },
 
-  async getReviewableProducts(): Promise<any[]> {
-    return await apiClient.get<any[]>(
-      API_ENDPOINTS.REVIEWS.REVIEWABLE_PRODUCTS,
-    );
+  async getReviewableProducts(): Promise<
+    {
+      productId: string;
+      orderId: string;
+      orderDate: Date;
+      product: {
+        id: string;
+        name: string;
+        slug: string;
+        images: string[];
+        price: number;
+        discountPrice?: number;
+      };
+    }[]
+  > {
+    return await apiClient.get(API_ENDPOINTS.REVIEWS.REVIEWABLE_PRODUCTS);
+  },
+
+  async getReviewByUserAndProduct(productId: string): Promise<Review | null> {
+    try {
+      return await apiClient.get<Review>(
+        `${API_ENDPOINTS.REVIEWS.BASE}/user-product/${productId}`,
+      );
+    } catch (error: any) {
+      if (error.status === 404) return null;
+      throw error;
+    }
   },
 };

@@ -39,7 +39,22 @@ export const cartService = {
     await apiClient.delete(API_ENDPOINTS.CART.BASE);
   },
 
-  async validateCart(): Promise<CartValidation> {
-    return await apiClient.get<CartValidation>(API_ENDPOINTS.CART.VALIDATE);
+  async validateCart(
+    type: 'basic' | 'checkout' = 'basic',
+  ): Promise<CartValidation> {
+    return await apiClient.get<CartValidation>(API_ENDPOINTS.CART.VALIDATE, {
+      type,
+    });
+  },
+
+  async validateForCheckout(): Promise<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    summary?: CartSummary;
+  }> {
+    return await apiClient.get(API_ENDPOINTS.CART.VALIDATE, {
+      type: 'checkout',
+    });
   },
 };

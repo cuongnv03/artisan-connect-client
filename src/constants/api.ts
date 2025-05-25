@@ -94,6 +94,7 @@ export const API_ENDPOINTS = {
     UPDATE_PRICE: (id: string) => `/products/${id}/price`,
     PUBLISH: (id: string) => `/products/${id}/publish`,
     UNPUBLISH: (id: string) => `/products/${id}/unpublish`,
+    VIEW: (id: string) => `/products/${id}/view`,
   },
 
   // Categories
@@ -101,6 +102,7 @@ export const API_ENDPOINTS = {
     BASE: '/categories',
     TREE: '/categories/tree',
     BY_ID: (id: string) => `/categories/${id}`,
+    BY_SLUG: (slug: string) => `/categories/slug/${slug}`,
   },
 
   // Cart

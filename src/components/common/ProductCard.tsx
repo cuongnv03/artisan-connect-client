@@ -14,6 +14,9 @@ import { Product } from '../../types/product';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { cartService } from '../../services/cart.service';
+import { useToastContext } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ProductCardProps {
   product: Product;
@@ -26,6 +29,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { success, error } = useToastContext();
+  const { state: authState } = useAuth();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -44,11 +50,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   const handleAddToCart = async () => {
+    if (!authState.isAuthenticated) {
+      error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      return;
+    }
+
+    if (product.quantity === 0) {
+      error('Sản phẩm đã hết hàng');
+      return;
+    }
+
+    setIsAddingToCart(true);
     try {
-      // TODO: Call API to add to cart
-      console.log('Add to cart:', product.id);
-    } catch (error) {
-      console.error('Add to cart error:', error);
+      await cartService.addToCart(product.id, 1);
+      success('Đã thêm sản phẩm vào giỏ hàng');
+    } catch (err: any) {
+      error(err.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -209,7 +228,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <Button
           fullWidth
           onClick={handleAddToCart}
-          disabled={product.quantity === 0}
+          disabled={product.quantity === 0 || isAddingToCart}
+          loading={isAddingToCart}
           leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
           className="justify-center"
         >

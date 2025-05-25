@@ -38,6 +38,7 @@ export interface Category extends BaseEntity {
   sortOrder: number;
   isActive: boolean;
   children?: Category[];
+  productCount?: number;
 }
 
 export interface PriceHistory extends BaseEntity {

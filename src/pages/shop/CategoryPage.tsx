@@ -37,81 +37,47 @@ export const CategoryPage: React.FC = () => {
     sortOrder: 'desc',
   });
 
-  const categoryMap = {
-    'gom-su': {
-      id: '1',
-      name: 'Gốm sứ',
-      description: 'Sản phẩm gốm sứ thủ công truyền thống',
-      imageUrl:
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800',
-    },
-    'theu-thua': {
-      id: '2',
-      name: 'Thêu thùa',
-      description: 'Sản phẩm thêu tay tinh xảo',
-      imageUrl:
-        'https://images.unsplash.com/photo-1565022840345-45da5b2e9eb2?w=800',
-    },
-    'do-go': {
-      id: '3',
-      name: 'Đồ gỗ',
-      description: 'Sản phẩm gỗ thủ công chất lượng cao',
-      imageUrl:
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
-    },
-    'tranh-ve': {
-      id: '4',
-      name: 'Tranh vẽ',
-      description: 'Tranh vẽ nghệ thuật độc đáo',
-      imageUrl:
-        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800',
-    },
-    'do-da': {
-      id: '5',
-      name: 'Đồ da',
-      description: 'Sản phẩm da thủ công cao cấp',
-      imageUrl:
-        'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800',
-    },
-    'trang-suc': {
-      id: '6',
-      name: 'Trang sức',
-      description: 'Trang sức handmade tinh tế',
-      imageUrl:
-        'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800',
-    },
-  };
-
   useEffect(() => {
     if (categorySlug) {
       loadCategoryData();
     }
-  }, [categorySlug, filters, currentPage]);
+  }, [categorySlug]);
 
   const loadCategoryData = async () => {
     if (!categorySlug) return;
 
     setLoading(true);
     try {
-      // Get category info from map (in real app, this would be from API)
-      const categoryInfo =
-        categoryMap[categorySlug as keyof typeof categoryMap];
-      if (categoryInfo) {
-        setCategory({
-          ...categoryInfo,
-          slug: categorySlug,
-          parentId: null,
-          level: 0,
-          sortOrder: 0,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
+      // Sử dụng API thay vì hardcode
+      const [categoryData, categoryTree] = await Promise.all([
+        productService.getCategoryBySlug(categorySlug),
+        productService.getCategoryTree(),
+      ]);
 
-      // Load products for this category
+      setCategory(categoryData);
+
+      // Tìm subcategories từ tree
+      const findSubcategories = (
+        tree: Category[],
+        parentSlug: string,
+      ): Category[] => {
+        for (const cat of tree) {
+          if (cat.slug === parentSlug) {
+            return cat.children || [];
+          }
+          if (cat.children) {
+            const found = findSubcategories(cat.children, parentSlug);
+            if (found.length > 0) return found;
+          }
+        }
+        return [];
+      };
+
+      setSubcategories(findSubcategories(categoryTree, categorySlug));
+
+      // Load products với categoryId thật
       const params: any = {
-        categoryId: categoryInfo?.id,
+        categoryId: categoryData.id,
         page: currentPage,
         limit: pagination.limit,
         ...filters,
@@ -124,47 +90,6 @@ export const CategoryPage: React.FC = () => {
         totalPages: result.meta.totalPages,
         limit: result.meta.limit,
       });
-
-      // Mock subcategories
-      if (categorySlug === 'gom-su') {
-        setSubcategories([
-          {
-            id: '1-1',
-            name: 'Bát đĩa',
-            slug: 'bat-dia',
-            parentId: '1',
-            level: 1,
-            sortOrder: 1,
-            isActive: true,
-            createdAt: '',
-            updatedAt: '',
-          },
-          {
-            id: '1-2',
-            name: 'Bình hoa',
-            slug: 'binh-hoa',
-            parentId: '1',
-            level: 1,
-            sortOrder: 2,
-            isActive: true,
-            createdAt: '',
-            updatedAt: '',
-          },
-          {
-            id: '1-3',
-            name: 'Tượng gốm',
-            slug: 'tuong-gom',
-            parentId: '1',
-            level: 1,
-            sortOrder: 3,
-            isActive: true,
-            createdAt: '',
-            updatedAt: '',
-          },
-        ]);
-      } else {
-        setSubcategories([]);
-      }
     } catch (error) {
       console.error('Error loading category data:', error);
     } finally {

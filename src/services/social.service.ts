@@ -32,8 +32,13 @@ export interface GetSavedPostsQuery {
 
 export const socialService = {
   // Like methods
-  async toggleLike(data: LikeToggleRequest): Promise<Like> {
-    return await apiClient.post<Like>(API_ENDPOINTS.SOCIAL.LIKE, data);
+  async toggleLike(
+    data: LikeToggleRequest,
+  ): Promise<{ liked: boolean; message: string }> {
+    return await apiClient.post<{ liked: boolean; message: string }>(
+      API_ENDPOINTS.SOCIAL.LIKE,
+      data,
+    );
   },
 
   async getPostLikes(

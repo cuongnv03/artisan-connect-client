@@ -51,6 +51,21 @@ export const productService = {
     );
   },
 
+  async viewProduct(id: string): Promise<void> {
+    await apiClient.post(`${API_ENDPOINTS.PRODUCTS.BY_ID(id)}/view`);
+  },
+
+  async updateProductStatus(
+    id: string,
+    status: 'publish' | 'unpublish',
+  ): Promise<Product> {
+    const endpoint =
+      status === 'publish'
+        ? API_ENDPOINTS.PRODUCTS.PUBLISH(id)
+        : API_ENDPOINTS.PRODUCTS.UNPUBLISH(id);
+    return await apiClient.post<Product>(endpoint);
+  },
+
   async deleteProduct(id: string): Promise<void> {
     await apiClient.delete(API_ENDPOINTS.PRODUCTS.BY_ID(id));
   },
@@ -105,5 +120,11 @@ export const productService = {
 
   async getCategory(id: string): Promise<Category> {
     return await apiClient.get<Category>(API_ENDPOINTS.CATEGORIES.BY_ID(id));
+  },
+
+  async getCategoryBySlug(slug: string): Promise<Category> {
+    return await apiClient.get<Category>(
+      `${API_ENDPOINTS.CATEGORIES.BASE}/slug/${slug}`,
+    );
   },
 };
