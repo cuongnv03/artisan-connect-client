@@ -1,3 +1,4 @@
+// src/pages/artisan/AnalyticsPage.tsx
 import React, { useState, useEffect } from 'react';
 import {
   ChartBarIcon,
@@ -48,9 +49,33 @@ export const AnalyticsPage: React.FC = () => {
     setLoading(true);
     try {
       const analyticsData = await analyticsService.getUserAnalyticsSummary();
-      setData(analyticsData);
+
+      // Đảm bảo dữ liệu có cấu trúc đúng và fallback values
+      const formattedData: AnalyticsData = {
+        totalViews: analyticsData?.totalViews || 0,
+        totalLikes: analyticsData?.totalLikes || 0,
+        totalComments: analyticsData?.totalComments || 0,
+        totalShares: analyticsData?.totalShares || 0,
+        followerGrowth: analyticsData?.followerGrowth || 0,
+        engagementRate: analyticsData?.engagementRate || 0,
+        topPosts: analyticsData?.topPerformingPosts || [],
+        viewsByDay: analyticsData?.viewsByDay || [],
+      };
+
+      setData(formattedData);
     } catch (error) {
       console.error('Error loading analytics:', error);
+      // Set default empty data instead of null
+      setData({
+        totalViews: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        totalShares: 0,
+        followerGrowth: 0,
+        engagementRate: 0,
+        topPosts: [],
+        viewsByDay: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -62,6 +87,22 @@ export const AnalyticsPage: React.FC = () => {
     { label: '3 tháng qua', value: 'quarter' },
     { label: '1 năm qua', value: 'year' },
   ];
+
+  // Helper function để format số an toàn
+  const safeFormatNumber = (num: number | undefined | null): string => {
+    if (num === null || num === undefined || isNaN(num)) {
+      return '0';
+    }
+    return num.toLocaleString();
+  };
+
+  // Helper function để format phần trăm an toàn
+  const safeFormatPercent = (num: number | undefined | null): string => {
+    if (num === null || num === undefined || isNaN(num)) {
+      return '0.0';
+    }
+    return num.toFixed(1);
+  };
 
   if (loading) {
     return (
@@ -121,7 +162,7 @@ export const AnalyticsPage: React.FC = () => {
                 </div>
               </div>
               <p className="text-2xl font-semibold text-gray-900">
-                {data.totalViews.toLocaleString()}
+                {safeFormatNumber(data.totalViews)}
               </p>
             </div>
           </div>
@@ -135,7 +176,7 @@ export const AnalyticsPage: React.FC = () => {
             <div className="ml-3 flex-1">
               <p className="text-sm font-medium text-gray-500">Lượt thích</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {data.totalLikes.toLocaleString()}
+                {safeFormatNumber(data.totalLikes)}
               </p>
             </div>
           </div>
@@ -165,7 +206,7 @@ export const AnalyticsPage: React.FC = () => {
                     }`}
                   >
                     {data.followerGrowth > 0 ? '+' : ''}
-                    {data.followerGrowth}%
+                    {safeFormatPercent(data.followerGrowth)}%
                   </span>
                 </div>
               </div>
@@ -182,7 +223,7 @@ export const AnalyticsPage: React.FC = () => {
             <div className="ml-3 flex-1">
               <p className="text-sm font-medium text-gray-500">Tương tác</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {(data.engagementRate * 100).toFixed(1)}%
+                {safeFormatPercent(data.engagementRate * 100)}%
               </p>
             </div>
           </div>
@@ -198,30 +239,32 @@ export const AnalyticsPage: React.FC = () => {
           </h3>
 
           <div className="space-y-3">
-            {data.viewsByDay.slice(-7).map((day, index) => (
-              <div key={day.date} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {new Date(day.date).toLocaleDateString('vi-VN')}
-                </span>
-                <div className="flex items-center space-x-3">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full"
-                      style={{
-                        width: `${
-                          (day.views /
-                            Math.max(...data.viewsByDay.map((d) => d.views))) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                    {day.views}
+            {data.viewsByDay.slice(-7).map((day, index) => {
+              const maxViews = Math.max(
+                ...data.viewsByDay.map((d) => d.views),
+                1,
+              );
+              return (
+                <div key={index} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    {new Date(day.date).toLocaleDateString('vi-VN')}
                   </span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full"
+                        style={{
+                          width: `${(day.views / maxViews) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                      {safeFormatNumber(day.views)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
 
@@ -232,31 +275,37 @@ export const AnalyticsPage: React.FC = () => {
           </h3>
 
           <div className="space-y-4">
-            {data.topPosts.map((post, index) => (
-              <div key={post.id} className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <Badge variant="secondary" size="sm">
-                    #{index + 1}
-                  </Badge>
-                </div>
+            {data.topPosts.length > 0 ? (
+              data.topPosts.map((post, index) => (
+                <div key={post.id} className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <Badge variant="secondary" size="sm">
+                      #{index + 1}
+                    </Badge>
+                  </div>
 
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-gray-900 truncate">
-                    {post.title}
-                  </h4>
-                  <div className="flex items-center space-x-4 mt-1">
-                    <span className="text-xs text-gray-500 flex items-center">
-                      <EyeIcon className="w-3 h-3 mr-1" />
-                      {post.views}
-                    </span>
-                    <span className="text-xs text-gray-500 flex items-center">
-                      <HeartIcon className="w-3 h-3 mr-1" />
-                      {post.likes}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-medium text-gray-900 truncate">
+                      {post.title}
+                    </h4>
+                    <div className="flex items-center space-x-4 mt-1">
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <EyeIcon className="w-3 h-3 mr-1" />
+                        {safeFormatNumber(post.views)}
+                      </span>
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <HeartIcon className="w-3 h-3 mr-1" />
+                        {safeFormatNumber(post.likes)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">
+                Chưa có bài viết nào
+              </p>
+            )}
           </div>
         </Card>
       </div>
@@ -270,21 +319,25 @@ export const AnalyticsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {data.totalComments}
+              {safeFormatNumber(data.totalComments)}
             </div>
             <p className="text-sm text-gray-500">Bình luận</p>
           </div>
 
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {data.totalShares}
+              {safeFormatNumber(data.totalShares)}
             </div>
             <p className="text-sm text-gray-500">Chia sẻ</p>
           </div>
 
           <div className="text-center">
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {Math.round(data.totalViews / data.topPosts.length) || 0}
+              {data.topPosts.length > 0
+                ? safeFormatNumber(
+                    Math.round(data.totalViews / data.topPosts.length),
+                  )
+                : '0'}
             </div>
             <p className="text-sm text-gray-500">Lượt xem TB/bài viết</p>
           </div>

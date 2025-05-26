@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { userService } from '../../services/user.service';
 import { postService } from '../../services/post.service';
 import { productService } from '../../services/product.service';
@@ -57,6 +58,7 @@ interface AddressFormData {
 export const ProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId?: string }>();
   const { state: authState } = useAuth();
+  const { currentTheme } = useTheme();
   const navigate = useNavigate();
   const { success, error } = useToastContext();
 
@@ -752,21 +754,33 @@ export const ProfilePage: React.FC = () => {
       {/* Profile Header */}
       <Card className="p-0 mb-8 overflow-hidden">
         {/* Cover Image */}
-        <div className="h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative">
+        <div
+          className="h-48 md:h-64 relative"
+          style={{
+            background: currentTheme
+              ? `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.secondary})`
+              : 'linear-gradient(135deg, #3B82F6, #1E40AF)',
+          }}
+        >
           {profile?.coverUrl ? (
             <img
               src={profile.coverUrl}
               alt="Cover"
               className="w-full h-full object-cover"
             />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600" />
-          )}
+          ) : null}
           <div className="absolute inset-0 bg-black bg-opacity-20" />
         </div>
 
         {/* Profile Info Container */}
-        <div className="px-4 sm:px-6 pb-6">
+        <div
+          className="px-4 sm:px-6 pb-6 font-theme"
+          style={{
+            backgroundColor: currentTheme?.colors.background,
+            color: currentTheme?.colors.text,
+            fontFamily: currentTheme?.typography.fontFamily,
+          }}
+        >
           {/* Profile Info */}
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 relative">
             {/* Avatar */}

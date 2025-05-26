@@ -52,11 +52,15 @@ export interface UserAnalyticsSummary {
   totalShares: number;
   followerGrowth: number;
   engagementRate: number;
-  topPosts: Array<{
-    id: string;
+  topPerformingPosts: Array<{
+    postId: string;
     title: string;
+    viewCount: number;
+    conversionCount: number;
+  }>;
+  viewsByDay?: Array<{
+    date: string;
     views: number;
-    likes: number;
   }>;
 }
 
