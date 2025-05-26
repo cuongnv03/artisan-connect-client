@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useMessage } from '../../contexts/MessageContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
 import {
   MagnifyingGlassIcon,
@@ -20,6 +22,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
   const { state, logout } = useAuth();
   const { state: cartState } = useCart();
+  const { state: messageState } = useMessage();
+  const { state: notificationState } = useNotification();
   const { isAuthenticated, user } = state;
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -102,31 +106,93 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
               <>
                 {/* Navigation icons */}
                 <div className="hidden md:flex items-center space-x-1">
+                  {/* Cart */}
                   <Link
                     to="/cart"
                     className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
                   >
                     <ShoppingCartIcon className="h-6 w-6" />
-                    {/* Cart badge - Now using real cart count */}
                     {cartState.itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
                         {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
                       </span>
                     )}
                   </Link>
 
+                  {/* Messages */}
                   <Link
                     to="/messages"
                     className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
                   >
                     <ChatBubbleLeftIcon className="h-6 w-6" />
+                    {messageState.unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {messageState.unreadCount > 99
+                          ? '99+'
+                          : messageState.unreadCount}
+                      </span>
+                    )}
                   </Link>
 
+                  {/* Notifications */}
                   <Link
                     to="/notifications"
                     className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
                   >
                     <BellIcon className="h-6 w-6" />
+                    {notificationState.unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {notificationState.unreadCount > 99
+                          ? '99+'
+                          : notificationState.unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                </div>
+
+                {/* Mobile navigation icons */}
+                <div className="flex md:hidden items-center space-x-1">
+                  {/* Cart */}
+                  <Link
+                    to="/cart"
+                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
+                  >
+                    <ShoppingCartIcon className="h-5 w-5" />
+                    {cartState.itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {cartState.itemCount > 9 ? '9+' : cartState.itemCount}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Messages */}
+                  <Link
+                    to="/messages"
+                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
+                  >
+                    <ChatBubbleLeftIcon className="h-5 w-5" />
+                    {messageState.unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {messageState.unreadCount > 9
+                          ? '9+'
+                          : messageState.unreadCount}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Notifications */}
+                  <Link
+                    to="/notifications"
+                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
+                  >
+                    <BellIcon className="h-5 w-5" />
+                    {notificationState.unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        {notificationState.unreadCount > 9
+                          ? '9+'
+                          : notificationState.unreadCount}
+                      </span>
+                    )}
                   </Link>
                 </div>
 
@@ -255,14 +321,14 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/auth/login')}
                 >
                   Đăng nhập
                 </Button>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate('/auth/register')}
                 >
                   Đăng ký
                 </Button>

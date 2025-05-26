@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
+  onlineUsers: Set<string>;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -14,6 +15,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { state } = useAuth();
 
   useEffect(() => {
@@ -43,12 +45,34 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsConnected(false);
       });
 
+      // Handle user status updates
+      newSocket.on(
+        'user-status',
+        (data: { userId: string; status: 'online' | 'offline' }) => {
+          setOnlineUsers((prev) => {
+            const newSet = new Set(prev);
+            if (data.status === 'online') {
+              newSet.add(data.userId);
+            } else {
+              newSet.delete(data.userId);
+            }
+            return newSet;
+          });
+        },
+      );
+
+      // Handle online users list
+      newSocket.on('online-users', (users: string[]) => {
+        setOnlineUsers(new Set(users));
+      });
+
       setSocket(newSocket);
 
       return () => {
         newSocket.close();
         setSocket(null);
         setIsConnected(false);
+        setOnlineUsers(new Set());
       };
     } else {
       // Disconnect when user logs out
@@ -56,6 +80,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         socket.close();
         setSocket(null);
         setIsConnected(false);
+        setOnlineUsers(new Set());
       }
     }
   }, [state.isAuthenticated, state.user]);
@@ -63,6 +88,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     socket,
     isConnected,
+    onlineUsers,
   };
 
   return (

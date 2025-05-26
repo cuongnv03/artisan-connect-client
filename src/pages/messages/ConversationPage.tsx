@@ -5,21 +5,22 @@ import {
   PaperAirplaneIcon,
   PhotoIcon,
   PlusIcon,
-  EllipsisVerticalIcon,
   PhoneIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSocketContext } from '../../contexts/SocketContext';
 import { messageService } from '../../services/message.service';
 import { userService } from '../../services/user.service';
 import { Message, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { useForm } from '../../hooks/useForm';
+import { useToastContext } from '../../contexts/ToastContext';
+import { formatRelativeTime } from '../../utils/format';
 
 interface MessageFormData {
   content: string;
@@ -28,14 +29,20 @@ interface MessageFormData {
 export const ConversationPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const { state } = useAuth();
+  const { socket, onlineUsers } = useSocketContext();
+  const { error: showError } = useToastContext();
   const [messages, setMessages] = useState<Message[]>([]);
   const [participant, setParticipant] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [participantTyping, setParticipantTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<number>();
 
   const { values, handleChange, handleSubmit, resetForm } =
     useForm<MessageFormData>({
@@ -58,33 +65,142 @@ export const ConversationPage: React.FC = () => {
   }, [userId]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (page === 1) {
+      scrollToBottom();
+    }
   }, [messages]);
 
-  const loadConversation = async () => {
+  // Real-time message handling
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    // Join conversation room
+    socket.emit('join-chat', {
+      roomId: `conversation:${[state.user?.id, userId].sort().join(':')}`,
+    });
+
+    const handleNewMessage = (message: Message) => {
+      // Only add message if it's for this conversation
+      if (
+        (message.senderId === userId &&
+          message.receiverId === state.user?.id) ||
+        (message.senderId === state.user?.id && message.receiverId === userId)
+      ) {
+        setMessages((prev) => {
+          // Check if message already exists (prevent duplicates)
+          if (prev.some((msg) => msg.id === message.id)) {
+            return prev;
+          }
+          return [...prev, message];
+        });
+
+        // Mark as read if message is from participant
+        if (message.senderId === userId) {
+          setTimeout(() => {
+            messageService.markAsRead(message.id).catch(console.error);
+          }, 1000);
+        }
+
+        // Scroll to bottom for new messages
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    };
+
+    const handleMessageRead = (data: { messageId: string; readBy: string }) => {
+      if (data.readBy === userId) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === data.messageId ? { ...msg, isRead: true } : msg,
+          ),
+        );
+      }
+    };
+
+    const handleTypingStatus = (data: {
+      userId: string;
+      isTyping: boolean;
+      roomId: string;
+    }) => {
+      if (data.userId === userId) {
+        setParticipantTyping(data.isTyping);
+      }
+    };
+
+    socket.on('new-message', handleNewMessage);
+    socket.on('message-read-update', handleMessageRead);
+    socket.on('typing-status', handleTypingStatus);
+
+    return () => {
+      socket.off('new-message', handleNewMessage);
+      socket.off('message-read-update', handleMessageRead);
+      socket.off('typing-status', handleTypingStatus);
+
+      // Leave conversation room
+      socket.emit('leave-chat', {
+        roomId: `conversation:${[state.user?.id, userId].sort().join(':')}`,
+      });
+    };
+  }, [socket, userId, state.user?.id]);
+
+  // Handle typing indicator
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleChange(e);
+
+    if (!socket || !userId) return;
+
+    // Send typing start
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit('typing', {
+        roomId: `conversation:${[state.user?.id, userId].sort().join(':')}`,
+        isTyping: true,
+      });
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      socket.emit('typing', {
+        roomId: `conversation:${[state.user?.id, userId].sort().join(':')}`,
+        isTyping: false,
+      });
+    }, 2000);
+  };
+
+  const loadConversation = async (pageNum = 1) => {
     if (!userId) return;
 
     try {
+      if (pageNum > 1) {
+        setLoadingMore(true);
+      }
+
       const result = await messageService.getConversationMessages(userId, {
-        page,
+        page: pageNum,
         limit: 50,
         sortOrder: 'desc',
       });
 
-      if (page === 1) {
+      if (pageNum === 1) {
         setMessages(result.data.reverse());
+        // Mark as read
+        await messageService.markConversationAsRead(userId);
       } else {
         setMessages((prev) => [...result.data.reverse(), ...prev]);
       }
 
-      setHasMore(page < result.meta.totalPages);
-
-      // Mark as read
-      await messageService.markConversationAsRead(userId);
-    } catch (error) {
+      setHasMore(pageNum < result.meta.totalPages);
+    } catch (error: any) {
       console.error('Error loading conversation:', error);
+      showError(error.message || 'Không thể tải cuộc trò chuyện');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -94,8 +210,17 @@ export const ConversationPage: React.FC = () => {
     try {
       const user = await userService.getUserProfile(userId);
       setParticipant(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading participant:', error);
+      showError('Không thể tải thông tin người dùng');
+    }
+  };
+
+  const loadMoreMessages = async () => {
+    if (hasMore && !loadingMore) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      await loadConversation(nextPage);
     }
   };
 
@@ -110,10 +235,31 @@ export const ConversationPage: React.FC = () => {
         type: MessageType.TEXT,
       });
 
-      setMessages((prev) => [...prev, newMessage]);
+      // Message will be added via socket event, but add immediately for better UX
+      setMessages((prev) => {
+        // Check if message already exists
+        if (prev.some((msg) => msg.id === newMessage.id)) {
+          return prev;
+        }
+        return [...prev, newMessage];
+      });
+
       resetForm();
-    } catch (error) {
+
+      // Stop typing indicator
+      if (isTyping && socket) {
+        setIsTyping(false);
+        socket.emit('typing', {
+          roomId: `conversation:${[state.user?.id, userId].sort().join(':')}`,
+          isTyping: false,
+        });
+      }
+
+      // Scroll to bottom after sending
+      setTimeout(() => scrollToBottom(), 100);
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      showError(error.message || 'Không thể gửi tin nhắn');
     } finally {
       setSending(false);
     }
@@ -130,14 +276,14 @@ export const ConversationPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const formatTime = (date: string) => {
+  const formatTime = (date: string | Date) => {
     return new Date(date).toLocaleTimeString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
     });
   };
 
-  const formatDate = (date: string) => {
+  const formatDate = (date: string | Date) => {
     const messageDate = new Date(date);
     const today = new Date();
     const yesterday = new Date(today);
@@ -154,6 +300,10 @@ export const ConversationPage: React.FC = () => {
         month: 'long',
       });
     }
+  };
+
+  const isUserOnline = () => {
+    return userId ? onlineUsers.has(userId) : false;
   };
 
   const renderMessage = (message: Message, index: number) => {
@@ -204,7 +354,7 @@ export const ConversationPage: React.FC = () => {
               {message.type === MessageType.IMAGE ? (
                 <div>
                   <img
-                    src={message.metadata?.url}
+                    src={message.metadata?.mediaUrl || message.metadata?.url}
                     alt="Shared image"
                     className="rounded-lg max-w-full h-auto"
                   />
@@ -217,14 +367,23 @@ export const ConversationPage: React.FC = () => {
                     <span className="font-medium">Yêu cầu đặt hàng</span>
                   </div>
                   <p>{message.content}</p>
-                  {message.metadata && (
+                  {message.metadata?.orderData && (
                     <div className="mt-2 p-2 bg-black bg-opacity-10 rounded">
                       <p className="text-sm">
-                        {message.metadata.productName} -{' '}
-                        {message.metadata.price}₫
+                        {message.metadata.orderData.productName}
+                        {message.metadata.orderData.estimatedPrice &&
+                          ` - ${message.metadata.orderData.estimatedPrice}₫`}
                       </p>
                     </div>
                   )}
+                </div>
+              ) : message.type === MessageType.QUOTE_DISCUSSION ? (
+                <div>
+                  <div className="flex items-center mb-2">
+                    <InformationCircleIcon className="w-4 h-4 mr-2" />
+                    <span className="font-medium">Thảo luận báo giá</span>
+                  </div>
+                  <p>{message.content}</p>
                 </div>
               ) : (
                 <p className="whitespace-pre-wrap">{message.content}</p>
@@ -237,7 +396,10 @@ export const ConversationPage: React.FC = () => {
               }`}
             >
               {formatTime(message.createdAt)}
-              {isOwn && message.isRead && <span className="ml-1">✓✓</span>}
+              {isOwn && message.isRead && (
+                <span className="ml-1 text-blue-500">✓✓</span>
+              )}
+              {isOwn && !message.isRead && <span className="ml-1">✓</span>}
             </div>
           </div>
         </div>
@@ -270,9 +432,9 @@ export const ConversationPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto h-screen flex flex-col">
+    <div className="max-w-7xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Link to="/messages">
@@ -291,13 +453,7 @@ export const ConversationPage: React.FC = () => {
                 src={participant.avatarUrl}
                 alt={`${participant.firstName} ${participant.lastName}`}
                 size="md"
-                online={
-                  participant.lastSeenAt
-                    ? new Date().getTime() -
-                        new Date(participant.lastSeenAt).getTime() <
-                      5 * 60 * 1000
-                    : false
-                }
+                online={isUserOnline()}
               />
 
               <div className="ml-3">
@@ -311,14 +467,12 @@ export const ConversationPage: React.FC = () => {
                     </Badge>
                   )}
                   <span className="text-sm text-gray-500">
-                    {participant.lastSeenAt
-                      ? new Date().getTime() -
-                          new Date(participant.lastSeenAt).getTime() <
-                        5 * 60 * 1000
-                        ? 'Đang hoạt động'
-                        : `Hoạt động ${new Date(
-                            participant.lastSeenAt,
-                          ).toLocaleString('vi-VN')}`
+                    {isUserOnline()
+                      ? 'Đang hoạt động'
+                      : participant.lastSeenAt
+                      ? `Hoạt động ${formatRelativeTime(
+                          participant.lastSeenAt,
+                        )}`
                       : 'Không rõ'}
                   </span>
                 </div>
@@ -327,7 +481,7 @@ export const ConversationPage: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" disabled>
               <PhoneIcon className="w-4 h-4" />
             </Button>
 
@@ -350,12 +504,11 @@ export const ConversationPage: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setPage((prev) => prev + 1);
-                loadConversation();
-              }}
+              onClick={loadMoreMessages}
+              loading={loadingMore}
+              disabled={loadingMore}
             >
-              Tải tin nhắn cũ hơn
+              {loadingMore ? 'Đang tải...' : 'Tải tin nhắn cũ hơn'}
             </Button>
           </div>
         )}
@@ -377,14 +530,42 @@ export const ConversationPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div>{messages.map(renderMessage)}</div>
+          <div>
+            {messages.map(renderMessage)}
+
+            {/* Typing indicator */}
+            {participantTyping && (
+              <div className="flex justify-start mb-4">
+                <div className="mr-3">
+                  <Avatar
+                    src={participant.avatarUrl}
+                    alt={`${participant.firstName} ${participant.lastName}`}
+                    size="sm"
+                  />
+                </div>
+                <div className="bg-gray-100 rounded-lg px-4 py-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
         <form onSubmit={handleSubmit} className="flex items-end space-x-3">
           <div className="flex space-x-2">
             <Button type="button" variant="ghost" size="sm" disabled>
@@ -403,9 +584,18 @@ export const ConversationPage: React.FC = () => {
               className="block w-full rounded-lg border-gray-300 resize-none focus:border-primary focus:ring-primary"
               placeholder="Nhập tin nhắn..."
               value={values.content}
-              onChange={handleChange}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              style={{ minHeight: '40px', maxHeight: '120px' }}
+              style={{
+                minHeight: '40px',
+                maxHeight: '120px',
+                resize: 'none',
+              }}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+              }}
             />
           </div>
 

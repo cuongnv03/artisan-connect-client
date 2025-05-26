@@ -2,19 +2,28 @@ import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
+import { MessageProvider } from './contexts/MessageContext';
 import { ToastProvider } from './contexts/ToastContext';
-import { router } from './router';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { CartProvider } from './contexts/CartContext';
+import { router } from './router';
 
 function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <ToastProvider>
-          <CartProvider>
-            <RouterProvider router={router} />
-          </CartProvider>
-        </ToastProvider>
+        <SocketProvider>
+          <MessageProvider>
+            <ToastProvider>
+              <NotificationProvider>
+                <CartProvider>
+                  <RouterProvider router={router} />
+                </CartProvider>
+              </NotificationProvider>
+            </ToastProvider>
+          </MessageProvider>
+        </SocketProvider>
       </AuthProvider>
     </HelmetProvider>
   );

@@ -20,6 +20,7 @@ import {
   DocumentTextIcon,
   TagIcon,
   CreditCardIcon,
+  PresentationChartBarIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -76,19 +77,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         activeIcon: ShoppingBagIconSolid,
         description: 'Duyệt và mua sắm sản phẩm',
       },
+      {
+        name: 'Bài viết',
+        href: '/posts/my-posts',
+        icon: PlusCircleIcon,
+        activeIcon: PlusCircleIconSolid,
+        description: 'Quản lý bài viết',
+      },
     ];
 
     const roleSpecificItems: NavItem[] = [];
 
     if (user?.role === 'CUSTOMER') {
       roleSpecificItems.push(
-        {
-          name: 'Tạo bài viết',
-          href: '/create-post',
-          icon: PlusCircleIcon,
-          activeIcon: PlusCircleIconSolid,
-          description: 'Chia sẻ câu chuyện của bạn',
-        },
         {
           name: 'Giỏ hàng',
           href: '/cart',
@@ -121,13 +122,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           icon: CreditCardIcon,
           activeIcon: CreditCardIcon,
           description: 'Thống kê và phân tích',
-        },
-        {
-          name: 'Tạo bài viết',
-          href: '/create-post',
-          icon: PlusCircleIcon,
-          activeIcon: PlusCircleIconSolid,
-          description: 'Chia sẻ tác phẩm và câu chuyện',
         },
         {
           name: 'Quản lý sản phẩm',

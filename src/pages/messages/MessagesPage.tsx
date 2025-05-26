@@ -8,8 +8,10 @@ import {
   ArchiveBoxIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSocketContext } from '../../contexts/SocketContext';
+import { useMessage } from '../../contexts/MessageContext';
 import { messageService } from '../../services/message.service';
-import { Conversation } from '../../types/message';
+import { Conversation, Message } from '../../types/message';
 import { Avatar } from '../../components/ui/Avatar';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -18,24 +20,101 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
 import { SearchBox } from '../../components/common/SearchBox';
 import { Dropdown } from '../../components/ui/Dropdown';
+import { useToastContext } from '../../contexts/ToastContext';
 
 export const MessagesPage: React.FC = () => {
   const { state } = useAuth();
+  const { socket, onlineUsers } = useSocketContext();
+  const { markConversationAsRead, markAllAsRead } = useMessage();
+  const { error: showError } = useToastContext();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState('all'); // all, unread, archived
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     loadConversations();
   }, []);
 
+  // Real-time message updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (message: Message) => {
+      setConversations((prev) => {
+        const updatedConversations = [...prev];
+        const existingIndex = updatedConversations.findIndex(
+          (conv) =>
+            conv.participantId === message.senderId ||
+            conv.participantId === message.receiverId,
+        );
+
+        const partnerId =
+          message.senderId === state.user?.id
+            ? message.receiverId
+            : message.senderId;
+
+        if (existingIndex >= 0) {
+          // Update existing conversation
+          updatedConversations[existingIndex] = {
+            ...updatedConversations[existingIndex],
+            lastMessage: message,
+            lastActivity: message.createdAt,
+            unreadCount:
+              message.receiverId === state.user?.id
+                ? updatedConversations[existingIndex].unreadCount + 1
+                : updatedConversations[existingIndex].unreadCount,
+          };
+
+          // Move to top
+          const updated = updatedConversations.splice(existingIndex, 1)[0];
+          updatedConversations.unshift(updated);
+        } else {
+          // Add new conversation (this would need participant info)
+          // For now, we'll refresh the conversations list
+          loadConversations();
+          return prev;
+        }
+
+        return updatedConversations;
+      });
+    };
+
+    const handleMessageRead = (data: {
+      conversationWith: string;
+      readCount: number;
+    }) => {
+      if (data.conversationWith === state.user?.id) {
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.participantId === data.conversationWith
+              ? {
+                  ...conv,
+                  unreadCount: Math.max(0, conv.unreadCount - data.readCount),
+                }
+              : conv,
+          ),
+        );
+      }
+    };
+
+    socket.on('new-message', handleNewMessage);
+    socket.on('conversation-read', handleMessageRead);
+
+    return () => {
+      socket.off('new-message', handleNewMessage);
+      socket.off('conversation-read', handleMessageRead);
+    };
+  }, [socket, state.user?.id]);
+
   const loadConversations = async () => {
     try {
+      setLoading(true);
       const conversationsData = await messageService.getConversations();
       setConversations(conversationsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading conversations:', error);
+      showError(error.message || 'Không thể tải danh sách cuộc trò chuyện');
     } finally {
       setLoading(false);
     }
@@ -43,18 +122,31 @@ export const MessagesPage: React.FC = () => {
 
   const handleMarkAsRead = async (userId: string) => {
     try {
-      await messageService.markConversationAsRead(userId);
+      await markConversationAsRead(userId);
       setConversations((prev) =>
         prev.map((conv) =>
           conv.participantId === userId ? { ...conv, unreadCount: 0 } : conv,
         ),
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error marking as read:', error);
+      showError('Không thể đánh dấu đã đọc');
     }
   };
 
-  const formatTime = (date: string) => {
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      setConversations((prev) =>
+        prev.map((conv) => ({ ...conv, unreadCount: 0 })),
+      );
+    } catch (error: any) {
+      console.error('Error marking all as read:', error);
+      showError('Không thể đánh dấu tất cả đã đọc');
+    }
+  };
+
+  const formatTime = (date: string | Date) => {
     const messageDate = new Date(date);
     const now = new Date();
     const diffMs = now.getTime() - messageDate.getTime();
@@ -96,12 +188,19 @@ export const MessagesPage: React.FC = () => {
     }
   };
 
+  const isUserOnline = (userId: string) => {
+    return onlineUsers.has(userId);
+  };
+
   const filteredConversations = conversations.filter((conv) => {
     const matchesSearch =
       conv.participant.firstName
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       conv.participant.lastName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      conv.participant.username
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
@@ -139,12 +238,18 @@ export const MessagesPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            onClick={loadConversations}
-            leftIcon={<CheckIcon className="w-4 h-4" />}
-          >
-            Đánh dấu tất cả đã đọc
+          {totalUnread > 0 && (
+            <Button
+              variant="ghost"
+              onClick={handleMarkAllAsRead}
+              leftIcon={<CheckIcon className="w-4 h-4" />}
+            >
+              Đánh dấu tất cả đã đọc
+            </Button>
+          )}
+
+          <Button variant="ghost" onClick={loadConversations}>
+            Làm mới
           </Button>
         </div>
       </div>
@@ -166,8 +271,8 @@ export const MessagesPage: React.FC = () => {
               onChange={(e) => setFilter(e.target.value)}
               className="rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-primary"
             >
-              <option value="all">Tất cả</option>
-              <option value="unread">Chưa đọc</option>
+              <option value="all">Tất cả ({conversations.length})</option>
+              <option value="unread">Chưa đọc ({totalUnread})</option>
             </select>
           </div>
         </div>
@@ -212,15 +317,7 @@ export const MessagesPage: React.FC = () => {
                       src={conversation.participant.avatarUrl}
                       alt={`${conversation.participant.firstName} ${conversation.participant.lastName}`}
                       size="lg"
-                      online={
-                        conversation.participant.lastSeenAt
-                          ? new Date().getTime() -
-                              new Date(
-                                conversation.participant.lastSeenAt,
-                              ).getTime() <
-                            5 * 60 * 1000
-                          : false
-                      }
+                      online={isUserOnline(conversation.participantId)}
                     />
                   </div>
 
@@ -236,12 +333,15 @@ export const MessagesPage: React.FC = () => {
                       >
                         {conversation.participant.firstName}{' '}
                         {conversation.participant.lastName}
+                        {isUserOnline(conversation.participantId) && (
+                          <span className="ml-2 inline-block w-2 h-2 bg-green-400 rounded-full"></span>
+                        )}
                       </h3>
 
                       <div className="flex items-center space-x-2">
-                        {conversation.lastMessageAt && (
+                        {conversation.lastActivity && (
                           <span className="text-sm text-gray-500">
-                            {formatTime(conversation.lastMessageAt)}
+                            {formatTime(conversation.lastActivity)}
                           </span>
                         )}
 
@@ -276,7 +376,10 @@ export const MessagesPage: React.FC = () => {
 
                         <Dropdown
                           trigger={
-                            <button className="p-1 text-gray-400 hover:text-gray-600">
+                            <button
+                              className="p-1 text-gray-400 hover:text-gray-600"
+                              onClick={(e) => e.preventDefault()}
+                            >
                               <EllipsisVerticalIcon className="w-4 h-4" />
                             </button>
                           }
@@ -293,6 +396,7 @@ export const MessagesPage: React.FC = () => {
                               icon: <ArchiveBoxIcon className="w-4 h-4" />,
                               onClick: () =>
                                 console.log('Archive conversation'),
+                              disabled: true,
                             },
                           ]}
                           placement="bottom-end"

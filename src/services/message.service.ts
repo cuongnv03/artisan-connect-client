@@ -5,57 +5,32 @@ import {
   Conversation,
   SendMessageRequest,
   MessageType,
+  MessageQueryOptions,
 } from '../types/message';
 import { PaginatedResponse } from '../types/common';
-
-export interface GetMessagesQuery {
-  page?: number;
-  limit?: number;
-  type?: MessageType;
-  isRead?: boolean;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
 
 export interface SendMediaMessageRequest {
   receiverId: string;
   mediaUrl: string;
   mediaType: string;
-  caption?: string;
+  content?: string;
 }
 
 export interface SendQuoteMessageRequest {
-  receiverId: string;
   quoteId: string;
-  message: string;
+  content: string;
 }
 
 export interface SendCustomOrderRequest {
-  receiverId: string;
-  type: 'proposal' | 'response' | 'message';
-  content: string;
-  orderData?: {
-    productName: string;
-    description: string;
-    price: number;
-    quantity: number;
-    specifications?: string;
-  };
-}
-
-export interface UpdateCustomOrderProposalRequest {
-  content: string;
-  orderData: {
-    productName: string;
-    description: string;
-    price: number;
-    quantity: number;
-    specifications?: string;
-  };
-}
-
-export interface CancelNegotiationRequest {
-  reason: string;
+  type: 'proposal' | 'response' | 'simple_message';
+  artisanId?: string;
+  customerId?: string;
+  originalMessageId?: string;
+  receiverId?: string;
+  content?: string;
+  proposal?: any;
+  response?: any;
+  orderData?: any;
 }
 
 export const messageService = {
@@ -71,26 +46,26 @@ export const messageService = {
   },
 
   async getMessages(
-    query: GetMessagesQuery = {},
+    options: MessageQueryOptions = {},
   ): Promise<PaginatedResponse<Message>> {
     return await apiClient.get<PaginatedResponse<Message>>(
       API_ENDPOINTS.MESSAGES.BASE,
-      query,
+      options,
     );
   },
 
   async getConversationMessages(
     userId: string,
-    query: GetMessagesQuery = {},
+    options: MessageQueryOptions = {},
   ): Promise<PaginatedResponse<Message>> {
     return await apiClient.get<PaginatedResponse<Message>>(
       API_ENDPOINTS.MESSAGES.CONVERSATION(userId),
-      query,
+      options,
     );
   },
 
-  async getUnreadCount(): Promise<{ count: number }> {
-    return await apiClient.get<{ count: number }>(
+  async getUnreadCount(): Promise<{ unreadCount: number }> {
+    return await apiClient.get<{ unreadCount: number }>(
       API_ENDPOINTS.MESSAGES.UNREAD_COUNT,
     );
   },
@@ -100,8 +75,10 @@ export const messageService = {
     await apiClient.patch(API_ENDPOINTS.MESSAGES.MARK_READ(id));
   },
 
-  async markConversationAsRead(userId: string): Promise<void> {
-    await apiClient.patch(
+  async markConversationAsRead(
+    userId: string,
+  ): Promise<{ markedCount: number }> {
+    return await apiClient.patch<{ markedCount: number }>(
       API_ENDPOINTS.MESSAGES.MARK_CONVERSATION_READ(userId),
     );
   },
@@ -143,7 +120,7 @@ export const messageService = {
 
   async updateCustomOrderProposal(
     negotiationId: string,
-    data: UpdateCustomOrderProposalRequest,
+    data: any,
   ): Promise<any> {
     return await apiClient.patch<any>(
       API_ENDPOINTS.MESSAGES.UPDATE_PROPOSAL(negotiationId),
@@ -153,7 +130,7 @@ export const messageService = {
 
   async cancelNegotiation(
     negotiationId: string,
-    data: CancelNegotiationRequest,
+    data: { reason?: string },
   ): Promise<any> {
     return await apiClient.post<any>(
       API_ENDPOINTS.MESSAGES.CANCEL_NEGOTIATION(negotiationId),
