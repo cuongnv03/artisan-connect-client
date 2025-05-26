@@ -274,9 +274,33 @@ export const ProfilePage: React.FC = () => {
         }));
         success('Đã theo dõi');
       }
+
+      // Reload follow stats to ensure consistency
+      setTimeout(async () => {
+        try {
+          const updatedStats = await userService.getFollowStats(targetUserId);
+          setFollowStats(updatedStats);
+        } catch (err) {
+          console.error('Error reloading follow stats:', err);
+        }
+      }, 500);
     } catch (err: any) {
       console.error('Error following user:', err);
-      error(err.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+
+      // Handle the specific "already following" error
+      if (
+        err.message?.includes('Already following') ||
+        err.response?.status === 409
+      ) {
+        // Update state to reflect current status
+        setFollowStats((prev) => ({
+          ...prev,
+          isFollowing: true,
+        }));
+        success('Bạn đã theo dõi người này rồi');
+      } else {
+        error(err.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+      }
     } finally {
       setFollowLoading(false);
     }
@@ -726,7 +750,6 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Profile Header */}
-      {/* Profile Header */}
       <Card className="p-0 mb-8 overflow-hidden">
         {/* Cover Image */}
         <div className="h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative">
@@ -743,60 +766,71 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {/* Profile Info Container */}
-        <div className="px-6 pb-6">
+        <div className="px-4 sm:px-6 pb-6">
           {/* Profile Info */}
-          <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-16 relative">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 relative">
             {/* Avatar */}
-            <div className="flex-shrink-0 z-10">
+            <div className="flex-shrink-0 -mt-12 sm:-mt-16 mb-2 sm:mb-0">
               <Avatar
                 src={user.avatarUrl}
                 alt={`${user.firstName} ${user.lastName}`}
                 size="2xl"
-                className="border-4 border-white shadow-lg bg-white relative z-10"
+                className="border-4 border-white shadow-lg bg-white ring-2 ring-gray-100"
               />
             </div>
 
             {/* User Details */}
-            <div className="flex-1 md:mt-16 pt-4">
-              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-gray-900">
+            <div className="flex-1 pt-2 sm:pt-4 min-w-0">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                       {user.firstName} {user.lastName}
                     </h1>
                     {user.isVerified && (
-                      <CheckBadgeIcon className="w-6 h-6 text-blue-500" />
+                      <CheckBadgeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0" />
                     )}
-                    <Badge variant={getRoleBadgeVariant(user.role) as any}>
+                    <Badge
+                      variant={getRoleBadgeVariant(user.role) as any}
+                      size="sm"
+                    >
                       {getRoleDisplayName(user.role)}
                     </Badge>
                   </div>
-                  <p className="text-gray-600 mb-1">@{user.username}</p>
-                  {user.bio && <p className="text-gray-700 mb-4">{user.bio}</p>}
+
+                  <p className="text-gray-600 mb-1 text-sm sm:text-base">
+                    @{user.username}
+                  </p>
+
+                  {user.bio && (
+                    <p className="text-gray-700 mb-3 sm:mb-4 text-sm sm:text-base leading-relaxed">
+                      {user.bio}
+                    </p>
+                  )}
 
                   {/* Additional profile info */}
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
                     {profile?.location && (
                       <div className="flex items-center">
-                        <MapPinIcon className="w-4 h-4 mr-1" />
-                        <span>{profile.location}</span>
+                        <MapPinIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">{profile.location}</span>
                       </div>
                     )}
                     {profile?.website && (
                       <div className="flex items-center">
-                        <GlobeAltIcon className="w-4 h-4 mr-1" />
+                        <GlobeAltIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
                         <a
                           href={profile.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline"
+                          className="text-primary hover:underline truncate"
                         >
                           Website
                         </a>
                       </div>
                     )}
                     <div className="flex items-center">
-                      <CalendarIcon className="w-4 h-4 mr-1" />
+                      <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
                       <span>
                         Tham gia{' '}
                         {new Date(user.createdAt).toLocaleDateString('vi-VN')}
@@ -805,15 +839,15 @@ export const ProfilePage: React.FC = () => {
                   </div>
 
                   {/* Stats */}
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4 sm:gap-6 text-sm">
                     <Link
                       to={`/profile/${user.id}/followers`}
                       className="text-center hover:text-primary transition-colors"
                     >
-                      <div className="text-lg font-semibold text-gray-900">
+                      <div className="text-base sm:text-lg font-semibold text-gray-900">
                         {followStats.followersCount || 0}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs sm:text-sm text-gray-500">
                         Người theo dõi
                       </div>
                     </Link>
@@ -821,46 +855,58 @@ export const ProfilePage: React.FC = () => {
                       to={`/profile/${user.id}/following`}
                       className="text-center hover:text-primary transition-colors"
                     >
-                      <div className="text-lg font-semibold text-gray-900">
+                      <div className="text-base sm:text-lg font-semibold text-gray-900">
                         {followStats.followingCount || 0}
                       </div>
-                      <div className="text-sm text-gray-500">Đang theo dõi</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Đang theo dõi
+                      </div>
                     </Link>
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-gray-900">
+                      <div className="text-base sm:text-lg font-semibold text-gray-900">
                         {posts.length}
                       </div>
-                      <div className="text-sm text-gray-500">Bài viết</div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        Bài viết
+                      </div>
                     </div>
                     {user.role === 'ARTISAN' && (
                       <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-900">
+                        <div className="text-base sm:text-lg font-semibold text-gray-900">
                           {products.length}+
                         </div>
-                        <div className="text-sm text-gray-500">Sản phẩm</div>
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          Sản phẩm
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 md:self-start">
+                <div className="flex gap-2 sm:gap-3 flex-shrink-0">
                   {isOwnProfile ? (
                     <>
                       <Link to="/profile/edit">
                         <Button
                           variant="outline"
+                          size="sm"
                           leftIcon={<PencilIcon className="w-4 h-4" />}
                         >
-                          Chỉnh sửa
+                          <span className="hidden sm:inline">Chỉnh sửa</span>
+                          <span className="sm:hidden">Sửa</span>
                         </Button>
                       </Link>
                       <Link to="/settings">
                         <Button
                           variant="outline"
+                          size="sm"
                           leftIcon={<CogIcon className="w-4 h-4" />}
                         >
-                          Cài đặt
+                          <span className="hidden sm:inline">Cài đặt</span>
+                          <span className="sm:hidden">
+                            <CogIcon className="w-4 h-4" />
+                          </span>
                         </Button>
                       </Link>
                     </>
@@ -870,19 +916,31 @@ export const ProfilePage: React.FC = () => {
                         variant={
                           followStats.isFollowing ? 'secondary' : 'primary'
                         }
+                        size="sm"
                         onClick={handleFollow}
                         loading={followLoading}
                         disabled={followLoading}
                         leftIcon={<UserPlusIcon className="w-4 h-4" />}
                       >
-                        {followStats.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                        <span className="hidden sm:inline">
+                          {followStats.isFollowing
+                            ? 'Đang theo dõi'
+                            : 'Theo dõi'}
+                        </span>
+                        <span className="sm:hidden">
+                          {followStats.isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
+                        </span>
                       </Button>
                       <Button
                         variant="outline"
+                        size="sm"
                         onClick={handleSendMessage}
                         leftIcon={<ChatBubbleLeftIcon className="w-4 h-4" />}
                       >
-                        Nhắn tin
+                        <span className="hidden sm:inline">Nhắn tin</span>
+                        <span className="sm:hidden">
+                          <ChatBubbleLeftIcon className="w-4 h-4" />
+                        </span>
                       </Button>
                     </>
                   )}
