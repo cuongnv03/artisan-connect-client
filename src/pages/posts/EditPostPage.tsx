@@ -54,7 +54,22 @@ export const EditPostPage: React.FC = () => {
     try {
       const postData = await postService.getPost(postId);
       setPost(postData);
-      setContent(postData.content || []);
+
+      // Convert server content format to editor format
+      const editorContent = (postData.content || []).map((block: any) => ({
+        id: block.id,
+        type: block.type,
+        content: block.data?.text || '',
+        metadata: {
+          ...block.data,
+          // Keep other metadata like author, caption, etc.
+          author: block.data?.author,
+          caption: block.data?.caption,
+          url: block.data?.url,
+          items: block.data?.items,
+        },
+      }));
+      setContent(editorContent);
 
       // Initialize form values
       setFieldValue('title', postData.title);

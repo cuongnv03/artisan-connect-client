@@ -13,16 +13,12 @@ import { ContentBlock, BlockType } from '../../types/post';
 interface ContentEditorProps {
   content: ContentBlock[];
   onChange: (content: ContentBlock[]) => void;
-  onImageUpload?: (files: FileList) => void;
 }
 
 export const ContentEditor: React.FC<ContentEditorProps> = ({
   content,
   onChange,
-  onImageUpload,
 }) => {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-
   const addBlock = (type: BlockType) => {
     const newBlock: ContentBlock = {
       id: Date.now().toString(),
@@ -45,13 +41,6 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     onChange(filteredContent);
   };
 
-  const moveBlock = (fromIndex: number, toIndex: number) => {
-    const newContent = [...content];
-    const [removed] = newContent.splice(fromIndex, 1);
-    newContent.splice(toIndex, 0, removed);
-    onChange(newContent);
-  };
-
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     blockId: string,
@@ -66,12 +55,11 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         metadata: {
           ...content.find((b) => b.id === blockId)?.metadata,
           url: reader.result as string,
+          file: file, // Store file for upload
         },
       });
     };
     reader.readAsDataURL(file);
-
-    onImageUpload?.(files);
   };
 
   const renderBlock = (block: ContentBlock, index: number) => {
@@ -122,6 +110,17 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 value={block.content || ''}
                 onChange={(e) =>
                   updateBlock(block.id, { content: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                className="w-full bg-transparent border-none text-sm focus:outline-none placeholder-gray-400 mt-2"
+                placeholder="Tác giả (tùy chọn)..."
+                value={block.metadata?.author || ''}
+                onChange={(e) =>
+                  updateBlock(block.id, {
+                    metadata: { ...block.metadata, author: e.target.value },
+                  })
                 }
               />
             </div>

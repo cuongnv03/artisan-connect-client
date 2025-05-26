@@ -18,20 +18,33 @@ export enum PostStatus {
 }
 
 export enum BlockType {
-  PARAGRAPH = 'PARAGRAPH',
-  HEADING = 'HEADING',
-  IMAGE = 'IMAGE',
-  GALLERY = 'GALLERY',
-  QUOTE = 'QUOTE',
-  LIST = 'LIST',
-  DIVIDER = 'DIVIDER',
+  PARAGRAPH = 'paragraph',
+  HEADING = 'heading',
+  IMAGE = 'image',
+  GALLERY = 'gallery',
+  VIDEO = 'video',
+  QUOTE = 'quote',
+  LIST = 'list',
+  PRODUCT = 'product',
+  DIVIDER = 'divider',
+  HTML = 'html',
+  EMBED = 'embed',
 }
 
 export interface ContentBlock {
   id: string;
-  type: BlockType;
-  content?: string;
-  metadata?: Record<string, any>;
+  type: string;
+  data: {
+    text?: string;
+    url?: string;
+    caption?: string;
+    author?: string;
+    items?: string[];
+    html?: string;
+    embed?: string;
+    images?: Array<{ url: string; caption?: string }>;
+  };
+  order: number;
 }
 
 export interface Post extends SoftDeleteEntity {

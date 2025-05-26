@@ -194,4 +194,12 @@ export const API_ENDPOINTS = {
     POST_INSIGHTS: (postId: string) => `/analytics/posts/${postId}/insights`,
     SUMMARY: '/analytics/summary',
   },
+
+  // Upload
+  UPLOAD: {
+    IMAGE: '/upload/image',
+    VIDEO: '/upload/video',
+    MULTIPLE: '/upload/multiple',
+    DELETE: (publicId: string) => `/upload/${publicId}`,
+  },
 } as const;

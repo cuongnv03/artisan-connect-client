@@ -507,53 +507,58 @@ export const PostDetailPage: React.FC = () => {
 
   const renderContentBlock = (block: any, index: number) => {
     switch (block.type) {
-      case BlockType.PARAGRAPH:
+      case 'paragraph':
         return (
           <p key={index} className="text-gray-700 mb-4 leading-relaxed">
-            {block.content}
+            {block.data?.text || ''}
           </p>
         );
 
-      case BlockType.HEADING:
+      case 'heading':
         return (
           <h2
             key={index}
             className="text-2xl font-semibold text-gray-900 mb-4 mt-8"
           >
-            {block.content}
+            {block.data?.text || ''}
           </h2>
         );
 
-      case BlockType.QUOTE:
+      case 'quote':
         return (
           <blockquote
             key={index}
             className="border-l-4 border-primary bg-gray-50 p-4 rounded-r-lg mb-4 italic text-gray-700"
           >
-            {block.content}
+            <p>{block.data?.text || ''}</p>
+            {block.data?.author && (
+              <cite className="block text-sm text-gray-500 mt-2">
+                — {block.data.author}
+              </cite>
+            )}
           </blockquote>
         );
 
-      case BlockType.IMAGE:
+      case 'image':
         return (
           <div key={index} className="mb-6">
             <img
-              src={block.metadata?.url}
-              alt={block.metadata?.caption || ''}
+              src={block.data?.url}
+              alt={block.data?.caption || ''}
               className="w-full rounded-lg"
             />
-            {block.metadata?.caption && (
+            {block.data?.caption && (
               <p className="text-sm text-gray-500 mt-2 text-center italic">
-                {block.metadata.caption}
+                {block.data.caption}
               </p>
             )}
           </div>
         );
 
-      case BlockType.LIST:
+      case 'list':
         return (
           <ul key={index} className="list-disc list-inside mb-4 space-y-1">
-            {((block.metadata?.items as string[]) || []).map(
+            {(block.data?.items || []).map(
               (item: string, itemIndex: number) => (
                 <li key={itemIndex} className="text-gray-700">
                   {item}
@@ -563,11 +568,67 @@ export const PostDetailPage: React.FC = () => {
           </ul>
         );
 
-      case BlockType.DIVIDER:
+      case 'gallery':
+        return (
+          <div key={index} className="mb-6">
+            {block.data?.images && block.data.images.length > 0 && (
+              <ImageGallery
+                images={block.data.images.map((img: any) => img.url)}
+              />
+            )}
+          </div>
+        );
+
+      case 'video':
+        return (
+          <div key={index} className="mb-6">
+            <video
+              src={block.data?.url}
+              controls
+              className="w-full rounded-lg"
+            />
+            {block.data?.caption && (
+              <p className="text-sm text-gray-500 mt-2 text-center italic">
+                {block.data.caption}
+              </p>
+            )}
+          </div>
+        );
+
+      case 'divider':
         return <hr key={index} className="my-8 border-gray-300" />;
 
+      case 'html':
+        return (
+          <div
+            key={index}
+            className="mb-4"
+            dangerouslySetInnerHTML={{ __html: block.data?.html || '' }}
+          />
+        );
+
+      case 'embed':
+        return (
+          <div key={index} className="mb-6">
+            <div
+              className="aspect-w-16 aspect-h-9"
+              dangerouslySetInnerHTML={{ __html: block.data?.embed || '' }}
+            />
+          </div>
+        );
+
       default:
-        return null;
+        // Fallback for unknown block types
+        return (
+          <div key={index} className="mb-4 p-4 bg-gray-100 rounded-lg">
+            <p className="text-gray-600 text-sm">
+              Loại nội dung không được hỗ trợ: {block.type}
+            </p>
+            {block.data?.text && (
+              <p className="text-gray-700 mt-2">{block.data.text}</p>
+            )}
+          </div>
+        );
     }
   };
 

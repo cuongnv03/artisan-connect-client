@@ -23,13 +23,7 @@ interface CreatePostFormData {
 export const CreatePostPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToastContext();
-  const [content, setContent] = useState<ContentBlock[]>([
-    {
-      id: '1',
-      type: BlockType.PARAGRAPH,
-      content: '',
-    },
-  ]);
+  const [content, setContent] = useState<ContentBlock[]>([]);
   const [coverImages, setCoverImages] = useState<File[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -49,8 +43,8 @@ export const CreatePostPage: React.FC = () => {
 
     if (!values.title.trim()) {
       errors.title = 'Tiêu đề là bắt buộc';
-    } else if (values.title.length < 10) {
-      errors.title = 'Tiêu đề phải có ít nhất 10 ký tự';
+    } else if (values.title.length < 3) {
+      errors.title = 'Tiêu đề phải có ít nhất 3 ký tự';
     }
 
     if (!values.summary.trim()) {
@@ -61,11 +55,8 @@ export const CreatePostPage: React.FC = () => {
       errors.type = 'Loại bài viết là bắt buộc';
     }
 
-    const hasContent = content.some(
-      (block) => block.content && block.content.trim().length > 0,
-    );
-    if (!hasContent) {
-      errors.content = 'Nội dung bài viết không được để trống';
+    if (content.length === 0) {
+      errors.content = 'Vui lòng thêm nội dung cho bài viết';
     }
 
     return errors;
@@ -78,10 +69,16 @@ export const CreatePostPage: React.FC = () => {
       // Upload cover image
       let coverImageUrl = '';
       if (coverImages.length > 0) {
-        const uploadResult = await uploadService.uploadImage(coverImages[0], {
-          folder: 'posts/covers',
-        });
-        coverImageUrl = uploadResult.url;
+        try {
+          const uploadResult = await uploadService.uploadImage(coverImages[0], {
+            folder: 'posts/covers',
+          });
+          coverImageUrl = uploadResult.url;
+        } catch (uploadError) {
+          console.error('Cover upload failed:', uploadError);
+          error('Không thể upload ảnh bìa');
+          return;
+        }
       }
 
       // Upload media files
@@ -93,20 +90,106 @@ export const CreatePostPage: React.FC = () => {
         mediaUrls.push(uploadResult.url);
       }
 
-      // Create post
-      await postService.createPost({
+      // Process content blocks to match server format
+      const processedContent = await Promise.all(
+        content.map(async (block, index) => {
+          // Skip empty content blocks
+          if (
+            !block.content?.trim() &&
+            block.type !== BlockType.DIVIDER &&
+            block.type !== BlockType.IMAGE
+          ) {
+            return null;
+          }
+
+          // Upload image if present
+          if (block.type === BlockType.IMAGE && block.metadata?.file) {
+            try {
+              const uploadResult = await uploadService.uploadImage(
+                block.metadata.file,
+                {
+                  folder: 'posts/content',
+                },
+              );
+              return {
+                id: block.id,
+                type: block.type,
+                data: {
+                  url: uploadResult.url,
+                  caption: block.metadata.caption || '',
+                },
+                order: index,
+              };
+            } catch (uploadError) {
+              console.error('Image upload failed:', uploadError);
+              throw new Error(`Không thể upload hình ảnh trong content`);
+            }
+          }
+
+          // Handle other block types
+          let blockData: any = {};
+
+          switch (block.type) {
+            case BlockType.PARAGRAPH:
+            case BlockType.HEADING:
+              blockData = { text: block.content || '' };
+              break;
+            case BlockType.QUOTE:
+              blockData = {
+                text: block.content || '',
+                author: block.metadata?.author || '',
+              };
+              break;
+            case BlockType.LIST:
+              blockData = {
+                items: block.metadata?.items || [block.content || ''],
+              };
+              break;
+            case BlockType.DIVIDER:
+              blockData = {};
+              break;
+            default:
+              blockData = { text: block.content || '' };
+          }
+
+          return {
+            id: block.id,
+            type: block.type,
+            data: blockData,
+            order: index,
+          };
+        }),
+      );
+
+      // Filter out null blocks (empty content)
+      const validContent = processedContent.filter((block) => block !== null);
+
+      if (validContent.length === 0) {
+        error('Bài viết phải có ít nhất một nội dung');
+        return;
+      }
+
+      // Create post với đúng format backend expects
+      const postData = {
         title: values.title,
         summary: values.summary,
-        content,
+        content: processedContent,
         type: values.type,
-        coverImage: coverImageUrl,
+        status: 'DRAFT',
+        coverImage: coverImageUrl || undefined,
         mediaUrls,
         tags: values.tags,
-      });
+        publishNow: false,
+      };
+
+      console.log('Sending post data:', JSON.stringify(postData, null, 2));
+
+      await postService.createPost(postData);
 
       success('Bài viết đã được tạo thành công!');
       navigate('/posts/my-posts');
     } catch (err: any) {
+      console.error('Create post error:', err);
       error(err.message || 'Có lỗi xảy ra khi tạo bài viết');
     } finally {
       setIsUploading(false);
@@ -134,7 +217,11 @@ export const CreatePostPage: React.FC = () => {
   });
 
   const addTag = () => {
-    if (tagInput.trim() && !values.tags.includes(tagInput.trim())) {
+    if (
+      tagInput.trim() &&
+      !values.tags.includes(tagInput.trim()) &&
+      values.tags.length < 10
+    ) {
       setFieldValue('tags', [...values.tags, tagInput.trim()]);
       setTagInput('');
     }
@@ -155,7 +242,7 @@ export const CreatePostPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Tạo bài viết mới
@@ -220,7 +307,7 @@ export const CreatePostPage: React.FC = () => {
             {/* Tags */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thẻ (Tags)
+                Thẻ (Tags) - Tối đa 10 thẻ
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
                 {values.tags.map((tag) => (
@@ -242,18 +329,29 @@ export const CreatePostPage: React.FC = () => {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleTagKeyPress}
+                  maxLength={50}
                 />
-                <Button type="button" variant="outline" onClick={addTag}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addTag}
+                  disabled={values.tags.length >= 10}
+                >
                   Thêm
                 </Button>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {values.tags.length}/10 thẻ
+              </p>
             </div>
           </div>
         </Card>
 
         {/* Cover Image */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Ảnh bìa</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Ảnh bìa (không bắt buộc)
+          </h2>
           <FileUpload
             files={coverImages}
             onFilesChange={setCoverImages}
@@ -272,7 +370,7 @@ export const CreatePostPage: React.FC = () => {
 
           <ContentEditor content={content} onChange={setContent} />
 
-          {touched.content && errors.content && (
+          {errors.content && (
             <p className="mt-2 text-sm text-red-600">{errors.content}</p>
           )}
         </Card>
@@ -298,7 +396,7 @@ export const CreatePostPage: React.FC = () => {
             Hủy
           </Button>
           <Button type="submit" loading={isSubmitting || isUploading}>
-            Đăng bài viết
+            {isUploading ? 'Đang tải lên...' : 'Lưu bài viết'}
           </Button>
         </div>
       </form>

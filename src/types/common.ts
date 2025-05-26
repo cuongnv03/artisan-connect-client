@@ -31,3 +31,12 @@ export interface PaginationParams {
 export interface SearchParams extends PaginationParams {
   q?: string;
 }
+
+export interface UploadResponse {
+  url: string;
+  publicId: string;
+  format: string;
+  width?: number;
+  height?: number;
+  resourceType: string;
+}
