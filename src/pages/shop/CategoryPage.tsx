@@ -23,6 +23,7 @@ export const CategoryPage: React.FC = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [allCategoryIds, setAllCategoryIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showFilters, setShowFilters] = useState(false);
@@ -43,12 +44,17 @@ export const CategoryPage: React.FC = () => {
     }
   }, [categorySlug]);
 
+  useEffect(() => {
+    if (allCategoryIds.length > 0) {
+      loadProducts();
+    }
+  }, [allCategoryIds, filters, currentPage]);
+
   const loadCategoryData = async () => {
     if (!categorySlug) return;
 
     setLoading(true);
     try {
-      // Sử dụng API thay vì hardcode
       const [categoryData, categoryTree] = await Promise.all([
         productService.getCategoryBySlug(categorySlug),
         productService.getCategoryTree(),
@@ -56,45 +62,156 @@ export const CategoryPage: React.FC = () => {
 
       setCategory(categoryData);
 
-      // Tìm subcategories từ tree
-      const findSubcategories = (
-        tree: Category[],
-        parentSlug: string,
-      ): Category[] => {
-        for (const cat of tree) {
-          if (cat.slug === parentSlug) {
-            return cat.children || [];
-          }
-          if (cat.children) {
-            const found = findSubcategories(cat.children, parentSlug);
-            if (found.length > 0) return found;
-          }
-        }
-        return [];
-      };
+      // Tìm subcategories và tất cả category IDs liên quan
+      const { subcategories: subs, allIds } = findCategoryAndSubcategories(
+        categoryTree,
+        categoryData.id,
+      );
 
-      setSubcategories(findSubcategories(categoryTree, categorySlug));
-
-      // Load products với categoryId thật
-      const params: any = {
-        categoryId: categoryData.id,
-        page: currentPage,
-        limit: pagination.limit,
-        ...filters,
-      };
-
-      const result = await productService.getProducts(params);
-      setProducts(result.data);
-      setPagination({
-        total: result.meta.total,
-        totalPages: result.meta.totalPages,
-        limit: result.meta.limit,
-      });
+      setSubcategories(subs);
+      setAllCategoryIds(allIds);
     } catch (error) {
       console.error('Error loading category data:', error);
+    }
+  };
+
+  // Hàm đệ quy để tìm tất cả subcategories
+  const findCategoryAndSubcategories = (
+    tree: Category[],
+    targetId: string,
+  ): { subcategories: Category[]; allIds: string[] } => {
+    const findInTree = (
+      categories: Category[],
+    ): { subcategories: Category[]; allIds: string[] } => {
+      for (const cat of categories) {
+        if (cat.id === targetId) {
+          // Tìm thấy category, lấy tất cả subcategories
+          const allIds = getAllCategoryIds([cat]);
+          return {
+            subcategories: cat.children || [],
+            allIds,
+          };
+        }
+        if (cat.children && cat.children.length > 0) {
+          const result = findInTree(cat.children);
+          if (result.allIds.length > 0) {
+            return result;
+          }
+        }
+      }
+      return { subcategories: [], allIds: [] };
+    };
+
+    return findInTree(tree);
+  };
+
+  // Hàm đệ quy để lấy tất cả category IDs (bao gồm cả category hiện tại và subcategories)
+  const getAllCategoryIds = (categories: Category[]): string[] => {
+    let ids: string[] = [];
+    for (const cat of categories) {
+      ids.push(cat.id);
+      if (cat.children && cat.children.length > 0) {
+        ids = ids.concat(getAllCategoryIds(cat.children));
+      }
+    }
+    return ids;
+  };
+
+  const loadProducts = async () => {
+    if (allCategoryIds.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Load products từ tất cả categories liên quan
+      const results = await Promise.all(
+        allCategoryIds.map((categoryId) =>
+          productService.getProducts({
+            categoryId,
+            page: currentPage,
+            limit: pagination.limit,
+            ...filters,
+          }),
+        ),
+      );
+
+      // Gộp tất cả products và loại bỏ duplicate
+      const allProducts: Product[] = [];
+      const seenIds = new Set<string>();
+      let totalCount = 0;
+
+      results.forEach((result) => {
+        totalCount += result.meta.total;
+        result.data.forEach((product) => {
+          if (!seenIds.has(product.id)) {
+            seenIds.add(product.id);
+            allProducts.push(product);
+          }
+        });
+      });
+
+      // Sort products theo filter
+      const sortedProducts = sortProducts(
+        allProducts,
+        filters.sortBy,
+        filters.sortOrder,
+      );
+
+      // Pagination cho merged results
+      const startIndex = (currentPage - 1) * pagination.limit;
+      const endIndex = startIndex + pagination.limit;
+      const paginatedProducts = sortedProducts.slice(startIndex, endIndex);
+
+      setProducts(paginatedProducts);
+      setPagination({
+        total: sortedProducts.length,
+        totalPages: Math.ceil(sortedProducts.length / pagination.limit),
+        limit: pagination.limit,
+      });
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Hàm sort products
+  const sortProducts = (
+    products: Product[],
+    sortBy: string,
+    sortOrder: string,
+  ) => {
+    return [...products].sort((a, b) => {
+      let aVal: any = a[sortBy as keyof Product];
+      let bVal: any = b[sortBy as keyof Product];
+
+      // Handle special cases
+      if (sortBy === 'price_asc') {
+        aVal = a.discountPrice || a.price;
+        bVal = b.discountPrice || b.price;
+        return aVal - bVal;
+      }
+      if (sortBy === 'price_desc') {
+        aVal = a.discountPrice || a.price;
+        bVal = b.discountPrice || b.price;
+        return bVal - aVal;
+      }
+
+      // Default sorting
+      if (typeof aVal === 'string') {
+        return sortOrder === 'asc'
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      if (typeof aVal === 'number') {
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      return 0;
+    });
   };
 
   const handleFilterChange = (newFilters: any) => {
@@ -138,14 +255,20 @@ export const CategoryPage: React.FC = () => {
 
       {/* Category Header */}
       <div className="relative h-64 rounded-xl overflow-hidden mb-8">
-        <img
-          src={category.imageUrl}
-          alt={category.name}
-          className="w-full h-full object-cover"
-        />
+        {category.imageUrl ? (
+          <img
+            src={category.imageUrl}
+            alt={category.name}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-primary to-primary-dark"></div>
+        )}
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
           <div className="text-center text-white">
-            <h1 className="text-4xl font-bold mb-4">{category.name}</h1>
+            <h1 className="text-4xl font-bold mb-4 text-primary-200">
+              {category.name}
+            </h1>
             {category.description && (
               <p className="text-lg text-gray-200 max-w-2xl">
                 {category.description}
@@ -171,6 +294,11 @@ export const CategoryPage: React.FC = () => {
                 <h3 className="font-medium text-gray-900 group-hover:text-primary">
                   {subcategory.name}
                 </h3>
+                {subcategory.productCount !== undefined && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {subcategory.productCount} sản phẩm
+                  </p>
+                )}
               </Link>
             ))}
           </div>

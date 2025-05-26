@@ -154,12 +154,12 @@ export const ShopPage: React.FC = () => {
     { label: 'Xem nhiều nhất', value: 'viewCount' },
   ];
 
-  const quickFilters = [
-    { label: 'Giảm giá', key: 'onSale', value: true },
-    { label: 'Có thể tùy chỉnh', key: 'isCustomizable', value: true },
-    { label: 'Miễn phí vận chuyển', key: 'freeShipping', value: true },
-    { label: 'Sản phẩm mới', key: 'isNew', value: true },
-  ];
+  // const quickFilters = [
+  //   { label: 'Giảm giá', key: 'onSale', value: true },
+  //   { label: 'Có thể tùy chỉnh', key: 'isCustomizable', value: true },
+  //   { label: 'Miễn phí vận chuyển', key: 'freeShipping', value: true },
+  //   { label: 'Sản phẩm mới', key: 'isNew', value: true },
+  // ];
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -202,7 +202,7 @@ export const ShopPage: React.FC = () => {
       </div>
 
       {/* Quick Filters */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <div className="flex flex-wrap gap-3">
           {quickFilters.map((filter) => (
             <Badge
@@ -225,7 +225,7 @@ export const ShopPage: React.FC = () => {
             </Badge>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
