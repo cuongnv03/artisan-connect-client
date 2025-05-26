@@ -16,7 +16,7 @@ export interface SearchUsersQuery extends SearchParams {
 
 export const userService = {
   async getUserProfile(id: string): Promise<User> {
-    return await apiClient.get<User>(`${API_ENDPOINTS.USERS.BASE}/${id}`);
+    return await apiClient.get<User>(API_ENDPOINTS.USERS.BY_ID(id));
   },
 
   async updateProfile(data: UpdateProfileRequest): Promise<User> {
@@ -99,9 +99,7 @@ export const userService = {
   },
 
   async getDefaultAddress(): Promise<Address> {
-    return await apiClient.get<Address>(
-      `${API_ENDPOINTS.USERS.ADDRESSES}/default`,
-    );
+    return await apiClient.get<Address>(API_ENDPOINTS.USERS.ADDRESSES_DEFAULT);
   },
 
   async deleteAccount(): Promise<void> {

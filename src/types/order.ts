@@ -1,7 +1,7 @@
 import { BaseEntity } from './common';
 import { User } from './auth';
-import { Product } from './product';
 import { Address } from './user';
+import { CartItem, CartSummary } from './cart';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -46,9 +46,20 @@ export interface Order extends BaseEntity {
   trackingNumber?: string;
   estimatedDelivery?: Date;
   deliveredAt?: Date;
-  customer?: User;
-  items: OrderItem[];
+}
+
+export interface OrderWithDetails extends Order {
+  customer: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  };
   shippingAddress?: Address;
+  items: OrderItemWithDetails[];
+  statusHistory: OrderStatusHistory[];
+  paymentTransactions: PaymentTransaction[];
 }
 
 export interface OrderItem extends BaseEntity {
@@ -57,74 +68,72 @@ export interface OrderItem extends BaseEntity {
   sellerId: string;
   quantity: number;
   price: number;
-  product: Product;
-  seller: User;
 }
 
-export interface CartItem extends BaseEntity {
+export interface OrderItemWithDetails extends OrderItem {
+  product: {
+    id: string;
+    name: string;
+    slug?: string;
+    images: string[];
+    isCustomizable: boolean;
+  };
+  seller: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    artisanProfile?: {
+      shopName: string;
+      isVerified: boolean;
+    };
+  };
+}
+
+export interface OrderStatusHistory extends BaseEntity {
+  orderId: string;
+  status: OrderStatus;
+  note?: string;
+  createdBy?: string;
+}
+
+export interface PaymentTransaction extends BaseEntity {
+  orderId: string;
   userId: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  product: Product;
+  paymentMethodId?: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  paymentMethod: PaymentMethod;
+  reference: string;
+  externalReference?: string;
+  failureReason?: string;
+  processedAt?: Date;
 }
 
-export interface CartSummary {
-  items: CartItem[];
-  totalItems: number;
-  subtotal: number;
-  estimatedShipping: number;
-  estimatedTotal: number;
+// DTOs
+export interface CreateOrderFromCartRequest {
+  addressId: string;
+  paymentMethod: PaymentMethod;
+  notes?: string;
 }
 
-export interface CartValidation {
-  isValid: boolean;
-  errors: Array<{
-    type: string;
-    productId: string;
-    productName: string;
-    message: string;
-  }>;
-  warnings: Array<{
-    type: string;
-    productId: string;
-    productName: string;
-    message: string;
-  }>;
+export interface CreateOrderFromQuoteRequest {
+  quoteRequestId: string;
+  addressId: string;
+  paymentMethod: PaymentMethod;
+  notes?: string;
 }
 
-// Quote types
-export enum QuoteStatus {
-  PENDING = 'PENDING',
-  ACCEPTED = 'ACCEPTED',
-  REJECTED = 'REJECTED',
-  COUNTER_OFFERED = 'COUNTER_OFFERED',
-  EXPIRED = 'EXPIRED',
+export interface UpdateOrderStatusRequest {
+  status: OrderStatus;
+  note?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: Date;
 }
 
-export interface QuoteRequest extends BaseEntity {
-  productId: string;
-  customerId: string;
-  artisanId: string;
-  requestedPrice?: number;
-  specifications?: string;
-  status: QuoteStatus;
-  counterOffer?: number;
-  finalPrice?: number;
-  customerMessage?: string;
-  artisanMessage?: string;
-  expiresAt?: Date;
-  product: Product;
-  customer: User;
-  artisan: User;
-}
-
-export interface QuoteStats {
-  totalQuotes: number;
-  pendingQuotes: number;
-  acceptedQuotes: number;
-  rejectedQuotes: number;
-  expiredQuotes: number;
-  averageNegotiationTime: number;
-  conversionRate: number;
+export interface ProcessPaymentRequest {
+  paymentMethodId?: string;
+  paymentReference?: string;
+  externalReference?: string;
 }

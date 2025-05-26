@@ -1,10 +1,10 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
-import { CartItem, CartSummary, CartValidation } from '../types/order';
+import { CartItem, CartSummary, CartValidation } from '../types/cart';
 
 export const cartService = {
-  async getCart(): Promise<CartItem[]> {
-    return await apiClient.get<CartItem[]>(API_ENDPOINTS.CART.BASE);
+  async getCart(): Promise<{ items: CartItem[] }> {
+    return await apiClient.get<{ items: CartItem[] }>(API_ENDPOINTS.CART.BASE);
   },
 
   async getCartSummary(): Promise<CartSummary> {

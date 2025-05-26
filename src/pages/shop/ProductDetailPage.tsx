@@ -27,7 +27,7 @@ import {
 } from '../../services/quote.service';
 import { Product } from '../../types/product';
 import { Review } from '../../types/product';
-import { QuoteStatus } from '../../types/order';
+import { QuoteStatus } from '../../types/quote';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';

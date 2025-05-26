@@ -1,6 +1,6 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
-import { QuoteRequest, QuoteStatus, QuoteStats } from '../types/order';
+import { QuoteRequest, QuoteStatus, QuoteStats } from '../types/quote';
 import { PaginatedResponse } from '../types/common';
 
 export interface CreateQuoteRequestData {

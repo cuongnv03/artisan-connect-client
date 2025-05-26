@@ -9,10 +9,12 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { useToastContext } from '../../contexts/ToastContext';
+import { useCart } from '../../contexts/CartContext';
 import { cartService } from '../../services/cart.service';
 import { orderService } from '../../services/order.service';
 import { userService } from '../../services/user.service';
-import { CartSummary, PaymentMethod } from '../../types/order';
+import { CartSummary } from '../../types/cart';
+import { PaymentMethod, CreateOrderFromCartRequest } from '../../types/order';
 import { Address } from '../../types/user';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -37,12 +39,12 @@ interface PaymentData {
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToastContext();
-  const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
+  const { state: cartState, clearCart } = useCart();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [orderData, setOrderData] = useState<any>(null);
+  const [orderData, setOrderData] = useState<CheckoutFormData | null>(null);
 
   const { values, handleChange, handleSubmit, setFieldValue, errors } =
     useForm<CheckoutFormData>({
@@ -110,28 +112,41 @@ export const CheckoutPage: React.FC = () => {
 
   const loadCheckoutData = async () => {
     try {
-      const [cart, addressList] = await Promise.all([
-        cartService.getCartSummary(),
-        userService.getAddresses(),
-      ]);
-
-      if (cart.totalItems === 0) {
-        error('Giỏ hàng trống');
+      // Check if cart has items
+      if (!cartState.summary || cartState.summary.totalItems === 0) {
         navigate('/cart');
         return;
       }
 
-      setCartSummary(cart);
+      // Load addresses
+      const addressList = await userService.getAddresses();
       setAddresses(addressList);
 
       // Set default address
       const defaultAddress = addressList.find((addr) => addr.isDefault);
       if (defaultAddress) {
         setFieldValue('addressId', defaultAddress.id);
+      } else if (addressList.length > 0) {
+        setFieldValue('addressId', addressList[0].id);
       }
-    } catch (err) {
+
+      // Validate cart for checkout
+      const validation = await cartService.validateForCheckout();
+      if (!validation.isValid) {
+        error(`Có vấn đề với giỏ hàng: ${validation.errors.join(', ')}`);
+        navigate('/cart');
+        return;
+      }
+
+      if (validation.warnings.length > 0) {
+        validation.warnings.forEach((warning) => {
+          console.warn(warning);
+        });
+      }
+    } catch (err: any) {
       console.error('Error loading checkout data:', err);
       error('Có lỗi xảy ra khi tải dữ liệu');
+      navigate('/cart');
     } finally {
       setLoading(false);
     }
@@ -147,6 +162,9 @@ export const CheckoutPage: React.FC = () => {
           paymentMethod: data.paymentMethod,
           notes: data.notes,
         });
+
+        // Clear cart after successful order
+        await clearCart();
 
         success('Đặt hàng thành công!');
         navigate(`/orders/${order.id}`);
@@ -176,14 +194,12 @@ export const CheckoutPage: React.FC = () => {
 
       // Process payment (mock implementation)
       await orderService.processPayment(order.id, {
-        paymentMethod: orderData.paymentMethod,
-        paymentData: {
-          cardNumber: paymentData.cardNumber,
-          expiryDate: paymentData.expiryDate,
-          cvv: paymentData.cvv,
-          cardHolder: paymentData.cardHolder,
-        },
+        paymentReference: `CARD_${Date.now()}`,
+        externalReference: paymentData.cardNumber.slice(-4),
       });
+
+      // Clear cart after successful order
+      await clearCart();
 
       success('Thanh toán thành công!');
       setShowPaymentModal(false);
@@ -228,7 +244,7 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!cartSummary || cartSummary.totalItems === 0) {
+  if (!cartState.summary || cartState.summary.totalItems === 0) {
     return (
       <div className="text-center py-12">
         <ShoppingBagIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -242,6 +258,8 @@ export const CheckoutPage: React.FC = () => {
       </div>
     );
   }
+
+  const { summary } = cartState;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -394,24 +412,45 @@ export const CheckoutPage: React.FC = () => {
               Tóm tắt đơn hàng
             </h2>
 
+            {/* Order items by seller */}
             <div className="space-y-4 mb-6">
-              {cartSummary.items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-3">
-                  <img
-                    src={
-                      item.product.images[0] || 'https://via.placeholder.com/60'
-                    }
-                    alt={item.product.name}
-                    className="w-12 h-12 object-cover rounded"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {item.product.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      SL: {item.quantity} x {formatPrice(item.price)}
-                    </p>
-                  </div>
+              {summary.groupedBySeller.map((sellerGroup) => (
+                <div
+                  key={sellerGroup.sellerId}
+                  className="border-b pb-4 last:border-b-0"
+                >
+                  <h4 className="font-medium text-sm text-gray-700 mb-2">
+                    {sellerGroup.sellerInfo.shopName ||
+                      sellerGroup.sellerInfo.name}
+                  </h4>
+                  {sellerGroup.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center space-x-3 mb-2"
+                    >
+                      <img
+                        src={
+                          item.product?.images?.[0] ||
+                          'https://via.placeholder.com/60'
+                        }
+                        alt={item.product?.name || 'Product'}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {item.product?.name || 'Unknown Product'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          SL: {item.quantity} x{' '}
+                          {formatPrice(
+                            item.product?.discountPrice ||
+                              item.product?.price ||
+                              item.price,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
@@ -420,15 +459,15 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Tạm tính</span>
                 <span className="font-medium">
-                  {formatPrice(cartSummary.subtotal)}
+                  {formatPrice(summary.subtotal)}
                 </span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-gray-600">Phí vận chuyển</span>
                 <span className="font-medium">
-                  {cartSummary.estimatedShipping > 0
-                    ? formatPrice(cartSummary.estimatedShipping)
+                  {summary.total > summary.subtotal
+                    ? formatPrice(summary.total - summary.subtotal)
                     : 'Miễn phí'}
                 </span>
               </div>
@@ -438,7 +477,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between text-lg font-semibold">
                 <span>Tổng cộng</span>
                 <span className="text-primary">
-                  {formatPrice(cartSummary.estimatedTotal)}
+                  {formatPrice(summary.total)}
                 </span>
               </div>
             </div>
@@ -475,6 +514,8 @@ export const CheckoutPage: React.FC = () => {
         onClose={() => !processing && setShowPaymentModal(false)}
         title="Thanh toán"
         size="md"
+        closeOnEscape={false}
+        closeOnOverlayClick={false}
       >
         <form onSubmit={paymentForm.handleSubmit} className="space-y-4">
           <div>
@@ -574,8 +615,7 @@ export const CheckoutPage: React.FC = () => {
               Hủy
             </Button>
             <Button type="submit" loading={processing} className="flex-1">
-              Thanh toán{' '}
-              {cartSummary && formatPrice(cartSummary.estimatedTotal)}
+              Thanh toán {formatPrice(summary.total)}
             </Button>
           </div>
         </form>

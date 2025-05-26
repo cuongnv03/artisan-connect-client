@@ -23,11 +23,15 @@ export const API_ENDPOINTS = {
     SEARCH: '/users/search',
     PROFILE: '/users/profile',
     ADDRESSES: '/users/addresses',
+    ADDRESSES_DEFAULT: '/users/addresses/default',
     FOLLOW: (userId: string) => `/users/${userId}/follow`,
     FOLLOWERS: (userId: string) => `/users/${userId}/followers`,
     FOLLOWING: (userId: string) => `/users/${userId}/following`,
+    FOLLOW_STATS: (userId: string) => `/users/${userId}/follow-stats`,
     ACTIVITIES: '/users/activities',
+    ACTIVITIES_STATS: '/users/activities/stats',
     DELETE_ACCOUNT: '/users/account',
+    BY_ID: (id: string) => `/users/${id}`,
   },
 
   // Artisans

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { cartService } from '../services/cart.service';
-import { CartItem, CartSummary } from '../types/order';
+import { CartItem, CartSummary } from '../types/cart';
 import { useAuth } from './AuthContext';
 import { useToastContext } from './ToastContext';
 
@@ -163,8 +163,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       const cartItem = await cartService.addToCart(productId, quantity);
       dispatch({ type: 'ITEM_ADDED', payload: cartItem });
 
-      // Refresh cart count to ensure accuracy
-      await refreshCartCount();
+      // Refresh full cart to get updated totals
+      await loadCart();
 
       success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
     } catch (err: any) {
@@ -177,7 +177,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const cartItem = await cartService.updateCartItem(productId, quantity);
       dispatch({ type: 'ITEM_UPDATED', payload: cartItem });
-      await refreshCartCount();
+      await loadCart();
       success('Đã cập nhật số lượng sản phẩm');
     } catch (err: any) {
       error(err.message || 'Không thể cập nhật sản phẩm');
@@ -189,7 +189,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await cartService.removeFromCart(productId);
       dispatch({ type: 'ITEM_REMOVED', payload: productId });
-      await refreshCartCount();
+      await loadCart();
       success('Đã xóa sản phẩm khỏi giỏ hàng');
     } catch (err: any) {
       error(err.message || 'Không thể xóa sản phẩm');

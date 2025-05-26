@@ -1,34 +1,16 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
-import { Order, OrderStatus, PaymentMethod } from '../types/order';
+import {
+  Order,
+  OrderWithDetails,
+  OrderStatus,
+  PaymentMethod,
+  CreateOrderFromCartRequest,
+  CreateOrderFromQuoteRequest,
+  UpdateOrderStatusRequest,
+  ProcessPaymentRequest,
+} from '../types/order';
 import { PaginatedResponse } from '../types/common';
-
-export interface CreateOrderFromCartRequest {
-  addressId: string;
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-export interface CreateOrderFromQuoteRequest {
-  quoteId: string;
-  addressId: string;
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-export interface UpdateOrderStatusRequest {
-  status: OrderStatus;
-  notes?: string;
-}
-
-export interface CancelOrderRequest {
-  reason: string;
-}
-
-export interface ProcessPaymentRequest {
-  paymentMethod: PaymentMethod;
-  paymentData?: Record<string, any>;
-}
 
 export interface GetOrdersQuery {
   status?: OrderStatus;
@@ -48,14 +30,22 @@ export interface GetOrderStatsQuery {
 
 export const orderService = {
   // Order creation
-  async createOrderFromCart(data: CreateOrderFromCartRequest): Promise<Order> {
-    return await apiClient.post<Order>(API_ENDPOINTS.ORDERS.FROM_CART, data);
+  async createOrderFromCart(
+    data: CreateOrderFromCartRequest,
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.FROM_CART,
+      data,
+    );
   },
 
   async createOrderFromQuote(
     data: CreateOrderFromQuoteRequest,
-  ): Promise<Order> {
-    return await apiClient.post<Order>(API_ENDPOINTS.ORDERS.FROM_QUOTE, data);
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.FROM_QUOTE,
+      data,
+    );
   },
 
   // Order retrieval
@@ -77,12 +67,14 @@ export const orderService = {
     );
   },
 
-  async getOrder(id: string): Promise<Order> {
-    return await apiClient.get<Order>(API_ENDPOINTS.ORDERS.BY_ID(id));
+  async getOrder(id: string): Promise<OrderWithDetails> {
+    return await apiClient.get<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.BY_ID(id),
+    );
   },
 
-  async getOrderByNumber(orderNumber: string): Promise<Order> {
-    return await apiClient.get<Order>(
+  async getOrderByNumber(orderNumber: string): Promise<OrderWithDetails> {
+    return await apiClient.get<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.BY_NUMBER(orderNumber),
     );
   },
@@ -99,21 +91,29 @@ export const orderService = {
   async updateOrderStatus(
     id: string,
     data: UpdateOrderStatusRequest,
-  ): Promise<Order> {
-    return await apiClient.patch<Order>(
+  ): Promise<OrderWithDetails> {
+    return await apiClient.patch<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.UPDATE_STATUS(id),
       data,
     );
   },
 
-  async cancelOrder(id: string, data: CancelOrderRequest): Promise<Order> {
-    return await apiClient.post<Order>(API_ENDPOINTS.ORDERS.CANCEL(id), data);
+  async cancelOrder(id: string, reason?: string): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.CANCEL(id),
+      {
+        reason,
+      },
+    );
   },
 
   async processPayment(
     id: string,
     data: ProcessPaymentRequest,
-  ): Promise<Order> {
-    return await apiClient.post<Order>(API_ENDPOINTS.ORDERS.PAYMENT(id), data);
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.PAYMENT(id),
+      data,
+    );
   },
 };
