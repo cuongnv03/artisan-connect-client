@@ -1,11 +1,17 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
 import {
-  OrderSummary,
+  Order,
   OrderWithDetails,
+  OrderSummary,
   OrderStatus,
-  PaymentMethod,
   OrderStatusHistory,
+  PaymentMethod,
+  CreateOrderFromCartRequest,
+  CreateOrderFromQuoteRequest,
+  UpdateOrderStatusRequest,
+  ProcessPaymentRequest,
+  OrderStats,
 } from '../types/order';
 import { PaginatedResponse } from '../types/common';
 
@@ -20,8 +26,38 @@ export interface GetOrdersQuery {
   dateTo?: string;
 }
 
+export interface GetOrderStatsQuery {
+  userId?: string;
+  sellerId?: string;
+  period?: 'day' | 'week' | 'month' | 'year';
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export const orderService = {
-  // Lấy đơn hàng của khách
+  // === ORDER CREATION ===
+
+  async createOrderFromCart(
+    data: CreateOrderFromCartRequest,
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.FROM_CART,
+      data,
+    );
+  },
+
+  async createOrderFromQuote(
+    data: CreateOrderFromQuoteRequest,
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.FROM_QUOTE,
+      data,
+    );
+  },
+
+  // === ORDER RETRIEVAL ===
+
+  // Cập nhật để return OrderSummary thay vì Order
   async getMyOrders(
     query: GetOrdersQuery = {},
   ): Promise<PaginatedResponse<OrderSummary>> {
@@ -31,7 +67,6 @@ export const orderService = {
     );
   },
 
-  // Lấy đơn hàng bán
   async getSellerOrders(
     query: GetOrdersQuery = {},
   ): Promise<PaginatedResponse<OrderSummary>> {
@@ -41,36 +76,34 @@ export const orderService = {
     );
   },
 
-  // Lấy chi tiết đơn hàng
   async getOrder(id: string): Promise<OrderWithDetails> {
     return await apiClient.get<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.BY_ID(id),
     );
   },
 
-  // Lấy đơn hàng theo số
   async getOrderByNumber(orderNumber: string): Promise<OrderWithDetails> {
     return await apiClient.get<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.BY_NUMBER(orderNumber),
     );
   },
 
-  // Lấy lịch sử trạng thái
+  // Cập nhật return type cho OrderStatusHistory
   async getOrderStatusHistory(id: string): Promise<OrderStatusHistory[]> {
     return await apiClient.get<OrderStatusHistory[]>(
       API_ENDPOINTS.ORDERS.HISTORY(id),
     );
   },
 
-  // Cập nhật trạng thái đơn hàng
+  async getOrderStats(query: GetOrderStatsQuery = {}): Promise<OrderStats> {
+    return await apiClient.get<OrderStats>(API_ENDPOINTS.ORDERS.STATS, query);
+  },
+
+  // === ORDER MANAGEMENT ===
+
   async updateOrderStatus(
     id: string,
-    data: {
-      status: OrderStatus;
-      note?: string;
-      trackingNumber?: string;
-      estimatedDelivery?: Date;
-    },
+    data: UpdateOrderStatusRequest,
   ): Promise<OrderWithDetails> {
     return await apiClient.patch<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.UPDATE_STATUS(id),
@@ -78,19 +111,24 @@ export const orderService = {
     );
   },
 
-  // Hủy đơn hàng
-  async cancelOrder(
-    id: string,
-    data: { reason?: string },
-  ): Promise<OrderWithDetails> {
+  async cancelOrder(id: string, reason?: string): Promise<OrderWithDetails> {
     return await apiClient.post<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.CANCEL(id),
-      data,
+      {
+        reason,
+      },
     );
   },
 
-  // Thống kê đơn hàng
-  async getOrderStats(query: any = {}): Promise<any> {
-    return await apiClient.get<any>(API_ENDPOINTS.ORDERS.STATS, query);
+  // === PAYMENT ===
+
+  async processPayment(
+    id: string,
+    data: ProcessPaymentRequest,
+  ): Promise<OrderWithDetails> {
+    return await apiClient.post<OrderWithDetails>(
+      API_ENDPOINTS.ORDERS.PAYMENT(id),
+      data,
+    );
   },
 };

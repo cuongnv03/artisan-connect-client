@@ -64,30 +64,60 @@ export const VIETNAMESE_PROVINCES = [
   'Yên Bái',
 ];
 
-export const ARTISAN_SPECIALTIES = [
-  'Gốm sứ',
-  'Thêu tay',
-  'Đồ gỗ',
-  'Trang sức',
-  'Tranh',
-  'Điêu khắc',
-  'Dệt may',
-  'Làm bánh',
-  'Pha chế',
-  'Hoa tươi',
-  'Nến thơm',
-  'Xà phòng handmade',
-  'Đồ da',
-  'Đồ kim loại',
-  'Thủy tinh',
-  'Đồ decor',
-  'Đồ chơi',
-  'Sách handmade',
-  'Nhạc cụ',
-  'Đồ vintage',
-  'Đồ organic',
-  'Mỹ phẩm tự nhiên',
-];
+export const ARTISAN_SPECIALTY_MAPPING = {
+  'Gốm sứ': 'pottery',
+  'Đồ gỗ': 'woodworking',
+  'Trang sức': 'jewelry',
+  'Dệt may': 'textiles',
+  'Đồ kim loại': 'metalwork',
+  'Thủy tinh': 'glasswork',
+  'Đồ da': 'leatherwork',
+  Tranh: 'painting',
+  'Điêu khắc': 'sculpture',
+  Gốm: 'ceramics',
+  'Đan len': 'knitting',
+  'Thêu tay': 'embroidery',
+  'Thư pháp': 'calligraphy',
+  'Nhiếp ảnh': 'photography',
+  Khác: 'other',
+};
+
+export const SPECIALTY_DISPLAY_MAPPING = {
+  pottery: 'Gốm sứ',
+  woodworking: 'Đồ gỗ',
+  jewelry: 'Trang sức',
+  textiles: 'Dệt may',
+  metalwork: 'Đồ kim loại',
+  glasswork: 'Thủy tinh',
+  leatherwork: 'Đồ da',
+  painting: 'Tranh',
+  sculpture: 'Điêu khắc',
+  ceramics: 'Gốm',
+  knitting: 'Đan len',
+  embroidery: 'Thêu tay',
+  calligraphy: 'Thư pháp',
+  photography: 'Nhiếp ảnh',
+  other: 'Khác',
+};
+
+export const ARTISAN_SPECIALTIES = Object.keys(ARTISAN_SPECIALTY_MAPPING);
+
+// Helper functions
+export const mapSpecialtyToServer = (vietnameseSpecialty: string): string => {
+  return (
+    ARTISAN_SPECIALTY_MAPPING[
+      vietnameseSpecialty as keyof typeof ARTISAN_SPECIALTY_MAPPING
+    ] || 'other'
+  );
+};
+
+export const mapSpecialtyToDisplay = (serverSpecialty: string): string => {
+  return (
+    SPECIALTY_DISPLAY_MAPPING[
+      serverSpecialty as keyof typeof SPECIALTY_DISPLAY_MAPPING
+    ] || serverSpecialty
+  );
+};
 
 export const POST_TYPES = [
   {

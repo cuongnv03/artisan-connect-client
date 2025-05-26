@@ -11,9 +11,15 @@ import {
   PhoneIcon,
   PrinterIcon,
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import { orderService } from '../../services/order.service';
-import { OrderWithDetails, OrderStatus } from '../../types/order';
+import {
+  OrderWithDetails,
+  OrderStatus,
+  UpdateOrderStatusRequest,
+} from '../../types/order';
+import { UpdateOrderStatusModal } from '../../components/common/UpdateOrderStatusModal';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -23,10 +29,12 @@ import { ConfirmModal } from '../../components/ui/Modal';
 export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const { success, error } = useToastContext();
+  const { state } = useAuth();
   const [order, setOrder] = useState<OrderWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -48,15 +56,28 @@ export const OrderDetailPage: React.FC = () => {
     }
   };
 
+  const handleUpdateStatus = async (data: UpdateOrderStatusRequest) => {
+    if (!order) return;
+
+    setUpdating(true);
+    try {
+      await orderService.updateOrderStatus(order.id, data);
+      success('Đã cập nhật trạng thái đơn hàng');
+      setShowUpdateStatusModal(false);
+      loadOrder();
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleCancelOrder = async () => {
     if (!order) return;
 
     setUpdating(true);
     try {
-      await orderService.cancelOrder(order.id, {
-        reason: 'Khách hàng yêu cầu hủy đơn',
-      });
-
+      await orderService.cancelOrder(order.id, 'Khách hàng yêu cầu hủy đơn');
       success('Đã hủy đơn hàng thành công');
       setShowCancelModal(false);
       loadOrder();
@@ -66,6 +87,48 @@ export const OrderDetailPage: React.FC = () => {
       setUpdating(false);
     }
   };
+
+  const canUpdateStatus = () => {
+    if (!order || !state.user) return false;
+
+    const { user } = state;
+
+    // Admin có thể update mọi đơn
+    if (user.role === 'ADMIN') return true;
+
+    // Nghệ nhân chỉ có thể update đơn của mình
+    if (user.role === 'ARTISAN') {
+      return order.items.some((item) => item.seller.id === user.id);
+    }
+
+    return false;
+  };
+
+  const getNextPossibleStatuses = () => {
+    if (!order || !state.user) return [];
+
+    const { user } = state;
+
+    if (user.role === 'ARTISAN') {
+      const transitions: Record<OrderStatus, OrderStatus[]> = {
+        [OrderStatus.PENDING]: [OrderStatus.CONFIRMED],
+        [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING],
+        [OrderStatus.PAID]: [OrderStatus.PROCESSING],
+        [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED],
+        [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+        [OrderStatus.DELIVERED]: [],
+        [OrderStatus.CANCELLED]: [],
+        [OrderStatus.REFUNDED]: [],
+      };
+      return transitions[order.status] || [];
+    }
+
+    return [];
+  };
+
+  const canCancelOrder =
+    order &&
+    [OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(order.status);
 
   const getStatusBadge = (status: OrderStatus) => {
     const statusConfig = {
@@ -139,10 +202,6 @@ export const OrderDetailPage: React.FC = () => {
       minute: '2-digit',
     });
   };
-
-  const canCancelOrder =
-    order &&
-    [OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(order.status);
 
   if (loading) {
     return (
@@ -311,12 +370,16 @@ export const OrderDetailPage: React.FC = () => {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-blue-800 font-medium mb-2">
-                  Mã vận đơn: {order.orderNumber}
+                  Mã đơn hàng:{' '}
+                  <span className="font-mono">{order.orderNumber}</span>
+                </p>
+                <p className="text-blue-700 text-sm mb-3">
+                  Theo dõi chi tiết trạng thái và lịch trình giao hàng
                 </p>
 
                 <Link to={`/orders/tracking/${order.orderNumber}`}>
                   <Button variant="outline" size="sm">
-                    Theo dõi chi tiết
+                    Xem lịch trình chi tiết
                   </Button>
                 </Link>
               </div>
@@ -402,20 +465,35 @@ export const OrderDetailPage: React.FC = () => {
           </Card>
 
           {/* Actions */}
-          {canCancelOrder && (
+          {(canCancelOrder || canUpdateStatus()) && (
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Thao tác
               </h2>
 
-              <Button
-                variant="danger"
-                fullWidth
-                onClick={() => setShowCancelModal(true)}
-                leftIcon={<XCircleIcon className="w-4 h-4" />}
-              >
-                Hủy đơn hàng
-              </Button>
+              <div className="space-y-3">
+                {canUpdateStatus() && getNextPossibleStatuses().length > 0 && (
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={() => setShowUpdateStatusModal(true)}
+                    leftIcon={<CheckCircleIcon className="w-4 h-4" />}
+                  >
+                    Cập nhật trạng thái
+                  </Button>
+                )}
+
+                {canCancelOrder && (
+                  <Button
+                    variant="danger"
+                    fullWidth
+                    onClick={() => setShowCancelModal(true)}
+                    leftIcon={<XCircleIcon className="w-4 h-4" />}
+                  >
+                    Hủy đơn hàng
+                  </Button>
+                )}
+              </div>
             </Card>
           )}
 
@@ -462,6 +540,15 @@ export const OrderDetailPage: React.FC = () => {
         confirmText="Hủy đơn hàng"
         cancelText="Giữ đơn hàng"
         type="danger"
+        loading={updating}
+      />
+
+      {/* Update Status Modal */}
+      <UpdateOrderStatusModal
+        isOpen={showUpdateStatusModal}
+        onClose={() => setShowUpdateStatusModal(false)}
+        onUpdate={handleUpdateStatus}
+        currentStatus={order?.status || OrderStatus.PENDING}
         loading={updating}
       />
     </div>

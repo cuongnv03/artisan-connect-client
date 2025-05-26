@@ -87,7 +87,12 @@ class ApiClient {
         let errorMessage = 'Có lỗi xảy ra';
         if (error.response?.data) {
           const errorData = error.response.data as any;
-          errorMessage = errorData.message || errorData.error || errorMessage;
+          // Handle validation errors specifically
+          if (error.response.status === 422 && errorData.message) {
+            errorMessage = errorData.message;
+          } else {
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          }
         } else if (error.message) {
           errorMessage = error.message;
         }

@@ -7,6 +7,7 @@ import {
   UpdateArtisanProfileRequest,
   UpgradeRequestData,
   SearchArtisansQuery,
+  UpgradeRequestStatusResponse,
 } from '../types/artisan';
 import { PaginatedResponse } from '../types/common';
 import { User } from '../types/auth';
@@ -22,10 +23,11 @@ export const artisanService = {
 
   async getTopArtisans(
     limit = 10,
-  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
-    return await apiClient.get<
-      PaginatedResponse<ArtisanProfile & { user: User }>
-    >(API_ENDPOINTS.ARTISANS.TOP, { limit });
+  ): Promise<(ArtisanProfile & { user: User })[]> {
+    return await apiClient.get<(ArtisanProfile & { user: User })[]>(
+      API_ENDPOINTS.ARTISANS.TOP,
+      { limit },
+    );
   },
 
   async getFeaturedArtisans(): Promise<(ArtisanProfile & { user: User })[]> {
@@ -36,12 +38,12 @@ export const artisanService = {
 
   async getArtisansBySpecialty(
     specialty: string,
-    page = 1,
-    limit = 20,
-  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
-    return await apiClient.get<
-      PaginatedResponse<ArtisanProfile & { user: User }>
-    >(API_ENDPOINTS.ARTISANS.SPECIALTY(specialty), { page, limit });
+    limit = 10,
+  ): Promise<(ArtisanProfile & { user: User })[]> {
+    return await apiClient.get<(ArtisanProfile & { user: User })[]>(
+      API_ENDPOINTS.ARTISANS.SPECIALTY(specialty),
+      { limit },
+    );
   },
 
   async getArtisanProfile(
@@ -98,10 +100,17 @@ export const artisanService = {
     );
   },
 
-  async getUpgradeRequestStatus(): Promise<ArtisanUpgradeRequest> {
-    return await apiClient.get<ArtisanUpgradeRequest>(
-      API_ENDPOINTS.ARTISANS.UPGRADE_REQUEST_STATUS,
-    );
+  async getUpgradeRequestStatus(): Promise<UpgradeRequestStatusResponse | null> {
+    try {
+      return await apiClient.get<UpgradeRequestStatusResponse>(
+        API_ENDPOINTS.ARTISANS.UPGRADE_REQUEST_STATUS,
+      );
+    } catch (error: any) {
+      if (error.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   async updateUpgradeRequest(
@@ -133,10 +142,11 @@ export const artisanService = {
   async getUpgradeRequests(
     page = 1,
     limit = 20,
+    status?: string,
   ): Promise<PaginatedResponse<ArtisanUpgradeRequest & { user: User }>> {
     return await apiClient.get<
       PaginatedResponse<ArtisanUpgradeRequest & { user: User }>
-    >(API_ENDPOINTS.ARTISANS.ADMIN.UPGRADE_REQUESTS, { page, limit });
+    >(API_ENDPOINTS.ARTISANS.ADMIN.UPGRADE_REQUESTS, { page, limit, status });
   },
 
   async approveUpgradeRequest(id: string, adminNotes?: string): Promise<void> {
@@ -145,7 +155,7 @@ export const artisanService = {
     });
   },
 
-  async rejectUpgradeRequest(id: string, adminNotes?: string): Promise<void> {
+  async rejectUpgradeRequest(id: string, adminNotes: string): Promise<void> {
     await apiClient.post(API_ENDPOINTS.ARTISANS.ADMIN.REJECT_UPGRADE(id), {
       adminNotes,
     });

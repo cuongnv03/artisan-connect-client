@@ -75,3 +75,13 @@ export interface SearchArtisansQuery extends PaginationParams {
   specialty?: string;
   verified?: boolean;
 }
+
+// Response wrapper cho upgrade request status
+export interface UpgradeRequestStatusResponse {
+  hasRequest: boolean;
+  status?: UpgradeRequestStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
+  adminNotes?: string;
+  reviewedAt?: Date;
+}

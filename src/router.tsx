@@ -286,7 +286,7 @@ export const router = createBrowserRouter(
               ),
             },
             {
-              path: 'tracking/:trackingNumber',
+              path: 'tracking/:orderNumber',
               element: (
                 <ProtectedRoute>
                   <TrackingPage />
