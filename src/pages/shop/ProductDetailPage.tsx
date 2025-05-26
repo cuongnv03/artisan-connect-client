@@ -18,8 +18,8 @@ import {
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
+import { useCart } from '../../contexts/CartContext';
 import { productService } from '../../services/product.service';
-import { cartService } from '../../services/cart.service';
 import { reviewService } from '../../services/review.service';
 import {
   CreateQuoteRequestData,
@@ -57,6 +57,7 @@ export const ProductDetailPage: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const { addToCart } = useCart();
   const [addingToCart, setAddingToCart] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [canReview, setCanReview] = useState(false);
@@ -159,10 +160,9 @@ export const ProductDetailPage: React.FC = () => {
 
     setAddingToCart(true);
     try {
-      await cartService.addToCart(product.id, quantity);
-      success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
+      await addToCart(product.id, quantity);
     } catch (err) {
-      error('Không thể thêm sản phẩm vào giỏ hàng');
+      // Error already handled in cart context
     } finally {
       setAddingToCart(false);
     }

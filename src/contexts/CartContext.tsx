@@ -1,32 +1,38 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { CartItem, CartSummary } from '../types/order';
 import { cartService } from '../services/cart.service';
+import { CartItem, CartSummary } from '../types/order';
+import { useAuth } from './AuthContext';
 import { useToastContext } from './ToastContext';
 
 interface CartState {
   items: CartItem[];
   summary: CartSummary | null;
-  loading: boolean;
+  itemCount: number;
+  isLoading: boolean;
   error: string | null;
 }
 
 type CartAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ITEMS'; payload: CartItem[] }
-  | { type: 'SET_SUMMARY'; payload: CartSummary }
-  | { type: 'SET_ERROR'; payload: string }
-  | { type: 'ADD_ITEM'; payload: CartItem }
-  | { type: 'UPDATE_ITEM'; payload: { productId: string; quantity: number } }
-  | { type: 'REMOVE_ITEM'; payload: string }
-  | { type: 'CLEAR_CART' };
+  | { type: 'CART_LOADING' }
+  | {
+      type: 'CART_LOADED';
+      payload: { items: CartItem[]; summary: CartSummary; itemCount: number };
+    }
+  | { type: 'CART_ERROR'; payload: string }
+  | { type: 'CART_CLEARED' }
+  | { type: 'ITEM_ADDED'; payload: CartItem }
+  | { type: 'ITEM_UPDATED'; payload: CartItem }
+  | { type: 'ITEM_REMOVED'; payload: string }
+  | { type: 'COUNT_UPDATED'; payload: number };
 
 interface CartContextType {
   state: CartState;
+  loadCart: () => Promise<void>;
   addToCart: (productId: string, quantity: number) => Promise<void>;
   updateCartItem: (productId: string, quantity: number) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   clearCart: () => Promise<void>;
-  refreshCart: () => Promise<void>;
+  refreshCartCount: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -34,51 +40,69 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const initialState: CartState = {
   items: [],
   summary: null,
-  loading: false,
+  itemCount: 0,
+  isLoading: false,
   error: null,
 };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    case 'SET_ITEMS':
-      return { ...state, items: action.payload, loading: false, error: null };
-    case 'SET_SUMMARY':
-      return { ...state, summary: action.payload };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
-    case 'ADD_ITEM':
-      const existingItemIndex = state.items.findIndex(
-        (item) => item.productId === action.payload.productId,
-      );
-      if (existingItemIndex >= 0) {
-        const updatedItems = [...state.items];
-        updatedItems[existingItemIndex] = {
-          ...updatedItems[existingItemIndex],
-          quantity:
-            updatedItems[existingItemIndex].quantity + action.payload.quantity,
-        };
-        return { ...state, items: updatedItems };
-      } else {
-        return { ...state, items: [...state.items, action.payload] };
-      }
-    case 'UPDATE_ITEM':
+    case 'CART_LOADING':
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+    case 'CART_LOADED':
+      return {
+        ...state,
+        items: action.payload.items,
+        summary: action.payload.summary,
+        itemCount: action.payload.itemCount,
+        isLoading: false,
+        error: null,
+      };
+    case 'CART_ERROR':
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+    case 'CART_CLEARED':
+      return {
+        ...state,
+        items: [],
+        summary: null,
+        itemCount: 0,
+        error: null,
+      };
+    case 'ITEM_ADDED':
+      return {
+        ...state,
+        items: [...state.items, action.payload],
+        itemCount: state.itemCount + action.payload.quantity,
+      };
+    case 'ITEM_UPDATED':
       return {
         ...state,
         items: state.items.map((item) =>
-          item.productId === action.payload.productId
-            ? { ...item, quantity: action.payload.quantity }
-            : item,
+          item.productId === action.payload.productId ? action.payload : item,
         ),
       };
-    case 'REMOVE_ITEM':
+    case 'ITEM_REMOVED':
+      const removedItem = state.items.find(
+        (item) => item.productId === action.payload,
+      );
       return {
         ...state,
         items: state.items.filter((item) => item.productId !== action.payload),
+        itemCount: state.itemCount - (removedItem?.quantity || 0),
       };
-    case 'CLEAR_CART':
-      return { ...state, items: [], summary: null };
+    case 'COUNT_UPDATED':
+      return {
+        ...state,
+        itemCount: action.payload,
+      };
     default:
       return state;
   }
@@ -88,91 +112,110 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
-  const { success, error: showError } = useToastContext();
+  const { state: authState } = useAuth();
+  const { success, error } = useToastContext();
 
+  // Load cart when user is authenticated
   useEffect(() => {
-    refreshCart();
-  }, []);
+    if (authState.isAuthenticated && authState.user) {
+      loadCart();
+    } else {
+      dispatch({ type: 'CART_CLEARED' });
+    }
+  }, [authState.isAuthenticated, authState.user]);
 
-  const refreshCart = async () => {
-    dispatch({ type: 'SET_LOADING', payload: true });
+  const loadCart = async () => {
+    dispatch({ type: 'CART_LOADING' });
     try {
-      const [items, summary] = await Promise.all([
-        cartService.getCart(),
+      const [summary, itemCount] = await Promise.all([
         cartService.getCartSummary(),
+        cartService.getCartCount(),
       ]);
-      dispatch({ type: 'SET_ITEMS', payload: items });
-      dispatch({ type: 'SET_SUMMARY', payload: summary });
+
+      dispatch({
+        type: 'CART_LOADED',
+        payload: {
+          items: summary.items,
+          summary,
+          itemCount,
+        },
+      });
     } catch (err: any) {
-      dispatch({ type: 'SET_ERROR', payload: err.message });
+      console.error('Error loading cart:', err);
+      dispatch({
+        type: 'CART_ERROR',
+        payload: err.message || 'Failed to load cart',
+      });
+    }
+  };
+
+  const refreshCartCount = async () => {
+    try {
+      const count = await cartService.getCartCount();
+      dispatch({ type: 'COUNT_UPDATED', payload: count });
+    } catch (err) {
+      console.error('Error refreshing cart count:', err);
     }
   };
 
   const addToCart = async (productId: string, quantity: number) => {
     try {
-      const newItem = await cartService.addToCart(productId, quantity);
-      dispatch({ type: 'ADD_ITEM', payload: newItem });
+      const cartItem = await cartService.addToCart(productId, quantity);
+      dispatch({ type: 'ITEM_ADDED', payload: cartItem });
 
-      // Refresh summary
-      const summary = await cartService.getCartSummary();
-      dispatch({ type: 'SET_SUMMARY', payload: summary });
+      // Refresh cart count to ensure accuracy
+      await refreshCartCount();
 
-      success('Đã thêm vào giỏ hàng');
+      success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
     } catch (err: any) {
-      showError(err.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+      error(err.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+      throw err;
     }
   };
 
   const updateCartItem = async (productId: string, quantity: number) => {
     try {
-      if (quantity <= 0) {
-        await removeFromCart(productId);
-        return;
-      }
-
-      await cartService.updateCartItem(productId, quantity);
-      dispatch({ type: 'UPDATE_ITEM', payload: { productId, quantity } });
-
-      // Refresh summary
-      const summary = await cartService.getCartSummary();
-      dispatch({ type: 'SET_SUMMARY', payload: summary });
+      const cartItem = await cartService.updateCartItem(productId, quantity);
+      dispatch({ type: 'ITEM_UPDATED', payload: cartItem });
+      await refreshCartCount();
+      success('Đã cập nhật số lượng sản phẩm');
     } catch (err: any) {
-      showError(err.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng');
+      error(err.message || 'Không thể cập nhật sản phẩm');
+      throw err;
     }
   };
 
   const removeFromCart = async (productId: string) => {
     try {
       await cartService.removeFromCart(productId);
-      dispatch({ type: 'REMOVE_ITEM', payload: productId });
-
-      // Refresh summary
-      const summary = await cartService.getCartSummary();
-      dispatch({ type: 'SET_SUMMARY', payload: summary });
-
-      success('Đã xóa khỏi giỏ hàng');
+      dispatch({ type: 'ITEM_REMOVED', payload: productId });
+      await refreshCartCount();
+      success('Đã xóa sản phẩm khỏi giỏ hàng');
     } catch (err: any) {
-      showError(err.message || 'Có lỗi xảy ra khi xóa khỏi giỏ hàng');
+      error(err.message || 'Không thể xóa sản phẩm');
+      throw err;
     }
   };
 
   const clearCart = async () => {
     try {
       await cartService.clearCart();
-      dispatch({ type: 'CLEAR_CART' });
-      success('Đã xóa tất cả sản phẩm');
+      dispatch({ type: 'CART_CLEARED' });
+      success('Đã xóa tất cả sản phẩm khỏi giỏ hàng');
     } catch (err: any) {
-      showError(err.message || 'Có lỗi xảy ra khi xóa giỏ hàng');
+      error(err.message || 'Không thể xóa giỏ hàng');
+      throw err;
     }
   };
 
   const value = {
     state,
+    loadCart,
     addToCart,
     updateCartItem,
     removeFromCart,
     clearCart,
-    refreshCart,
+    refreshCartCount,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

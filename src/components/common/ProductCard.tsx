@@ -14,8 +14,7 @@ import { Product } from '../../types/product';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { cartService } from '../../services/cart.service';
-import { useToastContext } from '../../contexts/ToastContext';
+import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ProductCardProps {
@@ -30,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { success, error } = useToastContext();
+  const { addToCart } = useCart();
   const { state: authState } = useAuth();
 
   const formatPrice = (price: number) => {
@@ -51,21 +50,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleAddToCart = async () => {
     if (!authState.isAuthenticated) {
-      error('Vui lòng đăng nhập để thêm vào giỏ hàng');
       return;
     }
 
     if (product.quantity === 0) {
-      error('Sản phẩm đã hết hàng');
       return;
     }
 
     setIsAddingToCart(true);
     try {
-      await cartService.addToCart(product.id, 1);
-      success('Đã thêm sản phẩm vào giỏ hàng');
+      await addToCart(product.id, 1);
     } catch (err: any) {
-      error(err.message || 'Không thể thêm sản phẩm vào giỏ hàng');
+      // Error already handled in cart context
     } finally {
       setIsAddingToCart(false);
     }

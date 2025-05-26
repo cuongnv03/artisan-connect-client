@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import { Button } from '../ui/Button';
 import {
   MagnifyingGlassIcon,
@@ -18,6 +19,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
   const { state, logout } = useAuth();
+  const { state: cartState } = useCart();
   const { isAuthenticated, user } = state;
   const navigate = useNavigate();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -105,10 +107,12 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                     className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
                   >
                     <ShoppingCartIcon className="h-6 w-6" />
-                    {/* Cart badge */}
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      0
-                    </span>
+                    {/* Cart badge - Now using real cart count */}
+                    {cartState.itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
+                      </span>
+                    )}
                   </Link>
 
                   <Link

@@ -4,13 +4,16 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { router } from './router';
+import { CartProvider } from './contexts/CartContext';
 
 function App() {
   return (
     <HelmetProvider>
       <AuthProvider>
         <ToastProvider>
-          <RouterProvider router={router} />
+          <CartProvider>
+            <RouterProvider router={router} />
+          </CartProvider>
         </ToastProvider>
       </AuthProvider>
     </HelmetProvider>
