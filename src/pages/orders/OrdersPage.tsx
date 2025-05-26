@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
-  FunnelIcon,
-  EyeIcon,
   ArrowPathIcon,
   ClipboardDocumentListIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { orderService } from '../../services/order.service';
-import { Order, OrderStatus } from '../../types/order';
+import { OrderSummary, OrderStatus } from '../../types/order';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -22,8 +21,7 @@ import { Tabs } from '../../components/ui/Tabs';
 
 export const OrdersPage: React.FC = () => {
   const { state } = useAuth();
-  const [buyOrders, setBuyOrders] = useState<Order[]>([]);
-  const [sellOrders, setSellOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('buy');
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,16 +48,16 @@ export const OrdersPage: React.FC = () => {
       let result;
       if (activeTab === 'buy') {
         result = await orderService.getMyOrders(query);
-        setBuyOrders(result.data);
       } else {
         result = await orderService.getSellerOrders(query);
-        setSellOrders(result.data);
       }
 
+      setOrders(result.data);
       setTotalPages(result.meta.totalPages);
       setTotalItems(result.meta.total);
     } catch (error) {
       console.error('Error loading orders:', error);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -127,9 +125,8 @@ export const OrdersPage: React.FC = () => {
     { label: 'Đã hủy', value: OrderStatus.CANCELLED },
   ];
 
-  const currentOrders = activeTab === 'buy' ? buyOrders : sellOrders;
-
-  const renderOrderCard = (order: Order) => (
+  // Render order card theo OrderSummary structure
+  const renderOrderCard = (order: OrderSummary) => (
     <Card key={order.id} className="p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
@@ -146,54 +143,32 @@ export const OrdersPage: React.FC = () => {
           <p className="text-lg font-semibold text-primary">
             {formatPrice(order.totalAmount)}
           </p>
-          <p className="text-sm text-gray-500">{order.items.length} sản phẩm</p>
+          <p className="text-sm text-gray-500">{order.itemCount} sản phẩm</p>
         </div>
       </div>
 
-      {/* Order Items Preview */}
-      <div className="space-y-3 mb-4">
-        {order.items.slice(0, 2).map((item) => (
-          <div key={item.id} className="flex items-center space-x-3">
-            <img
-              src={item.product.images[0] || 'https://via.placeholder.com/60'}
-              alt={item.product.name}
-              className="w-12 h-12 object-cover rounded"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {item.product.name}
-              </p>
-              <p className="text-sm text-gray-500">
-                SL: {item.quantity} x {formatPrice(item.price)}
-              </p>
-              {activeTab === 'buy' && item.seller && (
-                <p className="text-xs text-gray-400">
-                  Bởi {item.seller.firstName} {item.seller.lastName}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {order.items.length > 2 && (
-          <p className="text-sm text-gray-500">
-            và {order.items.length - 2} sản phẩm khác...
+      {/* Customer/Seller info */}
+      {activeTab === 'sell' && order.customer && (
+        <div className="mb-4 p-3 bg-gray-50 rounded">
+          <p className="text-sm font-medium">
+            Khách hàng: {order.customer.name}
           </p>
-        )}
-      </div>
+          <p className="text-xs text-gray-500">{order.customer.email}</p>
+        </div>
+      )}
+
+      {activeTab === 'buy' && order.primarySeller && (
+        <div className="mb-4 p-3 bg-gray-50 rounded">
+          <p className="text-sm font-medium">
+            Người bán: {order.primarySeller.name}
+            {order.primarySeller.shopName &&
+              ` (${order.primarySeller.shopName})`}
+          </p>
+        </div>
+      )}
 
       {/* Order Actions */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="flex items-center space-x-3">
-          {order.trackingNumber && (
-            <Link to={`/orders/tracking/${order.trackingNumber}`}>
-              <Button variant="ghost" size="sm">
-                Theo dõi đơn hàng
-              </Button>
-            </Link>
-          )}
-        </div>
-
+      <div className="flex items-center justify-end pt-4 border-t border-gray-100">
         <Link to={`/orders/${order.id}`}>
           <Button
             variant="outline"
@@ -213,8 +188,8 @@ export const OrdersPage: React.FC = () => {
       label: 'Đơn mua',
       content: (
         <div className="space-y-6">
-          {currentOrders.length > 0 ? (
-            currentOrders.map(renderOrderCard)
+          {orders.length > 0 ? (
+            orders.map(renderOrderCard)
           ) : (
             <EmptyState
               icon={<ClipboardDocumentListIcon className="w-12 h-12" />}
@@ -238,8 +213,8 @@ export const OrdersPage: React.FC = () => {
       label: 'Đơn bán',
       content: (
         <div className="space-y-6">
-          {currentOrders.length > 0 ? (
-            currentOrders.map(renderOrderCard)
+          {orders.length > 0 ? (
+            orders.map(renderOrderCard)
           ) : (
             <EmptyState
               icon={<ClipboardDocumentListIcon className="w-12 h-12" />}

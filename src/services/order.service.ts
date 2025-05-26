@@ -1,19 +1,17 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
 import {
-  Order,
+  OrderSummary,
   OrderWithDetails,
   OrderStatus,
   PaymentMethod,
-  CreateOrderFromCartRequest,
-  CreateOrderFromQuoteRequest,
-  UpdateOrderStatusRequest,
-  ProcessPaymentRequest,
+  OrderStatusHistory,
 } from '../types/order';
 import { PaginatedResponse } from '../types/common';
 
 export interface GetOrdersQuery {
-  status?: OrderStatus;
+  status?: OrderStatus | OrderStatus[];
+  paymentStatus?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -22,75 +20,57 @@ export interface GetOrdersQuery {
   dateTo?: string;
 }
 
-export interface GetOrderStatsQuery {
-  period?: 'day' | 'week' | 'month' | 'year';
-  dateFrom?: string;
-  dateTo?: string;
-}
-
 export const orderService = {
-  // Order creation
-  async createOrderFromCart(
-    data: CreateOrderFromCartRequest,
-  ): Promise<OrderWithDetails> {
-    return await apiClient.post<OrderWithDetails>(
-      API_ENDPOINTS.ORDERS.FROM_CART,
-      data,
-    );
-  },
-
-  async createOrderFromQuote(
-    data: CreateOrderFromQuoteRequest,
-  ): Promise<OrderWithDetails> {
-    return await apiClient.post<OrderWithDetails>(
-      API_ENDPOINTS.ORDERS.FROM_QUOTE,
-      data,
-    );
-  },
-
-  // Order retrieval
+  // Lấy đơn hàng của khách
   async getMyOrders(
     query: GetOrdersQuery = {},
-  ): Promise<PaginatedResponse<Order>> {
-    return await apiClient.get<PaginatedResponse<Order>>(
+  ): Promise<PaginatedResponse<OrderSummary>> {
+    return await apiClient.get<PaginatedResponse<OrderSummary>>(
       API_ENDPOINTS.ORDERS.MY_ORDERS,
       query,
     );
   },
 
+  // Lấy đơn hàng bán
   async getSellerOrders(
     query: GetOrdersQuery = {},
-  ): Promise<PaginatedResponse<Order>> {
-    return await apiClient.get<PaginatedResponse<Order>>(
+  ): Promise<PaginatedResponse<OrderSummary>> {
+    return await apiClient.get<PaginatedResponse<OrderSummary>>(
       API_ENDPOINTS.ORDERS.SELLER_ORDERS,
       query,
     );
   },
 
+  // Lấy chi tiết đơn hàng
   async getOrder(id: string): Promise<OrderWithDetails> {
     return await apiClient.get<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.BY_ID(id),
     );
   },
 
+  // Lấy đơn hàng theo số
   async getOrderByNumber(orderNumber: string): Promise<OrderWithDetails> {
     return await apiClient.get<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.BY_NUMBER(orderNumber),
     );
   },
 
-  async getOrderStatusHistory(id: string): Promise<any[]> {
-    return await apiClient.get<any[]>(API_ENDPOINTS.ORDERS.HISTORY(id));
+  // Lấy lịch sử trạng thái
+  async getOrderStatusHistory(id: string): Promise<OrderStatusHistory[]> {
+    return await apiClient.get<OrderStatusHistory[]>(
+      API_ENDPOINTS.ORDERS.HISTORY(id),
+    );
   },
 
-  async getOrderStats(query: GetOrderStatsQuery = {}): Promise<any> {
-    return await apiClient.get<any>(API_ENDPOINTS.ORDERS.STATS, query);
-  },
-
-  // Order management
+  // Cập nhật trạng thái đơn hàng
   async updateOrderStatus(
     id: string,
-    data: UpdateOrderStatusRequest,
+    data: {
+      status: OrderStatus;
+      note?: string;
+      trackingNumber?: string;
+      estimatedDelivery?: Date;
+    },
   ): Promise<OrderWithDetails> {
     return await apiClient.patch<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.UPDATE_STATUS(id),
@@ -98,22 +78,19 @@ export const orderService = {
     );
   },
 
-  async cancelOrder(id: string, reason?: string): Promise<OrderWithDetails> {
+  // Hủy đơn hàng
+  async cancelOrder(
+    id: string,
+    data: { reason?: string },
+  ): Promise<OrderWithDetails> {
     return await apiClient.post<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.CANCEL(id),
-      {
-        reason,
-      },
+      data,
     );
   },
 
-  async processPayment(
-    id: string,
-    data: ProcessPaymentRequest,
-  ): Promise<OrderWithDetails> {
-    return await apiClient.post<OrderWithDetails>(
-      API_ENDPOINTS.ORDERS.PAYMENT(id),
-      data,
-    );
+  // Thống kê đơn hàng
+  async getOrderStats(query: any = {}): Promise<any> {
+    return await apiClient.get<any>(API_ENDPOINTS.ORDERS.STATS, query);
   },
 };

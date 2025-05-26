@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useToastContext } from '../../contexts/ToastContext';
 import { orderService } from '../../services/order.service';
-import { Order, OrderStatus } from '../../types/order';
+import { OrderWithDetails, OrderStatus } from '../../types/order';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -23,7 +23,7 @@ import { ConfirmModal } from '../../components/ui/Modal';
 export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const { success, error } = useToastContext();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -302,7 +302,7 @@ export const OrderDetailPage: React.FC = () => {
           )}
 
           {/* Tracking */}
-          {order.trackingNumber && (
+          {order.orderNumber && (
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <TruckIcon className="w-5 h-5 mr-2" />
@@ -311,10 +311,10 @@ export const OrderDetailPage: React.FC = () => {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-blue-800 font-medium mb-2">
-                  Mã vận đơn: {order.trackingNumber}
+                  Mã vận đơn: {order.orderNumber}
                 </p>
 
-                <Link to={`/orders/tracking/${order.trackingNumber}`}>
+                <Link to={`/orders/tracking/${order.orderNumber}`}>
                   <Button variant="outline" size="sm">
                     Theo dõi chi tiết
                   </Button>

@@ -1,7 +1,4 @@
 import { BaseEntity } from './common';
-import { User } from './auth';
-import { Address } from './user';
-import { CartItem, CartSummary } from './cart';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -31,7 +28,27 @@ export enum PaymentMethod {
   CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
 }
 
-export interface Order extends BaseEntity {
+export interface OrderSummary {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  totalAmount: number;
+  itemCount: number;
+  createdAt: string; // ISO string
+  customer?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  primarySeller?: {
+    id: string;
+    name: string;
+    shopName?: string;
+  };
+}
+export interface OrderWithDetails {
+  id: string;
   orderNumber: string;
   userId: string;
   addressId?: string;
@@ -44,11 +61,11 @@ export interface Order extends BaseEntity {
   paymentReference?: string;
   notes?: string;
   trackingNumber?: string;
-  estimatedDelivery?: Date;
-  deliveredAt?: Date;
-}
+  estimatedDelivery?: string;
+  deliveredAt?: string;
+  createdAt: string;
+  updatedAt: string;
 
-export interface OrderWithDetails extends Order {
   customer: {
     id: string;
     firstName: string;
@@ -56,21 +73,32 @@ export interface OrderWithDetails extends Order {
     email: string;
     phone?: string;
   };
-  shippingAddress?: Address;
+
+  shippingAddress?: {
+    id: string;
+    fullName: string;
+    phone?: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+
   items: OrderItemWithDetails[];
   statusHistory: OrderStatusHistory[];
   paymentTransactions: PaymentTransaction[];
 }
 
-export interface OrderItem extends BaseEntity {
+export interface OrderItemWithDetails {
+  id: string;
   orderId: string;
   productId: string;
   sellerId: string;
   quantity: number;
   price: number;
-}
+  createdAt: string;
 
-export interface OrderItemWithDetails extends OrderItem {
   product: {
     id: string;
     name: string;
@@ -78,6 +106,7 @@ export interface OrderItemWithDetails extends OrderItem {
     images: string[];
     isCustomizable: boolean;
   };
+
   seller: {
     id: string;
     firstName: string;
@@ -90,14 +119,17 @@ export interface OrderItemWithDetails extends OrderItem {
   };
 }
 
-export interface OrderStatusHistory extends BaseEntity {
+export interface OrderStatusHistory {
+  id: string;
   orderId: string;
   status: OrderStatus;
   note?: string;
   createdBy?: string;
+  createdAt: string;
 }
 
-export interface PaymentTransaction extends BaseEntity {
+export interface PaymentTransaction {
+  id: string;
   orderId: string;
   userId: string;
   paymentMethodId?: string;
@@ -108,32 +140,7 @@ export interface PaymentTransaction extends BaseEntity {
   reference: string;
   externalReference?: string;
   failureReason?: string;
-  processedAt?: Date;
-}
-
-// DTOs
-export interface CreateOrderFromCartRequest {
-  addressId: string;
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-export interface CreateOrderFromQuoteRequest {
-  quoteRequestId: string;
-  addressId: string;
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-export interface UpdateOrderStatusRequest {
-  status: OrderStatus;
-  note?: string;
-  trackingNumber?: string;
-  estimatedDelivery?: Date;
-}
-
-export interface ProcessPaymentRequest {
-  paymentMethodId?: string;
-  paymentReference?: string;
-  externalReference?: string;
+  processedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }

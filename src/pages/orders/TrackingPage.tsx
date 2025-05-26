@@ -9,7 +9,7 @@ import {
   CalendarIcon,
 } from '@heroicons/react/24/outline';
 import { orderService } from '../../services/order.service';
-import { Order } from '../../types/order';
+import { OrderWithDetails } from '../../types/order';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
@@ -24,7 +24,7 @@ interface TrackingEvent {
 
 export const TrackingPage: React.FC = () => {
   const { trackingNumber } = useParams<{ trackingNumber: string }>();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<OrderWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export const TrackingPage: React.FC = () => {
     }
   };
 
-  const generateTrackingEvents = (order: Order): TrackingEvent[] => {
+  const generateTrackingEvents = (order: OrderWithDetails): TrackingEvent[] => {
     const events: TrackingEvent[] = [
       {
         date: order.createdAt,
