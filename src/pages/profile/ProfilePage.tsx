@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   UserPlusIcon,
   ChatBubbleLeftIcon,
@@ -13,6 +13,10 @@ import {
   PencilIcon,
   FunnelIcon,
   ArrowPathIcon,
+  HomeIcon,
+  PlusIcon,
+  TrashIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
@@ -22,6 +26,7 @@ import { productService } from '../../services/product.service';
 import { User } from '../../types/auth';
 import { Post, PostType } from '../../types/post';
 import { Product } from '../../types/product';
+import { Profile, Address } from '../../types/user';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -32,18 +37,50 @@ import { PostCard } from '../../components/common/PostCard';
 import { ProductCard } from '../../components/common/ProductCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Select } from '../../components/ui/Dropdown';
+import { Modal } from '../../components/ui/Modal';
+import { Input } from '../../components/ui/Input';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+import { useToastContext } from '../../contexts/ToastContext';
+import { useForm } from '../../hooks/useForm';
+
+interface AddressFormData {
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
 
 export const ProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId?: string }>();
   const { state: authState } = useAuth();
+  const navigate = useNavigate();
+  const { success, error } = useToastContext();
+
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [followStats, setFollowStats] = useState({
+    followersCount: 0,
+    followingCount: 0,
+    isFollowing: false,
+    isFollowedBy: false,
+  });
+  const [followLoading, setFollowLoading] = useState(false);
+
+  // Address modal states
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [submittingAddress, setSubmittingAddress] = useState(false);
 
   // Posts pagination and filtering
   const [postFilters, setPostFilters] = useState({
@@ -57,6 +94,38 @@ export const ProfilePage: React.FC = () => {
   const isOwnProfile = !userId || userId === authState.user?.id;
   const targetUserId = userId || authState.user?.id;
 
+  // Address form
+  const {
+    values: addressValues,
+    handleChange: handleAddressChange,
+    handleSubmit: handleAddressSubmit,
+    resetForm: resetAddressForm,
+    setFieldValue: setAddressFieldValue,
+    errors: addressErrors,
+  } = useForm<AddressFormData>({
+    initialValues: {
+      fullName: '',
+      phone: '',
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'Việt Nam',
+      isDefault: false,
+    },
+    validate: (values) => {
+      const errors: Record<string, string> = {};
+      if (!values.fullName.trim()) errors.fullName = 'Họ tên là bắt buộc';
+      if (!values.street.trim()) errors.street = 'Địa chỉ cụ thể là bắt buộc';
+      if (!values.city.trim()) errors.city = 'Thành phố là bắt buộc';
+      if (!values.state.trim()) errors.state = 'Tỉnh/Thành phố là bắt buộc';
+      if (!values.zipCode.trim()) errors.zipCode = 'Mã bưu điện là bắt buộc';
+      if (!values.country.trim()) errors.country = 'Quốc gia là bắt buộc';
+      return errors;
+    },
+    onSubmit: handleSaveAddress,
+  });
+
   useEffect(() => {
     if (targetUserId) {
       loadProfile();
@@ -65,7 +134,9 @@ export const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (targetUserId && activeTab === 'posts') {
-      loadPosts(true); // Reset posts when filters change
+      loadPosts(true);
+    } else if (targetUserId && activeTab === 'addresses' && isOwnProfile) {
+      loadAddresses();
     }
   }, [targetUserId, activeTab, postFilters]);
 
@@ -74,30 +145,49 @@ export const ProfilePage: React.FC = () => {
 
     setLoading(true);
     try {
-      // Load user profile
-      const userProfile = isOwnProfile
-        ? authState.user!
-        : await userService.getUserProfile(targetUserId);
+      // Load user profile and follow stats
+      const [userProfile, followStatsData] = await Promise.all([
+        userService.getUserProfile(targetUserId),
+        userService.getFollowStats
+          ? userService.getFollowStats(targetUserId)
+          : Promise.resolve({
+              followersCount: 0,
+              followingCount: 0,
+              isFollowing: false,
+              isFollowedBy: false,
+            }),
+      ]);
+
       setUser(userProfile);
+      setFollowStats(followStatsData);
+
+      // Load user's extended profile if available
+      if (isOwnProfile) {
+        try {
+          const userExtendedProfile = await userService.getProfile();
+          setProfile(userExtendedProfile);
+        } catch (err) {
+          console.log('Extended profile not found');
+        }
+      }
 
       // Load user products if they are artisan (limited for preview)
       if (userProfile.role === 'ARTISAN') {
-        const productsResult = await productService.getProducts({
-          sellerId: targetUserId,
-          limit: 8,
-          sortBy: 'createdAt',
-          sortOrder: 'desc',
-        });
-        setProducts(productsResult.data);
+        try {
+          const productsResult = await productService.getProducts({
+            sellerId: targetUserId,
+            limit: 8,
+            sortBy: 'createdAt',
+            sortOrder: 'desc',
+          });
+          setProducts(productsResult.data);
+        } catch (err) {
+          console.error('Error loading products:', err);
+        }
       }
-
-      // Check following status if not own profile
-      if (!isOwnProfile) {
-        // TODO: Check if current user is following this user
-        setIsFollowing(false);
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      error('Không thể tải thông tin người dùng');
     } finally {
       setLoading(false);
     }
@@ -127,10 +217,25 @@ export const ProfilePage: React.FC = () => {
 
       setHasMorePosts(page < result.meta.totalPages);
       setPostsPage((prev) => (reset ? 2 : prev + 1));
-    } catch (error) {
-      console.error('Error loading posts:', error);
+    } catch (err) {
+      console.error('Error loading posts:', err);
     } finally {
       setLoadingPosts(false);
+    }
+  };
+
+  const loadAddresses = async () => {
+    if (!isOwnProfile) return;
+
+    setLoadingAddresses(true);
+    try {
+      const addressList = await userService.getAddresses();
+      setAddresses(addressList);
+    } catch (err) {
+      console.error('Error loading addresses:', err);
+      error('Không thể tải danh sách địa chỉ');
+    } finally {
+      setLoadingAddresses(false);
     }
   };
 
@@ -148,25 +253,113 @@ export const ProfilePage: React.FC = () => {
   });
 
   const handleFollow = async () => {
-    if (!targetUserId || isOwnProfile) return;
+    if (!targetUserId || isOwnProfile || followLoading) return;
 
+    setFollowLoading(true);
     try {
-      if (isFollowing) {
+      if (followStats.isFollowing) {
         await userService.unfollowUser(targetUserId);
-        setIsFollowing(false);
+        setFollowStats((prev) => ({
+          ...prev,
+          isFollowing: false,
+          followersCount: Math.max(0, prev.followersCount - 1),
+        }));
+        success('Đã bỏ theo dõi');
       } else {
         await userService.followUser(targetUserId);
-        setIsFollowing(true);
+        setFollowStats((prev) => ({
+          ...prev,
+          isFollowing: true,
+          followersCount: prev.followersCount + 1,
+        }));
+        success('Đã theo dõi');
       }
-    } catch (error) {
-      console.error('Error following user:', error);
+    } catch (err: any) {
+      console.error('Error following user:', err);
+      error(err.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+    } finally {
+      setFollowLoading(false);
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!targetUserId || isOwnProfile) return;
+    navigate(`/messages/${targetUserId}`);
   };
 
   const handlePostFilterChange = (key: string, value: any) => {
     setPostFilters((prev) => ({ ...prev, [key]: value }));
     setPostsPage(1);
     setHasMorePosts(true);
+  };
+
+  // Address management functions
+  const openAddAddressModal = () => {
+    setEditingAddress(null);
+    resetAddressForm();
+    setAddressFieldValue(
+      'fullName',
+      `${authState.user?.firstName || ''} ${
+        authState.user?.lastName || ''
+      }`.trim(),
+    );
+    setAddressFieldValue('phone', authState.user?.phone || '');
+    setIsAddressModalOpen(true);
+  };
+
+  const openEditAddressModal = (address: Address) => {
+    setEditingAddress(address);
+    setAddressFieldValue('fullName', address.fullName);
+    setAddressFieldValue('phone', address.phone || '');
+    setAddressFieldValue('street', address.street);
+    setAddressFieldValue('city', address.city);
+    setAddressFieldValue('state', address.state);
+    setAddressFieldValue('zipCode', address.zipCode);
+    setAddressFieldValue('country', address.country);
+    setAddressFieldValue('isDefault', address.isDefault);
+    setIsAddressModalOpen(true);
+  };
+
+  async function handleSaveAddress(data: AddressFormData) {
+    setSubmittingAddress(true);
+    try {
+      if (editingAddress) {
+        await userService.updateAddress(editingAddress.id, data);
+        success('Cập nhật địa chỉ thành công!');
+      } else {
+        await userService.createAddress(data);
+        success('Thêm địa chỉ thành công!');
+      }
+
+      setIsAddressModalOpen(false);
+      loadAddresses();
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setSubmittingAddress(false);
+    }
+  }
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) return;
+
+    try {
+      await userService.deleteAddress(id);
+      success('Xóa địa chỉ thành công!');
+      loadAddresses();
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra khi xóa địa chỉ');
+    }
+  };
+
+  const handleSetDefaultAddress = async (id: string) => {
+    try {
+      await userService.setDefaultAddress(id);
+      success('Đặt làm địa chỉ mặc định thành công!');
+      loadAddresses();
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra');
+    }
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -337,7 +530,7 @@ export const ProfilePage: React.FC = () => {
               isOwnProfile
                 ? {
                     label: 'Tạo bài viết',
-                    onClick: () => (window.location.href = '/create-post'),
+                    onClick: () => navigate('/create-post'),
                   }
                 : postFilters.type
                 ? {
@@ -352,6 +545,107 @@ export const ProfilePage: React.FC = () => {
     </div>
   );
 
+  const addressesTabContent = (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Quản lý địa chỉ
+          </h3>
+          <p className="text-sm text-gray-500">
+            Thêm và quản lý địa chỉ giao hàng của bạn
+          </p>
+        </div>
+        <Button
+          onClick={openAddAddressModal}
+          leftIcon={<PlusIcon className="w-4 h-4" />}
+        >
+          Thêm địa chỉ
+        </Button>
+      </div>
+
+      {/* Address List */}
+      {loadingAddresses ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="md" />
+        </div>
+      ) : addresses.length === 0 ? (
+        <EmptyState
+          icon={<MapPinIcon className="w-16 h-16" />}
+          title="Chưa có địa chỉ nào"
+          description="Thêm địa chỉ để thuận tiện cho việc đặt hàng"
+          action={{
+            label: 'Thêm địa chỉ đầu tiên',
+            onClick: openAddAddressModal,
+          }}
+        />
+      ) : (
+        <div className="space-y-4">
+          {addresses.map((address) => (
+            <Card key={address.id} className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h4 className="font-semibold text-gray-900">
+                      {address.fullName}
+                    </h4>
+                    {address.isDefault && (
+                      <Badge variant="primary" size="sm">
+                        Mặc định
+                      </Badge>
+                    )}
+                  </div>
+
+                  {address.phone && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      📞 {address.phone}
+                    </p>
+                  )}
+
+                  <p className="text-gray-700">
+                    {address.street}, {address.city}, {address.state}{' '}
+                    {address.zipCode}, {address.country}
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {!address.isDefault && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSetDefaultAddress(address.id)}
+                      leftIcon={<CheckIcon className="w-4 h-4" />}
+                    >
+                      Đặt mặc định
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditAddressModal(address)}
+                  >
+                    <PencilIcon className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteAddress(address.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const tabItems = [
     {
       key: 'posts',
@@ -361,6 +655,17 @@ export const ProfilePage: React.FC = () => {
       content: postsTabContent,
     },
   ];
+
+  // Add addresses tab for own profile
+  if (isOwnProfile) {
+    tabItems.push({
+      key: 'addresses',
+      label: 'Địa chỉ',
+      icon: <HomeIcon className="w-4 h-4" />,
+      badge: addresses.length,
+      content: addressesTabContent,
+    });
+  }
 
   // Add products tab for artisans
   if (user.role === 'ARTISAN') {
@@ -407,8 +712,7 @@ export const ProfilePage: React.FC = () => {
                 isOwnProfile
                   ? {
                       label: 'Thêm sản phẩm',
-                      onClick: () =>
-                        (window.location.href = '/products/create'),
+                      onClick: () => navigate('/artisan/products'),
                     }
                   : undefined
               }
@@ -422,127 +726,167 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Profile Header */}
-      <Card className="p-6 mb-8">
+      {/* Profile Header */}
+      <Card className="p-0 mb-8 overflow-hidden">
         {/* Cover Image */}
-        <div className="h-32 bg-gradient-vietnamese rounded-lg mb-6 relative overflow-hidden">
-          <div className="absolute inset-0 pattern-traditional opacity-20"></div>
+        <div className="h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600 relative">
+          {profile?.coverUrl ? (
+            <img
+              src={profile.coverUrl}
+              alt="Cover"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600" />
+          )}
+          <div className="absolute inset-0 bg-black bg-opacity-20" />
         </div>
 
-        {/* Profile Info */}
-        <div className="flex flex-col md:flex-row md:items-start gap-6 -mt-16 relative">
-          {/* Avatar */}
-          <div className="flex-shrink-0">
-            <Avatar
-              src={user.avatarUrl}
-              alt={`${user.firstName} ${user.lastName}`}
-              size="2xl"
-              className="border-4 border-white shadow-lg"
-            />
-          </div>
-
-          {/* User Details */}
-          <div className="flex-1">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {user.firstName} {user.lastName}
-                  </h1>
-                  {user.isVerified && (
-                    <CheckBadgeIcon className="w-6 h-6 text-blue-500" />
-                  )}
-                  <Badge variant={getRoleBadgeVariant(user.role) as any}>
-                    {getRoleDisplayName(user.role)}
-                  </Badge>
-                </div>
-                <p className="text-gray-600 mb-1">@{user.username}</p>
-                {user.bio && <p className="text-gray-700 mb-4">{user.bio}</p>}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                {isOwnProfile ? (
-                  <>
-                    <Link to="/profile/edit">
-                      <Button
-                        variant="outline"
-                        leftIcon={<PencilIcon className="w-4 h-4" />}
-                      >
-                        Chỉnh sửa
-                      </Button>
-                    </Link>
-                    <Link to="/settings">
-                      <Button
-                        variant="outline"
-                        leftIcon={<CogIcon className="w-4 h-4" />}
-                      >
-                        Cài đặt
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant={isFollowing ? 'secondary' : 'primary'}
-                      onClick={handleFollow}
-                      leftIcon={<UserPlusIcon className="w-4 h-4" />}
-                    >
-                      {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      leftIcon={<ChatBubbleLeftIcon className="w-4 h-4" />}
-                    >
-                      Nhắn tin
-                    </Button>
-                  </>
-                )}
-              </div>
+        {/* Profile Info Container */}
+        <div className="px-6 pb-6">
+          {/* Profile Info */}
+          <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-16 relative">
+            {/* Avatar */}
+            <div className="flex-shrink-0 z-10">
+              <Avatar
+                src={user.avatarUrl}
+                alt={`${user.firstName} ${user.lastName}`}
+                size="2xl"
+                className="border-4 border-white shadow-lg bg-white relative z-10"
+              />
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-6 mt-4">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-900">
-                  {user.followerCount || 0}
-                </div>
-                <div className="text-sm text-gray-500">Người theo dõi</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-900">
-                  {user.followingCount || 0}
-                </div>
-                <div className="text-sm text-gray-500">Đang theo dõi</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-semibold text-gray-900">
-                  {posts.length}
-                </div>
-                <div className="text-sm text-gray-500">Bài viết</div>
-              </div>
-              {user.role === 'ARTISAN' && (
-                <div className="text-center">
-                  <div className="text-lg font-semibold text-gray-900">
-                    {products.length}+
+            {/* User Details */}
+            <div className="flex-1 md:mt-16 pt-4">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {user.firstName} {user.lastName}
+                    </h1>
+                    {user.isVerified && (
+                      <CheckBadgeIcon className="w-6 h-6 text-blue-500" />
+                    )}
+                    <Badge variant={getRoleBadgeVariant(user.role) as any}>
+                      {getRoleDisplayName(user.role)}
+                    </Badge>
                   </div>
-                  <div className="text-sm text-gray-500">Sản phẩm</div>
-                </div>
-              )}
-            </div>
+                  <p className="text-gray-600 mb-1">@{user.username}</p>
+                  {user.bio && <p className="text-gray-700 mb-4">{user.bio}</p>}
 
-            {/* Additional Info */}
-            <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-500">
-              {user.phone && (
-                <div className="flex items-center">
-                  <span>📞 {user.phone}</span>
+                  {/* Additional profile info */}
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
+                    {profile?.location && (
+                      <div className="flex items-center">
+                        <MapPinIcon className="w-4 h-4 mr-1" />
+                        <span>{profile.location}</span>
+                      </div>
+                    )}
+                    {profile?.website && (
+                      <div className="flex items-center">
+                        <GlobeAltIcon className="w-4 h-4 mr-1" />
+                        <a
+                          href={profile.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          Website
+                        </a>
+                      </div>
+                    )}
+                    <div className="flex items-center">
+                      <CalendarIcon className="w-4 h-4 mr-1" />
+                      <span>
+                        Tham gia{' '}
+                        {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-6">
+                    <Link
+                      to={`/profile/${user.id}/followers`}
+                      className="text-center hover:text-primary transition-colors"
+                    >
+                      <div className="text-lg font-semibold text-gray-900">
+                        {followStats.followersCount || 0}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Người theo dõi
+                      </div>
+                    </Link>
+                    <Link
+                      to={`/profile/${user.id}/following`}
+                      className="text-center hover:text-primary transition-colors"
+                    >
+                      <div className="text-lg font-semibold text-gray-900">
+                        {followStats.followingCount || 0}
+                      </div>
+                      <div className="text-sm text-gray-500">Đang theo dõi</div>
+                    </Link>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-gray-900">
+                        {posts.length}
+                      </div>
+                      <div className="text-sm text-gray-500">Bài viết</div>
+                    </div>
+                    {user.role === 'ARTISAN' && (
+                      <div className="text-center">
+                        <div className="text-lg font-semibold text-gray-900">
+                          {products.length}+
+                        </div>
+                        <div className="text-sm text-gray-500">Sản phẩm</div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-              <div className="flex items-center">
-                <CalendarIcon className="w-4 h-4 mr-1" />
-                <span>
-                  Tham gia{' '}
-                  {new Date(user.createdAt).toLocaleDateString('vi-VN')}
-                </span>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 md:self-start">
+                  {isOwnProfile ? (
+                    <>
+                      <Link to="/profile/edit">
+                        <Button
+                          variant="outline"
+                          leftIcon={<PencilIcon className="w-4 h-4" />}
+                        >
+                          Chỉnh sửa
+                        </Button>
+                      </Link>
+                      <Link to="/settings">
+                        <Button
+                          variant="outline"
+                          leftIcon={<CogIcon className="w-4 h-4" />}
+                        >
+                          Cài đặt
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant={
+                          followStats.isFollowing ? 'secondary' : 'primary'
+                        }
+                        onClick={handleFollow}
+                        loading={followLoading}
+                        disabled={followLoading}
+                        leftIcon={<UserPlusIcon className="w-4 h-4" />}
+                      >
+                        {followStats.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleSendMessage}
+                        leftIcon={<ChatBubbleLeftIcon className="w-4 h-4" />}
+                      >
+                        Nhắn tin
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -556,6 +900,116 @@ export const ProfilePage: React.FC = () => {
         onChange={setActiveTab}
         variant="line"
       />
+
+      {/* Add/Edit Address Modal */}
+      <Modal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        title={editingAddress ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
+        size="lg"
+      >
+        <form onSubmit={handleAddressSubmit} className="space-y-4">
+          <Input
+            label="Họ và tên"
+            name="fullName"
+            value={addressValues.fullName}
+            onChange={handleAddressChange}
+            error={addressErrors.fullName}
+            required
+          />
+
+          <Input
+            label="Số điện thoại"
+            name="phone"
+            type="tel"
+            value={addressValues.phone}
+            onChange={handleAddressChange}
+            placeholder="Ví dụ: 0987654321"
+          />
+
+          <Input
+            label="Địa chỉ cụ thể"
+            name="street"
+            value={addressValues.street}
+            onChange={handleAddressChange}
+            error={addressErrors.street}
+            required
+            placeholder="Số nhà, tên đường, phường/xã"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Thành phố"
+              name="city"
+              value={addressValues.city}
+              onChange={handleAddressChange}
+              error={addressErrors.city}
+              required
+            />
+
+            <Input
+              label="Tỉnh/Thành phố"
+              name="state"
+              value={addressValues.state}
+              onChange={handleAddressChange}
+              error={addressErrors.state}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Mã bưu điện"
+              name="zipCode"
+              value={addressValues.zipCode}
+              onChange={handleAddressChange}
+              error={addressErrors.zipCode}
+              required
+            />
+
+            <Input
+              label="Quốc gia"
+              name="country"
+              value={addressValues.country}
+              onChange={handleAddressChange}
+              error={addressErrors.country}
+              required
+            />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isDefault"
+              name="isDefault"
+              checked={addressValues.isDefault}
+              onChange={handleAddressChange}
+              className="rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700">
+              Đặt làm địa chỉ mặc định
+            </label>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsAddressModalOpen(false)}
+              disabled={submittingAddress}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="submit"
+              loading={submittingAddress}
+              disabled={submittingAddress}
+            >
+              {editingAddress ? 'Cập nhật' : 'Thêm địa chỉ'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

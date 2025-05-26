@@ -14,6 +14,13 @@ export interface SearchUsersQuery extends SearchParams {
   role?: string;
 }
 
+export interface FollowStatsResponse {
+  followersCount: number;
+  followingCount: number;
+  isFollowing?: boolean;
+  isFollowedBy?: boolean;
+}
+
 export const userService = {
   async getUserProfile(id: string): Promise<User> {
     return await apiClient.get<User>(API_ENDPOINTS.USERS.BY_ID(id));
@@ -68,6 +75,12 @@ export const userService = {
     return await apiClient.get<PaginatedResponse<User>>(
       API_ENDPOINTS.USERS.FOLLOWING(userId),
       { page, limit },
+    );
+  },
+
+  async getFollowStats(userId: string): Promise<FollowStatsResponse> {
+    return await apiClient.get<FollowStatsResponse>(
+      API_ENDPOINTS.USERS.FOLLOW_STATS(userId),
     );
   },
 

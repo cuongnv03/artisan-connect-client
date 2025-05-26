@@ -30,7 +30,6 @@ import { SearchPage } from './pages/shop/SearchPage';
 // Profile pages
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { EditProfilePage } from './pages/profile/EditProfilePage';
-import { AddressPage } from './pages/profile/AddressPage';
 import { SettingsPage } from './pages/profile/SettingsPage';
 
 // Cart & Orders
@@ -223,14 +222,6 @@ export const router = createBrowserRouter(
               element: (
                 <ProtectedRoute>
                   <EditProfilePage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'addresses',
-              element: (
-                <ProtectedRoute>
-                  <AddressPage />
                 </ProtectedRoute>
               ),
             },
