@@ -10,6 +10,7 @@ import {
   ShieldCheckIcon,
   TruckIcon,
   ArrowPathIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import {
   HeartIcon as HeartIconSolid,
@@ -528,10 +529,17 @@ export const ProductDetailPage: React.FC = () => {
                   onClick={handleAddToCart}
                   loading={addingToCart}
                   disabled={product.quantity === 0}
-                  leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
+                  variant={product.quantity === 0 ? 'secondary' : 'primary'}
+                  leftIcon={
+                    product.quantity === 0 ? (
+                      <XMarkIcon className="w-4 h-4" />
+                    ) : (
+                      <ShoppingCartIcon className="w-4 h-4" />
+                    )
+                  }
                   className="flex-1"
                 >
-                  Thêm vào giỏ
+                  {product.quantity === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
                 </Button>
 
                 <Button

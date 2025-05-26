@@ -85,6 +85,12 @@ export const ShopPage: React.FC = () => {
         ...filters,
       };
 
+      // Map filter.category thành categoryId cho API
+      if (filters.category) {
+        params.categoryId = filters.category;
+        delete params.category; // Xóa key category để tránh confusion
+      }
+
       if (debouncedQuery) {
         params.q = debouncedQuery;
         setSearchParams({ q: debouncedQuery });
