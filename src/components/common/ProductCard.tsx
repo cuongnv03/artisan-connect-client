@@ -81,14 +81,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="relative aspect-square overflow-hidden bg-gray-100">
         <Link to={`/products/${product.slug || product.id}`}>
           <img
-            src={product.images[currentImageIndex] || product.images[0]}
+            src={
+              product.images?.[currentImageIndex] ||
+              product.images?.[0] ||
+              '/placeholder-image.jpg'
+            }
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
 
         {/* Image Indicators */}
-        {product.images.length > 1 && (
+        {product.images && product.images.length > 1 && (
           <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
             <div className="flex space-x-1">
               {product.images.slice(0, 5).map((_, index) => (
@@ -176,7 +180,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Tags */}
-        {product.tags.length > 0 && (
+        {product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {product.tags.slice(0, 2).map((tag) => (
               <Badge key={tag} variant="secondary" size="sm">

@@ -23,7 +23,14 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!images || images.length === 0) {
-    return null;
+    return (
+      <div
+        className={`${className} bg-gray-200 rounded-lg flex items-center justify-center`}
+        style={{ height: maxHeight }}
+      >
+        <p className="text-gray-500">Không có hình ảnh</p>
+      </div>
+    );
   }
 
   const goToPrevious = () => {

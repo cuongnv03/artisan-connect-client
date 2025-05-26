@@ -69,19 +69,32 @@ export const reviewService = {
   async getProductReviews(
     productId: string,
     query: Omit<GetReviewsQuery, 'productId'> = {},
-  ): Promise<PaginatedResponse<Review>> {
-    return await apiClient.get<PaginatedResponse<Review>>(
+  ): Promise<any> {
+    const response = await apiClient.get<any>(
       API_ENDPOINTS.REVIEWS.PRODUCT_REVIEWS(productId),
       query,
     );
+
+    if (response.reviews && response.reviews.data) {
+      return {
+        data: response.reviews.data,
+        meta: response.reviews.meta,
+        statistics: response.statistics,
+      };
+    }
+
+    // Fallback for direct structure
+    return response;
   },
 
   async getProductReviewStatistics(
     productId: string,
   ): Promise<ReviewStatistics> {
-    return await apiClient.get<ReviewStatistics>(
+    const response = await apiClient.get<any>(
       API_ENDPOINTS.REVIEWS.PRODUCT_STATS(productId),
     );
+
+    return response.statistics || response;
   },
 
   async getUserReviews(
@@ -117,8 +130,11 @@ export const reviewService = {
         `${API_ENDPOINTS.REVIEWS.BASE}/user-product/${productId}`,
       );
     } catch (error: any) {
-      if (error.status === 404) return null;
-      throw error;
+      if (error.status === 404 || error.response?.status === 404) {
+        return null;
+      }
+      console.warn('Error checking user review status:', error);
+      return null;
     }
   },
 };

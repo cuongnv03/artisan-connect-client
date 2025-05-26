@@ -47,8 +47,8 @@ export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { state: authState } = useAuth();
   const { success, error } = useToastContext();
-  const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [product, setProduct] = useState<Product | null>(null);
   const [reviewStats, setReviewStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -63,11 +63,16 @@ export const ProductDetailPage: React.FC = () => {
   useEffect(() => {
     if (productId) {
       loadProduct();
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (product?.id) {
       loadReviews();
       loadReviewStats();
       checkReviewStatus();
     }
-  }, [productId]);
+  }, [product?.id, authState.user]);
 
   const loadProduct = async () => {
     if (!productId) return;
@@ -93,19 +98,18 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const checkReviewStatus = async () => {
-    if (!productId || !authState.user) return;
+    if (!product?.id || !authState.user) return;
 
     try {
-      // Check if user has reviewed this product
       const existingReview = await reviewService.getReviewByUserAndProduct(
-        productId,
+        product.id,
       );
       setHasReviewed(!!existingReview);
 
       // Check if user can review (has purchased)
       const reviewableProducts = await reviewService.getReviewableProducts();
       const canReviewProduct = reviewableProducts.some(
-        (p) => p.productId === productId,
+        (p) => p.productId === product.id,
       );
       setCanReview(canReviewProduct);
     } catch (err) {
@@ -114,25 +118,35 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const loadReviews = async () => {
-    if (!productId) return;
+    if (!product?.id) return;
 
     try {
-      const reviewsResult = await reviewService.getProductReviews(productId, {
+      const reviewsResult = await reviewService.getProductReviews(product.id, {
         limit: 5,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       });
-      setReviews(reviewsResult.data);
+
+      const reviewsData =
+        reviewsResult.reviews?.data ||
+        reviewsResult.data ||
+        reviewsResult ||
+        [];
+      setReviews(reviewsData);
     } catch (err) {
       console.error('Error loading reviews:', err);
+      setReviews([]);
     }
   };
 
   const loadReviewStats = async () => {
-    if (!productId) return;
+    if (!product?.id) return;
 
     try {
-      const stats = await reviewService.getProductReviewStatistics(productId);
+      const statsResult = await reviewService.getProductReviewStatistics(
+        product.id,
+      );
+      const stats = statsResult.statistics || statsResult;
       setReviewStats(stats);
     } catch (err) {
       console.error('Error loading review stats:', err);
@@ -355,13 +369,13 @@ export const ProductDetailPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Product Images */}
-        <div>
+        {product?.images && product.images.length > 0 && (
           <ImageGallery
             images={product.images}
             maxHeight="500px"
             showThumbnails={true}
           />
-        </div>
+        )}
 
         {/* Product Info */}
         <div>
@@ -446,7 +460,7 @@ export const ProductDetailPage: React.FC = () => {
           )}
 
           {/* Tags */}
-          {product.tags.length > 0 && (
+          {product?.tags && product.tags.length > 0 && (
             <div className="mb-6">
               <h3 className="font-semibold text-gray-900 mb-2">Thẻ</h3>
               <div className="flex flex-wrap gap-2">
@@ -630,54 +644,54 @@ export const ProductDetailPage: React.FC = () => {
 
         {/* Reviews List */}
         <div className="space-y-4">
-          {reviews.map((review) => (
-            <div
-              key={review.id}
-              className="border-b border-gray-200 pb-4 last:border-b-0"
-            >
-              <div className="flex items-start">
-                <Avatar
-                  src={review.user?.avatarUrl}
-                  alt={`${review.user?.firstName} ${review.user?.lastName}`}
-                  size="md"
-                />
-                <div className="ml-3 flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {review.user?.firstName} {review.user?.lastName}
-                      </p>
-                      <div className="flex items-center">
-                        {renderStarRating(review.rating, 'sm')}
-                        <span className="ml-2 text-sm text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString(
-                            'vi-VN',
-                          )}
-                        </span>
+          {reviews && reviews.length > 0 ? (
+            reviews.map((review) => (
+              <div
+                key={review.id}
+                className="border-b border-gray-200 pb-4 last:border-b-0"
+              >
+                <div className="flex items-start">
+                  <Avatar
+                    src={review.user?.avatarUrl}
+                    alt={`${review.user?.firstName} ${review.user?.lastName}`}
+                    size="md"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {review.user?.firstName} {review.user?.lastName}
+                        </p>
+                        <div className="flex items-center">
+                          {renderStarRating(review.rating, 'sm')}
+                          <span className="ml-2 text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString(
+                              'vi-VN',
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {review.title && (
+                      <h4 className="font-medium text-gray-900 mb-1">
+                        {review.title}
+                      </h4>
+                    )}
+
+                    {review.comment && (
+                      <p className="text-gray-700">{review.comment}</p>
+                    )}
                   </div>
-
-                  {review.title && (
-                    <h4 className="font-medium text-gray-900 mb-1">
-                      {review.title}
-                    </h4>
-                  )}
-
-                  {review.comment && (
-                    <p className="text-gray-700">{review.comment}</p>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-center text-gray-500 py-8">
+              Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!
+            </p>
+          )}
         </div>
-
-        {reviews.length === 0 && (
-          <p className="text-center text-gray-500 py-8">
-            Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!
-          </p>
-        )}
       </Card>
 
       {/* Quote Request Modal */}

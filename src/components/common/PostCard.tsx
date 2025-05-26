@@ -228,13 +228,6 @@ export const PostCard: React.FC<PostCardProps> = ({
           </h2>
         </Link>
 
-        {post.summary && (
-          <p className="text-gray-600 mb-3">
-            {compact ? post.summary.substring(0, 150) : post.summary}
-            {compact && post.summary.length > 150 && '...'}
-          </p>
-        )}
-
         {renderContent()}
       </div>
 
