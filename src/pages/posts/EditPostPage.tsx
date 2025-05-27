@@ -10,6 +10,10 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Select } from '../../components/ui/Dropdown';
 import { ContentEditor } from '../../components/common/ContentEditor';
+import {
+  ProductMentionSelector,
+  ProductMentionData,
+} from '../../components/common/ProductMentionSelector';
 import { FileUpload } from '../../components/common/FileUpload';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Post, PostType, ContentBlock } from '../../types/post';
@@ -27,6 +31,9 @@ export const EditPostPage: React.FC = () => {
   const { success, error } = useToastContext();
   const [post, setPost] = useState<Post | null>(null);
   const [content, setContent] = useState<ContentBlock[]>([]);
+  const [productMentions, setProductMentions] = useState<ProductMentionData[]>(
+    [],
+  );
   const [coverImages, setCoverImages] = useState<File[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +77,19 @@ export const EditPostPage: React.FC = () => {
         },
       }));
       setContent(editorContent);
+
+      // Load product mentions
+      if (postData.productMentions) {
+        const mentions: ProductMentionData[] = postData.productMentions.map(
+          (mention: any) => ({
+            productId: mention.productId,
+            contextText: mention.contextText || '',
+            position: mention.position || 0,
+            product: mention.product,
+          }),
+        );
+        setProductMentions(mentions);
+      }
 
       // Initialize form values
       setFieldValue('title', postData.title);
@@ -147,6 +167,11 @@ export const EditPostPage: React.FC = () => {
         coverImage: coverImageUrl,
         mediaUrls,
         tags: values.tags,
+        productMentions: productMentions.map((mention) => ({
+          productId: mention.productId,
+          contextText: mention.contextText,
+          position: mention.position,
+        })),
       });
 
       success('Bài viết đã được cập nhật thành công!');
@@ -374,6 +399,14 @@ export const EditPostPage: React.FC = () => {
           {touched.content && errors.content && (
             <p className="mt-2 text-sm text-red-600">{errors.content}</p>
           )}
+        </Card>
+
+        {/* Product Mentions */}
+        <Card className="p-6">
+          <ProductMentionSelector
+            mentions={productMentions}
+            onChange={setProductMentions}
+          />
         </Card>
 
         {/* Additional Media */}

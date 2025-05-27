@@ -47,6 +47,35 @@ export interface ContentBlock {
   order: number;
 }
 
+export interface ProductMention {
+  id: string;
+  postId: string;
+  productId: string;
+  contextText?: string;
+  position?: number;
+  product: {
+    id: string;
+    name: string;
+    slug?: string;
+    images: string[];
+    price: number;
+    discountPrice?: number;
+    status: string;
+    avgRating?: number;
+    reviewCount: number;
+    seller: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      avatarUrl?: string;
+      artisanProfile?: {
+        shopName: string;
+        isVerified: boolean;
+      };
+    };
+  };
+}
+
 export interface Post extends SoftDeleteEntity {
   userId: string;
   title: string;
@@ -69,6 +98,7 @@ export interface Post extends SoftDeleteEntity {
   isLiked?: boolean;
   isSaved?: boolean;
   canEdit?: boolean;
+  productMentions?: ProductMention[];
 }
 
 export interface PostAnalytics extends BaseEntity {
@@ -91,6 +121,11 @@ export interface CreatePostRequest {
   mediaUrls?: string[];
   tags?: string[];
   publishNow?: boolean;
+  productMentions?: Array<{
+    productId: string;
+    contextText?: string;
+    position: number;
+  }>;
 }
 
 export interface UpdatePostRequest extends Partial<CreatePostRequest> {}

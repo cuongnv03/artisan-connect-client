@@ -45,6 +45,7 @@ export const CheckoutPage: React.FC = () => {
   const [processing, setProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [orderData, setOrderData] = useState<CheckoutFormData | null>(null);
+  const [customOrderData, setCustomOrderData] = useState<any>(null);
 
   const { values, handleChange, handleSubmit, setFieldValue, errors } =
     useForm<CheckoutFormData>({
@@ -110,6 +111,47 @@ export const CheckoutPage: React.FC = () => {
     loadCheckoutData();
   }, []);
 
+  useEffect(() => {
+    // Check for custom order data
+    const savedCustomOrder = sessionStorage.getItem('customOrderData');
+    if (savedCustomOrder) {
+      try {
+        const data = JSON.parse(savedCustomOrder);
+        setCustomOrderData(data);
+        // Clear from session storage
+        sessionStorage.removeItem('customOrderData');
+      } catch (err) {
+        console.error('Error parsing custom order data:', err);
+      }
+    }
+
+    if (!customOrderData) {
+      loadCheckoutData();
+    } else {
+      loadCheckoutDataForCustomOrder();
+    }
+  }, [customOrderData]);
+
+  const loadCheckoutDataForCustomOrder = async () => {
+    try {
+      // Load addresses for custom order
+      const addressList = await userService.getAddresses();
+      setAddresses(addressList);
+
+      const defaultAddress = addressList.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        setFieldValue('addressId', defaultAddress.id);
+      } else if (addressList.length > 0) {
+        setFieldValue('addressId', addressList[0].id);
+      }
+    } catch (err: any) {
+      console.error('Error loading checkout data for custom order:', err);
+      error('Có lỗi xảy ra khi tải dữ liệu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadCheckoutData = async () => {
     try {
       // Check if cart has items
@@ -155,24 +197,40 @@ export const CheckoutPage: React.FC = () => {
   async function handlePlaceOrder(data: CheckoutFormData) {
     setProcessing(true);
     try {
-      if (data.paymentMethod === PaymentMethod.CASH_ON_DELIVERY) {
-        // Direct order creation for COD
-        const order = await orderService.createOrderFromCart({
+      let order;
+
+      if (customOrderData) {
+        // Create order from custom order
+        order = await orderService.createOrderFromQuote({
+          quoteRequestId: customOrderData.negotiationId, // Might need to adjust this
           addressId: data.addressId,
           paymentMethod: data.paymentMethod,
-          notes: data.notes,
+          notes:
+            data.notes ||
+            `Custom order: ${customOrderData.proposal.productName}`,
         });
-
-        // Clear cart after successful order
-        await clearCart();
-
-        success('Đặt hàng thành công!');
-        navigate(`/orders/${order.id}`);
       } else {
-        // Store order data and show payment modal
-        setOrderData(data);
-        setShowPaymentModal(true);
+        // Regular cart order
+        if (data.paymentMethod === PaymentMethod.CASH_ON_DELIVERY) {
+          order = await orderService.createOrderFromCart({
+            addressId: data.addressId,
+            paymentMethod: data.paymentMethod,
+            notes: data.notes,
+          });
+        } else {
+          setOrderData(data);
+          setShowPaymentModal(true);
+          setProcessing(false);
+          return;
+        }
       }
+
+      if (!customOrderData) {
+        await clearCart();
+      }
+
+      success('Đặt hàng thành công!');
+      navigate(`/orders/${order.id}`);
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra khi đặt hàng');
     } finally {
@@ -258,6 +316,80 @@ export const CheckoutPage: React.FC = () => {
       </div>
     );
   }
+
+  // Render custom order summary if available
+  const renderCustomOrderSummary = () => {
+    if (!customOrderData) return null;
+
+    const { proposal } = customOrderData;
+
+    return (
+      <Card className="p-6 sticky top-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Custom Order Summary
+        </h2>
+
+        <div className="space-y-4 mb-6">
+          <div className="border-b pb-4">
+            <h4 className="font-medium text-gray-900 mb-2">
+              {proposal.productName}
+            </h4>
+            <p className="text-sm text-gray-600 mb-3">{proposal.description}</p>
+
+            <div className="flex items-center space-x-4 text-sm">
+              <span>Thời gian: {proposal.estimatedDuration}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Giá sản phẩm</span>
+            <span className="font-medium">
+              {formatPrice(proposal.estimatedPrice)}
+            </span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-600">Phí vận chuyển</span>
+            <span className="font-medium">Miễn phí</span>
+          </div>
+
+          <hr />
+
+          <div className="flex justify-between text-lg font-semibold">
+            <span>Tổng cộng</span>
+            <span className="text-primary">
+              {formatPrice(proposal.estimatedPrice)}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <Button
+            type="submit"
+            fullWidth
+            loading={processing}
+            disabled={addresses.length === 0}
+            leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
+          >
+            {values.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
+              ? 'Đặt hàng Custom'
+              : 'Thanh toán Custom Order'}
+          </Button>
+        </form>
+
+        {selectedAddress && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center text-sm text-gray-600">
+              <TruckIcon className="w-4 h-4 mr-2" />
+              <span>Giao hàng đến: {selectedAddress.city}</span>
+            </div>
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   const { summary } = cartState;
 
@@ -407,104 +539,108 @@ export const CheckoutPage: React.FC = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <Card className="p-6 sticky top-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Tóm tắt đơn hàng
-            </h2>
+          {customOrderData ? (
+            renderCustomOrderSummary()
+          ) : (
+            <Card className="p-6 sticky top-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Tóm tắt đơn hàng
+              </h2>
 
-            {/* Order items by seller */}
-            <div className="space-y-4 mb-6">
-              {summary.groupedBySeller.map((sellerGroup) => (
-                <div
-                  key={sellerGroup.sellerId}
-                  className="border-b pb-4 last:border-b-0"
-                >
-                  <h4 className="font-medium text-sm text-gray-700 mb-2">
-                    {sellerGroup.sellerInfo.shopName ||
-                      sellerGroup.sellerInfo.name}
-                  </h4>
-                  {sellerGroup.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center space-x-3 mb-2"
-                    >
-                      <img
-                        src={
-                          item.product?.images?.[0] ||
-                          'https://via.placeholder.com/60'
-                        }
-                        alt={item.product?.name || 'Product'}
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {item.product?.name || 'Unknown Product'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          SL: {item.quantity} x{' '}
-                          {formatPrice(
-                            item.product?.discountPrice ||
-                              item.product?.price ||
-                              item.price,
-                          )}
-                        </p>
+              {/* Order items by seller */}
+              <div className="space-y-4 mb-6">
+                {summary.groupedBySeller.map((sellerGroup) => (
+                  <div
+                    key={sellerGroup.sellerId}
+                    className="border-b pb-4 last:border-b-0"
+                  >
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">
+                      {sellerGroup.sellerInfo.shopName ||
+                        sellerGroup.sellerInfo.name}
+                    </h4>
+                    {sellerGroup.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center space-x-3 mb-2"
+                      >
+                        <img
+                          src={
+                            item.product?.images?.[0] ||
+                            'https://via.placeholder.com/60'
+                          }
+                          alt={item.product?.name || 'Product'}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {item.product?.name || 'Unknown Product'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            SL: {item.quantity} x{' '}
+                            {formatPrice(
+                              item.product?.discountPrice ||
+                                item.product?.price ||
+                                item.price,
+                            )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Tạm tính</span>
+                  <span className="font-medium">
+                    {formatPrice(summary.subtotal)}
+                  </span>
                 </div>
-              ))}
-            </div>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tạm tính</span>
-                <span className="font-medium">
-                  {formatPrice(summary.subtotal)}
-                </span>
-              </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Phí vận chuyển</span>
+                  <span className="font-medium">
+                    {summary.total > summary.subtotal
+                      ? formatPrice(summary.total - summary.subtotal)
+                      : 'Miễn phí'}
+                  </span>
+                </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-600">Phí vận chuyển</span>
-                <span className="font-medium">
-                  {summary.total > summary.subtotal
-                    ? formatPrice(summary.total - summary.subtotal)
-                    : 'Miễn phí'}
-                </span>
-              </div>
+                <hr />
 
-              <hr />
-
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Tổng cộng</span>
-                <span className="text-primary">
-                  {formatPrice(summary.total)}
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              <Button
-                type="submit"
-                fullWidth
-                loading={processing}
-                disabled={addresses.length === 0}
-                leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
-              >
-                {values.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
-                  ? 'Đặt hàng'
-                  : 'Thanh toán'}
-              </Button>
-            </form>
-
-            {selectedAddress && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center text-sm text-gray-600">
-                  <TruckIcon className="w-4 h-4 mr-2" />
-                  <span>Giao hàng đến: {selectedAddress.city}</span>
+                <div className="flex justify-between text-lg font-semibold">
+                  <span>Tổng cộng</span>
+                  <span className="text-primary">
+                    {formatPrice(summary.total)}
+                  </span>
                 </div>
               </div>
-            )}
-          </Card>
+
+              <form onSubmit={handleSubmit}>
+                <Button
+                  type="submit"
+                  fullWidth
+                  loading={processing}
+                  disabled={addresses.length === 0}
+                  leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
+                >
+                  {values.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
+                    ? 'Đặt hàng'
+                    : 'Thanh toán'}
+                </Button>
+              </form>
+
+              {selectedAddress && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <TruckIcon className="w-4 h-4 mr-2" />
+                    <span>Giao hàng đến: {selectedAddress.city}</span>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
         </div>
       </div>
 

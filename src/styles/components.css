@@ -465,6 +465,24 @@
   overflow: hidden;
 }
 
+/* Product mention card styles */
+.product-mention-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.product-mention-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.product-mention-context {
+  background: linear-gradient(90deg, #f9fafb 0%, #ffffff 100%);
+  border-left: 3px solid #d4292f;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-style: italic;
+}
+
 /* Animation keyframes */
 @keyframes fadeIn {
   from {

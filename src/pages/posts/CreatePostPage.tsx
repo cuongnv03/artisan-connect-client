@@ -10,6 +10,10 @@ import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Select } from '../../components/ui/Dropdown';
 import { ContentEditor } from '../../components/common/ContentEditor';
+import {
+  ProductMentionSelector,
+  ProductMentionData,
+} from '../../components/common/ProductMentionSelector';
 import { FileUpload } from '../../components/common/FileUpload';
 import { PostType, ContentBlock, BlockType } from '../../types/post';
 
@@ -24,6 +28,9 @@ export const CreatePostPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToastContext();
   const [content, setContent] = useState<ContentBlock[]>([]);
+  const [productMentions, setProductMentions] = useState<ProductMentionData[]>(
+    [],
+  );
   const [coverImages, setCoverImages] = useState<File[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -180,6 +187,11 @@ export const CreatePostPage: React.FC = () => {
         mediaUrls,
         tags: values.tags,
         publishNow: false,
+        productMentions: productMentions.map((mention) => ({
+          productId: mention.productId,
+          contextText: mention.contextText,
+          position: mention.position,
+        })),
       };
 
       console.log('Sending post data:', JSON.stringify(postData, null, 2));
@@ -373,6 +385,14 @@ export const CreatePostPage: React.FC = () => {
           {errors.content && (
             <p className="mt-2 text-sm text-red-600">{errors.content}</p>
           )}
+        </Card>
+
+        {/* Product Mentions */}
+        <Card className="p-6">
+          <ProductMentionSelector
+            mentions={productMentions}
+            onChange={setProductMentions}
+          />
         </Card>
 
         {/* Media Gallery */}

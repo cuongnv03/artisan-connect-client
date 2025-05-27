@@ -28,8 +28,30 @@ export interface SendCustomOrderRequest {
   originalMessageId?: string;
   receiverId?: string;
   content?: string;
-  proposal?: any;
-  response?: any;
+  proposal?: {
+    productName: string;
+    description: string;
+    estimatedPrice: number;
+    estimatedDuration: string;
+    specifications?: Record<string, string>;
+    materials?: string[];
+    dimensions?: string;
+    colorPreferences?: string[];
+    deadline?: Date;
+  };
+  response?: {
+    accepted: boolean;
+    message: string;
+    counterOffer?: {
+      price: number;
+      duration: string;
+      modifications: string;
+      conditions?: string[];
+    };
+    canProceed?: boolean;
+    requiresMoreInfo?: boolean;
+    additionalQuestions?: string[];
+  };
   orderData?: any;
 }
 

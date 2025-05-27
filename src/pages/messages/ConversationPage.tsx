@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   PaperAirplaneIcon,
@@ -7,10 +7,12 @@ import {
   PlusIcon,
   PhoneIcon,
   InformationCircleIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocketContext } from '../../contexts/SocketContext';
 import { messageService } from '../../services/message.service';
+import { orderService } from '../../services/order.service';
 import { userService } from '../../services/user.service';
 import { Message, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
@@ -21,6 +23,9 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { useForm } from '../../hooks/useForm';
 import { useToastContext } from '../../contexts/ToastContext';
 import { formatRelativeTime } from '../../utils/format';
+import { CustomOrderProposalForm } from '../../components/common/CustomOrderProposalForm';
+import { CustomOrderDisplay } from '../../components/common/CustomOrderDisplay';
+import { CustomOrderCard } from '../../components/common/CustomOrderCard';
 
 interface MessageFormData {
   content: string;
@@ -28,9 +33,10 @@ interface MessageFormData {
 
 export const ConversationPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const { state } = useAuth();
   const { socket, onlineUsers } = useSocketContext();
-  const { error: showError } = useToastContext();
+  const { error: showError, success: showSuccess } = useToastContext();
   const [messages, setMessages] = useState<Message[]>([]);
   const [participant, setParticipant] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +46,8 @@ export const ConversationPage: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [participantTyping, setParticipantTyping] = useState(false);
+  const [showCustomOrderForm, setShowCustomOrderForm] = useState(false);
+  const [customOrderLoading, setCustomOrderLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<number>();
@@ -265,6 +273,226 @@ export const ConversationPage: React.FC = () => {
     }
   }
 
+  const handleSendCustomOrder = async (proposal: any) => {
+    if (!userId) return;
+
+    setCustomOrderLoading(true);
+    try {
+      // Gửi message với metadata structured để render CustomOrderCard
+      await messageService.sendMessage({
+        receiverId: userId,
+        content: `🛠️ Tôi có một đề xuất custom order cho bạn: "${proposal.productName}"`,
+        type: MessageType.CUSTOM_ORDER,
+        metadata: {
+          type: 'custom_order_proposal',
+          negotiationId: `custom_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 9)}`,
+          proposal: {
+            ...proposal,
+            // Ensure deadline is string if it exists
+            deadline: proposal.deadline
+              ? proposal.deadline.toISOString()
+              : undefined,
+          },
+          status: 'pending',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      showSuccess('Đề xuất custom order đã được gửi');
+      setShowCustomOrderForm(false);
+    } catch (error: any) {
+      showError(error.message || 'Không thể gửi đề xuất custom order');
+    } finally {
+      setCustomOrderLoading(false);
+    }
+  };
+
+  // src/pages/messages/ConversationPage.tsx (updated handlers)
+  const handleAcceptCustomOrder = async (
+    negotiationId: string,
+    proposal: any,
+  ) => {
+    if (!userId) return;
+
+    setSending(true);
+    try {
+      // Gửi message response
+      await messageService.sendMessage({
+        receiverId: userId,
+        content: `✅ Tôi đồng ý với đề xuất "${proposal.productName}". Hãy tiến hành thanh toán!`,
+        type: MessageType.CUSTOM_ORDER,
+        metadata: {
+          type: 'custom_order_response',
+          negotiationId,
+          originalProposal: proposal,
+          response: {
+            accepted: true,
+            message: 'Đề xuất được chấp nhận',
+            canProceed: true,
+          },
+          status: 'accepted',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      showSuccess('Đã chấp nhận đề xuất custom order');
+
+      // Update local message status if needed
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.metadata?.negotiationId === negotiationId) {
+            return {
+              ...msg,
+              metadata: {
+                ...msg.metadata,
+                status: 'accepted',
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+    } catch (error: any) {
+      showError(error.message || 'Không thể chấp nhận đề xuất');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleDeclineCustomOrder = async (
+    negotiationId: string,
+    reason?: string,
+  ) => {
+    if (!userId) return;
+
+    setSending(true);
+    try {
+      await messageService.sendMessage({
+        receiverId: userId,
+        content: `❌ Tôi từ chối đề xuất này.${
+          reason ? ` Lý do: ${reason}` : ''
+        }`,
+        type: MessageType.CUSTOM_ORDER,
+        metadata: {
+          type: 'custom_order_response',
+          negotiationId,
+          response: {
+            accepted: false,
+            message: reason || 'Đề xuất bị từ chối',
+            canProceed: false,
+          },
+          status: 'declined',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      showSuccess('Đã từ chối đề xuất custom order');
+
+      // Update local message status
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.metadata?.negotiationId === negotiationId) {
+            return {
+              ...msg,
+              metadata: {
+                ...msg.metadata,
+                status: 'declined',
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+    } catch (error: any) {
+      showError(error.message || 'Không thể từ chối đề xuất');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleRequestChanges = async (
+    negotiationId: string,
+    changes: string,
+  ) => {
+    if (!userId) return;
+
+    setSending(true);
+    try {
+      await messageService.sendMessage({
+        receiverId: userId,
+        content: `🔄 Tôi muốn yêu cầu một số thay đổi: ${changes}`,
+        type: MessageType.CUSTOM_ORDER,
+        metadata: {
+          type: 'custom_order_response',
+          negotiationId,
+          response: {
+            accepted: false,
+            message: `Yêu cầu thay đổi: ${changes}`,
+            canProceed: false,
+            requiresMoreInfo: true,
+            additionalQuestions: [changes],
+          },
+          status: 'negotiating',
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      showSuccess('Đã gửi yêu cầu thay đổi');
+
+      // Update local message status
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.metadata?.negotiationId === negotiationId) {
+            return {
+              ...msg,
+              metadata: {
+                ...msg.metadata,
+                status: 'negotiating',
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+    } catch (error: any) {
+      showError(error.message || 'Không thể gửi yêu cầu thay đổi');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleCustomOrderResponse = async (
+    originalMessageId: string,
+    response: any,
+  ) => {
+    if (!userId) return;
+
+    try {
+      await messageService.sendCustomOrder({
+        type: 'response',
+        customerId: userId,
+        originalMessageId,
+        response,
+      });
+
+      showSuccess('Phản hồi đã được gửi');
+    } catch (error: any) {
+      showError(error.message || 'Không thể gửi phản hồi');
+    }
+  };
+
+  const handleCreateOrderFromNegotiation = async (negotiationId: string) => {
+    try {
+      // Tích hợp với address selection và payment method
+      // Có thể mở modal để chọn địa chỉ và phương thức thanh toán
+      showSuccess('Chức năng tạo đơn hàng sẽ được triển khai');
+    } catch (error: any) {
+      showError(error.message || 'Không thể tạo đơn hàng');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -306,6 +534,7 @@ export const ConversationPage: React.FC = () => {
     return userId ? onlineUsers.has(userId) : false;
   };
 
+  // src/pages/messages/ConversationPage.tsx (updated renderMessage)
   const renderMessage = (message: Message, index: number) => {
     const isOwn = message.senderId === state.user?.id;
     const prevMessage = messages[index - 1];
@@ -346,50 +575,106 @@ export const ConversationPage: React.FC = () => {
           <div
             className={`max-w-xs lg:max-w-md ${isOwn ? 'order-1' : 'order-2'}`}
           >
-            <div
-              className={`px-4 py-2 rounded-lg ${
-                isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
-              }`}
-            >
-              {message.type === MessageType.IMAGE ? (
-                <div>
-                  <img
-                    src={message.metadata?.mediaUrl || message.metadata?.url}
-                    alt="Shared image"
-                    className="rounded-lg max-w-full h-auto"
-                  />
-                  {message.content && <p className="mt-2">{message.content}</p>}
-                </div>
-              ) : message.type === MessageType.CUSTOM_ORDER ? (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <InformationCircleIcon className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Yêu cầu đặt hàng</span>
+            {/* Render based on message type */}
+            {message.type === MessageType.CUSTOM_ORDER ? (
+              // Custom Order - render without background, let CustomOrderCard handle styling
+              <div>
+                {/* Short message text */}
+                {message.content && (
+                  <div
+                    className={`px-4 py-2 rounded-lg mb-2 ${
+                      isOwn
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{message.content}</p>
                   </div>
-                  <p>{message.content}</p>
-                  {message.metadata?.orderData && (
-                    <div className="mt-2 p-2 bg-black bg-opacity-10 rounded">
-                      <p className="text-sm">
-                        {message.metadata.orderData.productName}
-                        {message.metadata.orderData.estimatedPrice &&
-                          ` - ${message.metadata.orderData.estimatedPrice}₫`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : message.type === MessageType.QUOTE_DISCUSSION ? (
-                <div>
-                  <div className="flex items-center mb-2">
-                    <InformationCircleIcon className="w-4 h-4 mr-2" />
-                    <span className="font-medium">Thảo luận báo giá</span>
-                  </div>
-                  <p>{message.content}</p>
-                </div>
-              ) : (
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              )}
-            </div>
+                )}
 
+                {/* Custom Order Card */}
+                {message.metadata?.type === 'custom_order_proposal' &&
+                  message.metadata?.proposal && (
+                    <CustomOrderCard
+                      proposal={message.metadata.proposal}
+                      negotiationId={message.metadata.negotiationId}
+                      status={message.metadata.status || 'pending'}
+                      isOwn={isOwn}
+                      userRole={state.user?.role || 'CUSTOMER'}
+                      onAccept={handleAcceptCustomOrder}
+                      onDecline={handleDeclineCustomOrder}
+                      onRequestChanges={handleRequestChanges}
+                      loading={sending}
+                    />
+                  )}
+
+                {/* Response type custom orders */}
+                {message.metadata?.type === 'custom_order_response' && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">
+                      {message.metadata.response?.accepted
+                        ? 'Đề xuất được chấp nhận'
+                        : 'Phản hồi đề xuất'}
+                    </h4>
+                    <p>{message.content}</p>
+                    {message.metadata.response?.counterOffer && (
+                      <div className="mt-2 p-3 bg-white rounded border">
+                        <h5 className="font-medium mb-1">Đề xuất mới:</h5>
+                        <p className="text-sm">
+                          Giá: ${message.metadata.response.counterOffer.price}
+                        </p>
+                        <p className="text-sm">
+                          Thời gian:{' '}
+                          {message.metadata.response.counterOffer.duration}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Update type custom orders */}
+                {message.metadata?.type === 'custom_order_update' && (
+                  <div className="bg-yellow-50 rounded-lg p-4">
+                    <h4 className="font-semibold mb-2">
+                      Đề xuất đã được cập nhật
+                    </h4>
+                    <p>{message.content}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Regular messages
+              <div
+                className={`px-4 py-2 rounded-lg ${
+                  isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
+                }`}
+              >
+                {message.type === MessageType.IMAGE ? (
+                  <div>
+                    <img
+                      src={message.metadata?.mediaUrl || message.metadata?.url}
+                      alt="Shared image"
+                      className="rounded-lg max-w-full h-auto"
+                    />
+                    {message.content && (
+                      <p className="mt-2">{message.content}</p>
+                    )}
+                  </div>
+                ) : message.type === MessageType.QUOTE_DISCUSSION ? (
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <InformationCircleIcon className="w-4 h-4 mr-2" />
+                      <span className="font-medium">Thảo luận báo giá</span>
+                    </div>
+                    <p>{message.content}</p>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                )}
+              </div>
+            )}
+
+            {/* Timestamp */}
             <div
               className={`text-xs text-gray-500 mt-1 ${
                 isOwn ? 'text-right' : 'text-left'
@@ -572,6 +857,17 @@ export const ConversationPage: React.FC = () => {
               <PhotoIcon className="w-5 h-5" />
             </Button>
 
+            {/* Custom Order Button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCustomOrderForm(true)}
+              title="Tạo đề xuất custom order"
+            >
+              <WrenchScrewdriverIcon className="w-5 h-5" />
+            </Button>
+
             <Button type="button" variant="ghost" size="sm" disabled>
               <PlusIcon className="w-5 h-5" />
             </Button>
@@ -609,6 +905,14 @@ export const ConversationPage: React.FC = () => {
           </Button>
         </form>
       </div>
+
+      {/* Custom Order Proposal Form */}
+      <CustomOrderProposalForm
+        isOpen={showCustomOrderForm}
+        onClose={() => setShowCustomOrderForm(false)}
+        onSubmit={handleSendCustomOrder}
+        loading={customOrderLoading}
+      />
     </div>
   );
 };

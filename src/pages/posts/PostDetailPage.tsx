@@ -30,6 +30,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { ConfirmModal } from '../../components/ui/Modal';
 import { ImageGallery } from '../../components/common/ImageGallery';
+import { ProductMentionCard } from '../../components/common/ProductMentionCard';
 import { useForm } from '../../hooks/useForm';
 
 interface CommentFormData {
@@ -801,6 +802,21 @@ export const PostDetailPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Product Mentions Section */}
+      {post.productMentions && post.productMentions.length > 0 && (
+        <Card className="p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="mr-2">🏷️</span>
+            Sản phẩm được đề cập trong bài viết
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {post.productMentions.map((mention) => (
+              <ProductMentionCard key={mention.id} mention={mention} />
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <Card className="p-6 mb-6">
