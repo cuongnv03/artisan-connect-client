@@ -99,6 +99,18 @@ export const API_ENDPOINTS = {
     PUBLISH: (id: string) => `/products/${id}/publish`,
     UNPUBLISH: (id: string) => `/products/${id}/unpublish`,
     VIEW: (id: string) => `/products/${id}/view`,
+
+    // Attributes
+    ATTRIBUTES: (productId: string) =>
+      `/attributes/products/${productId}/attributes`,
+    SET_ATTRIBUTES: (productId: string) =>
+      `/attributes/products/${productId}/attributes`,
+
+    // Variants
+    VARIANTS: (productId: string) => `/variants/products/${productId}/variants`,
+    VARIANT_BY_ID: (variantId: string) => `/variants/variants/${variantId}`,
+    GENERATE_VARIANTS: (productId: string) =>
+      `/variants/products/${productId}/variants/generate`,
   },
 
   // Categories
@@ -107,6 +119,30 @@ export const API_ENDPOINTS = {
     TREE: '/categories/tree',
     BY_ID: (id: string) => `/categories/${id}`,
     BY_SLUG: (slug: string) => `/categories/slug/${slug}`,
+
+    // Attribute Templates
+    ATTRIBUTE_TEMPLATES: (categoryId: string) =>
+      `/attributes/categories/${categoryId}/templates`,
+    ATTRIBUTE_TEMPLATE_BY_ID: (templateId: string) =>
+      `/attributes/categories/templates/${templateId}`,
+  },
+
+  // Attributes
+  ATTRIBUTES: {
+    CATEGORY_TEMPLATES: (categoryId: string) =>
+      `/attributes/categories/${categoryId}/templates`,
+    CUSTOM_TEMPLATES: '/attributes/custom-templates',
+    PRODUCT_ATTRIBUTES: (productId: string) =>
+      `/attributes/products/${productId}/attributes`,
+  },
+
+  // Variants
+  VARIANTS: {
+    PRODUCT_VARIANTS: (productId: string) =>
+      `/variants/products/${productId}/variants`,
+    VARIANT_BY_ID: (variantId: string) => `/variants/variants/${variantId}`,
+    GENERATE_VARIANTS: (productId: string) =>
+      `/variants/products/${productId}/variants/generate`,
   },
 
   // Cart

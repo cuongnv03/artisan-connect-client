@@ -1,122 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   PlusIcon,
+  FunnelIcon,
+  MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  EyeSlashIcon,
-  MagnifyingGlassIcon,
-  AdjustmentsHorizontalIcon,
+  ChartBarIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
 } from '@heroicons/react/24/outline';
-import { useToastContext } from '../../contexts/ToastContext';
+import { Product, ProductStatus, ProductStats } from '../../types/product';
+import { PaginatedResponse } from '../../types/common';
 import { productService } from '../../services/product.service';
-import { Product, ProductStatus } from '../../types/product';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
-import { SearchBox } from '../../components/common/SearchBox';
-import { FilterPanel } from '../../components/common/FilterPanel';
 import { Pagination } from '../../components/ui/Pagination';
+import { Select } from '../../components/ui/Dropdown';
 import { ConfirmModal } from '../../components/ui/Modal';
+import { ProductCard } from '../../components/common/ProductCard';
+import { EmptyState } from '../../components/common/EmptyState';
+import { useToastContext } from '../../contexts/ToastContext';
+import { useDebounce } from '../../hooks/useDebounce';
+import { ROUTE_PATHS, getArtisanRoutes } from '../../constants/routes';
+
+type ViewMode = 'grid' | 'list' | 'table';
+
+interface ProductFilters {
+  status?: ProductStatus;
+  search?: string;
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
 
 export const ProductsPage: React.FC = () => {
-  const { success, error } = useToastContext();
   const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<ProductStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    status: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc' as 'asc' | 'desc',
-  });
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [deleteModal, setDeleteModal] = useState<{
-    isOpen: boolean;
-    product: Product | null;
-  }>({
-    isOpen: false,
-    product: null,
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 0,
+    limit: 12,
   });
-  const [deleting, setDeleting] = useState(false);
+  const [filters, setFilters] = useState<ProductFilters>({
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  const { success, error } = useToastContext();
+  const navigate = useNavigate();
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   useEffect(() => {
     loadProducts();
-  }, [currentPage, filters, searchQuery]);
+    loadStats();
+  }, [currentPage, filters, debouncedSearch]);
 
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const result = await productService.getMyProducts({
+      const params = {
         page: currentPage,
-        limit: 12,
-        q: searchQuery || undefined,
-        status: filters.status || undefined,
+        limit: pagination.limit,
+        search: debouncedSearch || undefined,
+        status: filters.status,
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
-      });
+      };
 
-      setProducts(result.data);
-      setTotalPages(result.meta.totalPages);
-      setTotalItems(result.meta.total);
+      const response = await productService.getMyProducts(params);
+      setProducts(response.data);
+      setPagination({
+        total: response.meta.total,
+        totalPages: response.meta.totalPages,
+        limit: response.meta.limit,
+      });
     } catch (err) {
       console.error('Error loading products:', err);
+      error('Không thể tải danh sách sản phẩm');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusToggle = async (product: Product) => {
+  const loadStats = async () => {
     try {
-      if (product.status === ProductStatus.PUBLISHED) {
-        await productService.unpublishProduct(product.id);
-        success('Đã ẩn sản phẩm');
-      } else {
-        await productService.publishProduct(product.id);
-        success('Đã xuất bản sản phẩm');
-      }
-      loadProducts();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
+      const statsData = await productService.getMyProductStats();
+      setStats(statsData);
+    } catch (err) {
+      console.error('Error loading stats:', err);
     }
   };
 
   const handleDeleteProduct = async () => {
-    if (!deleteModal.product) return;
+    if (!productToDelete) return;
 
-    setDeleting(true);
     try {
-      await productService.deleteProduct(deleteModal.product.id);
-      success('Xóa sản phẩm thành công');
-      setDeleteModal({ isOpen: false, product: null });
-      loadProducts();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra khi xóa sản phẩm');
-    } finally {
-      setDeleting(false);
+      await productService.deleteProduct(productToDelete.id);
+      success('Đã xóa sản phẩm thành công');
+      setShowDeleteModal(false);
+      setProductToDelete(null);
+      await loadProducts();
+      await loadStats();
+    } catch (err) {
+      error('Không thể xóa sản phẩm');
+    }
+  };
+
+  const handleStatusChange = async (
+    productId: string,
+    newStatus: 'publish' | 'unpublish',
+  ) => {
+    try {
+      if (newStatus === 'publish') {
+        await productService.publishProduct(productId);
+        success('Đã xuất bản sản phẩm');
+      } else {
+        await productService.unpublishProduct(productId);
+        success('Đã gỡ xuất bản sản phẩm');
+      }
+      await loadProducts();
+      await loadStats();
+    } catch (err) {
+      error('Không thể thay đổi trạng thái sản phẩm');
     }
   };
 
   const getStatusBadge = (status: ProductStatus) => {
     const statusConfig = {
-      [ProductStatus.DRAFT]: { variant: 'secondary' as const, text: 'Nháp' },
       [ProductStatus.PUBLISHED]: {
         variant: 'success' as const,
-        text: 'Đã xuất bản',
+        label: 'Đã xuất bản',
+      },
+      [ProductStatus.DRAFT]: {
+        variant: 'secondary' as const,
+        label: 'Bản nháp',
       },
       [ProductStatus.OUT_OF_STOCK]: {
         variant: 'warning' as const,
-        text: 'Hết hàng',
+        label: 'Hết hàng',
       },
-      [ProductStatus.DELETED]: { variant: 'danger' as const, text: 'Đã xóa' },
+      [ProductStatus.DELETED]: { variant: 'danger' as const, label: 'Đã xóa' },
     };
 
     const config = statusConfig[status];
-    return <Badge variant={config.variant}>{config.text}</Badge>;
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   const formatPrice = (price: number) => {
@@ -127,8 +164,9 @@ export const ProductsPage: React.FC = () => {
   };
 
   const statusOptions = [
-    { label: 'Nháp', value: ProductStatus.DRAFT },
+    { label: 'Tất cả trạng thái', value: '' },
     { label: 'Đã xuất bản', value: ProductStatus.PUBLISHED },
+    { label: 'Bản nháp', value: ProductStatus.DRAFT },
     { label: 'Hết hàng', value: ProductStatus.OUT_OF_STOCK },
   ];
 
@@ -136,196 +174,346 @@ export const ProductsPage: React.FC = () => {
     { label: 'Mới nhất', value: 'createdAt' },
     { label: 'Tên A-Z', value: 'name' },
     { label: 'Giá thấp đến cao', value: 'price' },
-    { label: 'Lượt xem', value: 'viewCount' },
-    { label: 'Đã bán', value: 'salesCount' },
+    { label: 'Lượt xem nhiều nhất', value: 'viewCount' },
+    { label: 'Bán chạy nhất', value: 'salesCount' },
   ];
 
-  if (loading && products.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Đang tải sản phẩm...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-        <Link to="/products/create">
-          <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
-            Thêm sản phẩm
-          </Button>
-        </Link>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="space-y-4">
-        <SearchBox
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Tìm kiếm sản phẩm..."
-        />
-
-        <FilterPanel
-          filters={filters}
-          onFilterChange={setFilters}
-          categoryOptions={statusOptions.map((s) => ({
-            label: s.label,
-            value: s.value,
-          }))}
-          sortOptions={sortOptions}
-        />
-      </div>
-
-      {/* Products Grid */}
-      {products.length === 0 ? (
-        <EmptyState
-          icon={<PlusIcon className="w-16 h-16" />}
-          title="Chưa có sản phẩm nào"
-          description="Tạo sản phẩm đầu tiên để bắt đầu bán hàng"
-          action={{
-            label: 'Tạo sản phẩm đầu tiên',
-            onClick: () => (window.location.href = '/products/create'),
-          }}
-        />
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  const renderTableView = () => (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Sản phẩm
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Giá
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Kho
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thống kê
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Thao tác
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
             {products.map((product) => (
-              <Card key={product.id} className="overflow-hidden">
-                {/* Product Image */}
-                <div className="aspect-square bg-gray-100 relative">
-                  {product.images[0] ? (
+              <tr key={product.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
                     <img
-                      src={product.images[0]}
+                      className="h-16 w-16 rounded-lg object-cover"
+                      src={product.images[0] || '/placeholder-image.jpg'}
                       alt={product.name}
-                      className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-gray-400">Chưa có ảnh</span>
-                    </div>
-                  )}
-
-                  {/* Status Badge */}
-                  <div className="absolute top-2 left-2">
-                    {getStatusBadge(product.status)}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex flex-col space-y-1">
-                      <Link to={`/products/${product.id}`}>
-                        <button className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50">
-                          <EyeIcon className="w-4 h-4 text-gray-600" />
-                        </button>
+                    <div className="ml-4">
+                      <Link
+                        to={`/products/${product.slug || product.id}`}
+                        className="text-sm font-medium text-gray-900 hover:text-primary"
+                      >
+                        {product.name}
                       </Link>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Product Info */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">
-                    {product.name}
-                  </h3>
-
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      {product.discountPrice ? (
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg font-bold text-primary">
-                            {formatPrice(product.discountPrice)}
-                          </span>
-                          <span className="text-sm text-gray-500 line-through">
-                            {formatPrice(product.price)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-lg font-bold text-primary">
-                          {formatPrice(product.price)}
-                        </span>
+                      <p className="text-sm text-gray-500 line-clamp-1">
+                        {product.description}
+                      </p>
+                      {product.hasVariants && (
+                        <Badge variant="info" size="sm" className="mt-1">
+                          {product.variants?.length || 0} biến thể
+                        </Badge>
                       )}
                     </div>
-
-                    <span className="text-sm text-gray-500">
-                      SL: {product.quantity}
-                    </span>
                   </div>
-
-                  {/* Stats */}
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>{product.viewCount} lượt xem</span>
-                    <span>{product.salesCount} đã bán</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">
+                      {formatPrice(product.discountPrice || product.price)}
+                    </div>
+                    {product.discountPrice && (
+                      <div className="text-gray-500 line-through">
+                        {formatPrice(product.price)}
+                      </div>
+                    )}
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex space-x-2">
-                    <Link
-                      to={`/products/${product.id}/edit`}
-                      className="flex-1"
-                    >
-                      <Button variant="outline" size="sm" fullWidth>
-                        <PencilIcon className="w-4 h-4 mr-2" />
-                        Sửa
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {product.quantity}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {getStatusBadge(product.status)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <div>{product.viewCount} lượt xem</div>
+                  <div>{product.salesCount} đã bán</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex justify-end gap-2">
+                    <Link to={`/products/${product.slug || product.id}`}>
+                      <Button variant="ghost" size="sm" title="Xem sản phẩm">
+                        <EyeIcon className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Link to={getArtisanRoutes.editProduct(product.id)}>
+                      <Button variant="ghost" size="sm" title="Chỉnh sửa">
+                        <PencilIcon className="w-4 h-4" />
                       </Button>
                     </Link>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleStatusToggle(product)}
-                    >
-                      {product.status === ProductStatus.PUBLISHED ? (
-                        <EyeSlashIcon className="w-4 h-4" />
-                      ) : (
-                        <EyeIcon className="w-4 h-4" />
-                      )}
-                    </Button>
+                    {/* Status toggle buttons */}
+                    {product.status === ProductStatus.DRAFT ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleStatusChange(product.id, 'publish')
+                        }
+                        title="Xuất bản"
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        Xuất bản
+                      </Button>
+                    ) : product.status === ProductStatus.PUBLISHED ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleStatusChange(product.id, 'unpublish')
+                        }
+                        title="Gỡ xuất bản"
+                        className="text-yellow-600 hover:text-yellow-700"
+                      >
+                        Gỡ xuất bản
+                      </Button>
+                    ) : null}
 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setDeleteModal({ isOpen: true, product })}
+                      onClick={() => {
+                        setProductToDelete(product);
+                        setShowDeleteModal(true);
+                      }}
+                      title="Xóa"
                       className="text-red-600 hover:text-red-700"
                     >
                       <TrashIcon className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              </Card>
+                </td>
+              </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
+          <p className="text-gray-600 mt-1">Quản lý tất cả sản phẩm của bạn</p>
+        </div>
+        <Link to={ROUTE_PATHS.APP.ARTISAN.CREATE_PRODUCT}>
+          <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
+            Thêm sản phẩm mới
+          </Button>
+        </Link>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Tổng sản phẩm</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.totalProducts}
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Đã xuất bản</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {stats.publishedProducts}
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Bản nháp</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {stats.draftProducts}
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Tổng lượt xem</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {stats.totalViews.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Filters & Search */}
+      <Card className="p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm sản phẩm..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
           </div>
 
+          <div className="flex gap-3">
+            <Select
+              value={filters.status || ''}
+              onChange={(value) =>
+                setFilters({
+                  ...filters,
+                  status: (value as ProductStatus) || undefined,
+                })
+              }
+              options={statusOptions}
+            />
+
+            <Select
+              value={filters.sortBy}
+              onChange={(value) => setFilters({ ...filters, sortBy: value })}
+              options={sortOptions}
+            />
+
+            <div className="flex border border-gray-300 rounded-lg">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 ${
+                  viewMode === 'grid'
+                    ? 'bg-primary text-white'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Squares2X2Icon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 ${
+                  viewMode === 'list'
+                    ? 'bg-primary text-white'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ListBulletIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 ${
+                  viewMode === 'table'
+                    ? 'bg-primary text-white'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ChartBarIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Products Display */}
+      {loading ? (
+        <div className="text-center py-12">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">Đang tải sản phẩm...</p>
+        </div>
+      ) : products.length > 0 ? (
+        <>
+          {viewMode === 'table' ? (
+            renderTableView()
+          ) : viewMode === 'list' ? (
+            <div className="space-y-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  variant="list"
+                  showSellerInfo={false}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  showSellerInfo={false}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Pagination */}
-          {totalPages > 1 && (
+          {pagination.totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={12}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
               onPageChange={setCurrentPage}
             />
           )}
         </>
+      ) : (
+        <EmptyState
+          icon={<PlusIcon className="w-16 h-16" />}
+          title="Chưa có sản phẩm nào"
+          description="Tạo sản phẩm đầu tiên để bắt đầu bán hàng trên nền tảng"
+          action={{
+            label: 'Thêm sản phẩm mới',
+            onClick: () => navigate(ROUTE_PATHS.APP.ARTISAN.CREATE_PRODUCT),
+          }}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, product: null })}
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteProduct}
-        title="Xác nhận xóa sản phẩm"
-        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deleteModal.product?.name}"? Hành động này không thể hoàn tác.`}
+        title="Xóa sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${productToDelete?.name}"? Thao tác này không thể hoàn tác.`}
         confirmText="Xóa sản phẩm"
-        cancelText="Hủy"
         type="danger"
-        loading={deleting}
       />
     </div>
   );

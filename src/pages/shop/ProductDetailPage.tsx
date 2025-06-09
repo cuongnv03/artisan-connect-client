@@ -26,6 +26,7 @@ import {
   quoteService,
 } from '../../services/quote.service';
 import { Product } from '../../types/product';
+import { ProductVariant, ProductAttribute } from '../../types/product';
 import { Review } from '../../types/product';
 import { QuoteStatus } from '../../types/quote';
 import { Button } from '../../components/ui/Button';
@@ -61,12 +62,33 @@ export const ProductDetailPage: React.FC = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [canReview, setCanReview] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null,
+  );
+  const [selectedAttributes, setSelectedAttributes] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     if (productId) {
       loadProduct();
     }
   }, [productId]);
+
+  useEffect(() => {
+    if (product?.variants && product.variants.length > 0) {
+      const defaultVariant =
+        product.variants.find((v) => v.isDefault) || product.variants[0];
+      setSelectedVariant(defaultVariant);
+
+      // Set initial selected attributes
+      const initialAttributes: Record<string, string> = {};
+      defaultVariant.attributes.forEach((attr) => {
+        initialAttributes[attr.key] = attr.value;
+      });
+      setSelectedAttributes(initialAttributes);
+    }
+  }, [product]);
 
   useEffect(() => {
     if (product?.id) {
@@ -97,6 +119,33 @@ export const ProductDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getVariantOptions = () => {
+    if (!product?.variants || product.variants.length <= 1) return [];
+
+    const attributeGroups: Record<string, { name: string; values: string[] }> =
+      {};
+
+    product.variants.forEach((variant) => {
+      variant.attributes.forEach((attr) => {
+        if (!attributeGroups[attr.key]) {
+          attributeGroups[attr.key] = {
+            name: attr.name,
+            values: [],
+          };
+        }
+        if (!attributeGroups[attr.key].values.includes(attr.value)) {
+          attributeGroups[attr.key].values.push(attr.value);
+        }
+      });
+    });
+
+    return Object.entries(attributeGroups).map(([key, data]) => ({
+      key,
+      name: data.name,
+      values: data.values,
+    }));
   };
 
   const checkReviewStatus = async () => {
@@ -155,12 +204,26 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
+  const getCurrentPrice = () => selectedVariant?.price || product?.price || 0;
+  const getCurrentDiscountPrice = () =>
+    selectedVariant?.discountPrice || product?.discountPrice;
+  const getCurrentQuantity = () =>
+    selectedVariant?.quantity || product?.quantity || 0;
+  const getCurrentImages = () => {
+    if (selectedVariant?.images && selectedVariant.images.length > 0) {
+      return selectedVariant.images;
+    }
+    return product?.images || [];
+  };
+
+  const maxQuantity = getCurrentQuantity();
+
   const handleAddToCart = async () => {
     if (!product) return;
 
     setAddingToCart(true);
     try {
-      await addToCart(product.id, quantity);
+      await addToCart(product.id, quantity, selectedVariant?.id);
     } catch (err) {
       // Error already handled in cart context
     } finally {
@@ -171,6 +234,29 @@ export const ProductDetailPage: React.FC = () => {
   const handleBuyNow = async () => {
     await handleAddToCart();
     navigate('/cart');
+  };
+
+  const handleAttributeChange = (attributeKey: string, value: string) => {
+    const newSelectedAttributes = {
+      ...selectedAttributes,
+      [attributeKey]: value,
+    };
+    setSelectedAttributes(newSelectedAttributes);
+
+    // Find matching variant
+    if (product?.variants) {
+      const matchingVariant = product.variants.find((variant) => {
+        return Object.entries(newSelectedAttributes).every(([key, val]) =>
+          variant.attributes.some(
+            (attr) => attr.key === key && attr.value === val,
+          ),
+        );
+      });
+
+      if (matchingVariant) {
+        setSelectedVariant(matchingVariant);
+      }
+    }
   };
 
   const handleRequestQuote = async (values: CreateQuoteRequestData) => {
@@ -430,19 +516,25 @@ export const ProductDetailPage: React.FC = () => {
           {/* Price */}
           <div className="mb-6">
             <div className="flex items-center gap-4">
-              {product.discountPrice ? (
+              {getCurrentDiscountPrice() ? (
                 <>
                   <span className="text-3xl font-bold text-primary">
-                    {formatPrice(product.discountPrice)}
+                    {formatPrice(getCurrentDiscountPrice())}
                   </span>
                   <span className="text-lg text-gray-500 line-through">
-                    {formatPrice(product.price)}
+                    {formatPrice(getCurrentPrice())}
                   </span>
-                  <Badge variant="danger">-{discountPercentage}%</Badge>
+                  <Badge variant="danger">
+                    -
+                    {Math.round(
+                      (1 - getCurrentDiscountPrice() / getCurrentPrice()) * 100,
+                    )}
+                    %
+                  </Badge>
                 </>
               ) : (
                 <span className="text-3xl font-bold text-primary">
-                  {formatPrice(product.price)}
+                  {formatPrice(getCurrentPrice())}
                 </span>
               )}
             </div>
@@ -484,6 +576,173 @@ export const ProductDetailPage: React.FC = () => {
                 Bạn có thể yêu cầu tùy chỉnh sản phẩm này theo ý muốn. Liên hệ
                 trực tiếp với nghệ nhân để thảo luận chi tiết.
               </p>
+            </div>
+          )}
+
+          {/* Product Variants */}
+          {getVariantOptions().length > 0 && (
+            <div className="space-y-4 mb-6">
+              <h3 className="font-semibold text-gray-900">Tùy chọn sản phẩm</h3>
+              {getVariantOptions().map((option) => (
+                <div key={option.key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {option.name}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {option.values.map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => handleAttributeChange(option.key, value)}
+                        className={`px-3 py-2 text-sm border rounded-lg transition-colors ${
+                          selectedAttributes[option.key] === value
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                        }`}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Selected Variant Info */}
+              {selectedVariant && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        SKU: {selectedVariant.sku}
+                      </p>
+                      {selectedVariant.name && (
+                        <p className="text-sm text-gray-600">
+                          {selectedVariant.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">
+                        Còn lại: {selectedVariant.quantity}
+                      </p>
+                      {selectedVariant.weight && (
+                        <p className="text-sm text-gray-600">
+                          Trọng lượng: {selectedVariant.weight}kg
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Product Attributes */}
+          {product?.attributes && product.attributes.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                Thông số kỹ thuật
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {product.attributes.map((attr) => (
+                  <div
+                    key={attr.id}
+                    className="flex justify-between py-2 border-b border-gray-100"
+                  >
+                    <span className="text-sm text-gray-600">{attr.name}:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {attr.value}{' '}
+                      {attr.unit && (
+                        <span className="text-gray-500">{attr.unit}</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Specifications */}
+          {product?.specifications &&
+            Object.keys(product.specifications).length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Thông số sản phẩm
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(product.specifications).map(
+                    ([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex justify-between py-2 border-b border-gray-100"
+                      >
+                        <span className="text-sm text-gray-600 capitalize">
+                          {key.replace('_', ' ')}:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {typeof value === 'object'
+                            ? JSON.stringify(value)
+                            : String(value)}
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+
+          {/* Weight & Dimensions */}
+          {(product?.weight || product?.dimensions) && (
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                Kích thước & Trọng lượng
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {product.weight && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="text-sm text-gray-600">Trọng lượng:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {product.weight} kg
+                    </span>
+                  </div>
+                )}
+                {product.dimensions && (
+                  <>
+                    {product.dimensions.length && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">
+                          Chiều dài:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {product.dimensions.length}{' '}
+                          {product.dimensions.unit || 'cm'}
+                        </span>
+                      </div>
+                    )}
+                    {product.dimensions.width && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">
+                          Chiều rộng:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {product.dimensions.width}{' '}
+                          {product.dimensions.unit || 'cm'}
+                        </span>
+                      </div>
+                    )}
+                    {product.dimensions.height && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-sm text-gray-600">
+                          Chiều cao:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {product.dimensions.height}{' '}
+                          {product.dimensions.unit || 'cm'}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
 

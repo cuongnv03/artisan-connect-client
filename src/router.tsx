@@ -51,6 +51,8 @@ import { UpgradeRequestPage } from './pages/artisan/UpgradeRequestPage';
 import { DashboardPage as ArtisanDashboardPage } from './pages/artisan/DashboardPage';
 import { CustomizePage as ArtisanCustomizePage } from './pages/artisan/CustomizePage';
 import { ProductsPage as ArtisanProductsPage } from './pages/artisan/ProductsPage';
+import { CreateProductPage } from './pages/artisan/CreateProductPage';
+import { EditProductPage } from './pages/artisan/EditProductPage';
 import { AnalyticsPage as ArtisanAnalyticsPage } from './pages/artisan/AnalyticsPage';
 
 // Admin pages
@@ -352,11 +354,32 @@ export const router = createBrowserRouter(
             },
             {
               path: 'products',
-              element: (
-                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanProductsPage />
-                </ProtectedRoute>
-              ),
+              children: [
+                {
+                  index: true,
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <ArtisanProductsPage />
+                    </ProtectedRoute>
+                  ),
+                },
+                {
+                  path: 'create',
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <CreateProductPage />
+                    </ProtectedRoute>
+                  ),
+                },
+                {
+                  path: ':productId/edit',
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <EditProductPage />
+                    </ProtectedRoute>
+                  ),
+                },
+              ],
             },
             {
               path: 'analytics',

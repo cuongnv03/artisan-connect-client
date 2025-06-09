@@ -58,6 +58,8 @@ export const ROUTE_PATHS = {
     ARTISAN: {
       DASHBOARD: '/artisan/dashboard',
       PRODUCTS: '/artisan/products',
+      CREATE_PRODUCT: '/artisan/products/create',
+      EDIT_PRODUCT: '/artisan/products/:productId/edit',
       ANALYTICS: '/artisan/analytics',
       CUSTOMIZE: '/artisan/customize',
     },
@@ -92,6 +94,15 @@ export const getRoutePath = (
   });
 
   return result;
+};
+
+// Helper functions cho artisan routes
+export const getArtisanRoutes = {
+  editProduct: (productId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.ARTISAN.EDIT_PRODUCT, { productId }),
+
+  productDetail: (productId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.PRODUCT_DETAIL, { productId }),
 };
 
 // Route metadata for navigation
