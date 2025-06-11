@@ -64,16 +64,22 @@ class ApiClient {
 
             const response = await axios.post(
               `${API_BASE_URL}${API_PREFIX}/auth/refresh-token`,
+              { refreshToken },
               {
-                refreshToken,
+                withCredentials: true,
               },
             );
 
             const newTokenData = response.data.success
               ? response.data.data
               : response.data;
-            const { accessToken } = newTokenData;
+
+            const { accessToken, user } = newTokenData;
             localStorage.setItem('accessToken', accessToken);
+
+            if (user) {
+              localStorage.setItem('user', JSON.stringify(user));
+            }
 
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return this.client(originalRequest);
