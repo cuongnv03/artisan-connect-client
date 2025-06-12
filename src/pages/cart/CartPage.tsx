@@ -52,10 +52,10 @@ export const CartPage: React.FC = () => {
     }
   };
 
-  const handleRemoveItem = async (productId: string) => {
+  const handleRemoveItem = async (productId: string, variantId?: string) => {
     setUpdating(productId);
     try {
-      await removeFromCart(productId);
+      await removeFromCart(productId, variantId);
     } catch (err) {
       // Error already handled in context
     } finally {
@@ -254,7 +254,9 @@ export const CartPage: React.FC = () => {
                           </div>
 
                           <button
-                            onClick={() => handleRemoveItem(item.productId)}
+                            onClick={() =>
+                              handleRemoveItem(item.productId, item.variantId)
+                            }
                             disabled={updating === item.productId}
                             className="text-gray-400 hover:text-red-500 p-1"
                           >

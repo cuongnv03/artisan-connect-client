@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Notification } from '../types/notification';
 import { notificationService } from '../services/notification.service';
 import { useSocket } from '../hooks/useSocket';
+import { useAuth } from './AuthContext';
 
 interface NotificationState {
   notifications: Notification[];
@@ -96,14 +97,25 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, dispatch] = useReducer(notificationReducer, initialState);
   const socket = useSocket();
+  const { state: authState } = useAuth();
 
   useEffect(() => {
-    refreshNotifications();
-    loadUnreadCount();
-  }, []);
+    if (authState.isInitialized && authState.isAuthenticated) {
+      refreshNotifications();
+      loadUnreadCount();
+    }
+  }, [authState.isInitialized, authState.isAuthenticated]);
+
+  // Clear notifications when user logs out
+  useEffect(() => {
+    if (authState.isInitialized && !authState.isAuthenticated) {
+      dispatch({ type: 'SET_NOTIFICATIONS', payload: [] });
+      dispatch({ type: 'SET_UNREAD_COUNT', payload: 0 });
+    }
+  }, [authState.isInitialized, authState.isAuthenticated]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !authState.isAuthenticated) return;
 
     const handleNewNotification = (notification: Notification) => {
       dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
@@ -114,9 +126,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       socket.off('notification', handleNewNotification);
     };
-  }, [socket]);
+  }, [socket, authState.isAuthenticated]);
 
   const refreshNotifications = async () => {
+    if (!authState.isAuthenticated) return;
+
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const result = await notificationService.getNotifications({
@@ -132,6 +146,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const loadUnreadCount = async () => {
+    if (!authState.isAuthenticated) return;
+
     try {
       const { count } = await notificationService.getUnreadCount();
       dispatch({ type: 'SET_UNREAD_COUNT', payload: count });

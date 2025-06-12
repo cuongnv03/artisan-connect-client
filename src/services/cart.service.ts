@@ -18,21 +18,53 @@ export const cartService = {
     return response.count;
   },
 
-  async addToCart(productId: string, quantity: number): Promise<CartItem> {
-    return await apiClient.post<CartItem>(API_ENDPOINTS.CART.BASE, {
+  async addToCart(
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ): Promise<CartItem> {
+    const payload: any = {
       productId,
       quantity,
-    });
+    };
+
+    if (variantId) {
+      payload.variantId = variantId;
+    }
+
+    return await apiClient.post<CartItem>(API_ENDPOINTS.CART.BASE, payload);
   },
 
-  async updateCartItem(productId: string, quantity: number): Promise<CartItem> {
-    return await apiClient.patch<CartItem>(API_ENDPOINTS.CART.ITEM(productId), {
+  async updateCartItem(
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ): Promise<CartItem> {
+    const params = new URLSearchParams();
+    if (variantId) {
+      params.append('variantId', variantId);
+    }
+
+    const url = `${API_ENDPOINTS.CART.ITEM(productId)}${
+      params.toString() ? `?${params.toString()}` : ''
+    }`;
+
+    return await apiClient.patch<CartItem>(url, {
       quantity,
     });
   },
 
-  async removeFromCart(productId: string): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.CART.ITEM(productId));
+  async removeFromCart(productId: string, variantId?: string): Promise<void> {
+    const params = new URLSearchParams();
+    if (variantId) {
+      params.append('variantId', variantId);
+    }
+
+    const url = `${API_ENDPOINTS.CART.ITEM(productId)}${
+      params.toString() ? `?${params.toString()}` : ''
+    }`;
+
+    await apiClient.delete(url);
   },
 
   async clearCart(): Promise<void> {

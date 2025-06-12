@@ -28,9 +28,17 @@ type CartAction =
 interface CartContextType {
   state: CartState;
   loadCart: () => Promise<void>;
-  addToCart: (productId: string, quantity: number) => Promise<void>;
-  updateCartItem: (productId: string, quantity: number) => Promise<void>;
-  removeFromCart: (productId: string) => Promise<void>;
+  addToCart: (
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ) => Promise<void>;
+  updateCartItem: (
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ) => Promise<void>;
+  removeFromCart: (productId: string, variantId?: string) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCartCount: () => Promise<void>;
 }
@@ -86,16 +94,19 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         ...state,
         items: state.items.map((item) =>
-          item.productId === action.payload.productId ? action.payload : item,
+          item.productId === action.payload.productId &&
+          item.variantId === action.payload.variantId
+            ? action.payload
+            : item,
         ),
       };
     case 'ITEM_REMOVED':
       const removedItem = state.items.find(
-        (item) => item.productId === action.payload,
+        (item) => item.id === action.payload,
       );
       return {
         ...state,
-        items: state.items.filter((item) => item.productId !== action.payload),
+        items: state.items.filter((item) => item.id !== action.payload),
         itemCount: state.itemCount - (removedItem?.quantity || 0),
       };
     case 'COUNT_UPDATED':
@@ -158,9 +169,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const addToCart = async (productId: string, quantity: number) => {
+  const addToCart = async (
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ) => {
     try {
-      const cartItem = await cartService.addToCart(productId, quantity);
+      const cartItem = await cartService.addToCart(
+        productId,
+        quantity,
+        variantId,
+      );
       dispatch({ type: 'ITEM_ADDED', payload: cartItem });
 
       // Refresh full cart to get updated totals
@@ -173,9 +192,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateCartItem = async (productId: string, quantity: number) => {
+  const updateCartItem = async (
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ) => {
     try {
-      const cartItem = await cartService.updateCartItem(productId, quantity);
+      const cartItem = await cartService.updateCartItem(
+        productId,
+        quantity,
+        variantId,
+      );
       dispatch({ type: 'ITEM_UPDATED', payload: cartItem });
       await loadCart();
       success('Đã cập nhật số lượng sản phẩm');
@@ -185,10 +212,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const removeFromCart = async (productId: string) => {
+  const removeFromCart = async (productId: string, variantId?: string) => {
     try {
-      await cartService.removeFromCart(productId);
-      dispatch({ type: 'ITEM_REMOVED', payload: productId });
+      await cartService.removeFromCart(productId, variantId);
+      // Find the item to remove by productId and variantId
+      const itemToRemove = state.items.find(
+        (item) => item.productId === productId && item.variantId === variantId,
+      );
+      if (itemToRemove) {
+        dispatch({ type: 'ITEM_REMOVED', payload: itemToRemove.id });
+      }
       await loadCart();
       success('Đã xóa sản phẩm khỏi giỏ hàng');
     } catch (err: any) {

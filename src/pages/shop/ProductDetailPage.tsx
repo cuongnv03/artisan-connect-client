@@ -216,8 +216,6 @@ export const ProductDetailPage: React.FC = () => {
     return product?.images || [];
   };
 
-  const maxQuantity = getCurrentQuantity();
-
   const handleAddToCart = async () => {
     if (!product) return;
 

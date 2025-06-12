@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useRef,
+} from 'react';
 import { User } from '../types/auth';
 import { authService } from '../services/auth.service';
 import { jwtDecode } from 'jwt-decode';
@@ -7,6 +13,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 }
 
@@ -15,6 +22,7 @@ type AuthAction =
   | { type: 'AUTH_SUCCESS'; payload: User }
   | { type: 'AUTH_ERROR'; payload: string }
   | { type: 'AUTH_LOGOUT' }
+  | { type: 'AUTH_INITIALIZED' }
   | { type: 'CLEAR_ERROR' };
 
 interface AuthContextType {
@@ -41,6 +49,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isInitialized: false,
   error: null,
 };
 
@@ -58,6 +67,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: action.payload,
         isAuthenticated: true,
         isLoading: false,
+        isInitialized: true,
         error: null,
       };
     case 'AUTH_ERROR':
@@ -66,6 +76,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        isInitialized: true,
         error: action.payload,
       };
     case 'AUTH_LOGOUT':
@@ -74,7 +85,14 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        isInitialized: true,
         error: null,
+      };
+    case 'AUTH_INITIALIZED':
+      return {
+        ...state,
+        isInitialized: true,
+        isLoading: false,
       };
     case 'CLEAR_ERROR':
       return {
@@ -90,13 +108,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const isRefreshing = useRef(false);
 
   useEffect(() => {
     const initAuth = async () => {
+      // Prevent multiple initialization
+      if (isRefreshing.current) return;
+
       const token = localStorage.getItem('accessToken');
 
       if (!token) {
-        dispatch({ type: 'AUTH_ERROR', payload: '' });
+        dispatch({ type: 'AUTH_INITIALIZED' });
         return;
       }
 
@@ -108,13 +130,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (decodedToken.exp < currentTime) {
           // Token expired, try refresh
           const refreshToken = localStorage.getItem('refreshToken');
-          if (refreshToken) {
-            const response = await authService.refreshToken(refreshToken);
-            localStorage.setItem('accessToken', response.accessToken);
-            if (response.refreshToken) {
-              localStorage.setItem('refreshToken', response.refreshToken);
+          if (refreshToken && !isRefreshing.current) {
+            isRefreshing.current = true;
+            try {
+              const response = await authService.refreshToken(refreshToken);
+              localStorage.setItem('accessToken', response.accessToken);
+              if (response.refreshToken) {
+                localStorage.setItem('refreshToken', response.refreshToken);
+              }
+              dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
+            } finally {
+              isRefreshing.current = false;
             }
-            dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
           } else {
             throw new Error('No refresh token available');
           }

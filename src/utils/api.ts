@@ -3,6 +3,11 @@ import { API_BASE_URL, API_PREFIX } from '../constants/api';
 
 class ApiClient {
   private client: AxiosInstance;
+  private isRefreshing = false;
+  private failedQueue: Array<{
+    resolve: (value?: any) => void;
+    reject: (error?: any) => void;
+  }> = [];
 
   constructor() {
     this.client = axios.create({
@@ -14,6 +19,18 @@ class ApiClient {
     });
 
     this.setupInterceptors();
+  }
+
+  private processQueue(error: any, token: string | null = null) {
+    this.failedQueue.forEach(({ resolve, reject }) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(token);
+      }
+    });
+
+    this.failedQueue = [];
   }
 
   private setupInterceptors() {
@@ -32,9 +49,6 @@ class ApiClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
-        // console.log('API Response:', response); // Debug log
-
-        // Server trả về format: { success: true, data: T, message: string }
         if (
           response.data &&
           response.data.success &&
@@ -42,22 +56,33 @@ class ApiClient {
         ) {
           return response.data.data;
         }
-
-        // Fallback nếu server không trả về theo format chuẩn
         return response.data;
       },
       async (error: AxiosError) => {
-        // console.log('API Error:', error); // Debug log
-        // console.log('Error Response:', error.response); // Debug log
-
         const originalRequest = error.config as any;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
+          if (this.isRefreshing) {
+            // If we're already refreshing, queue this request
+            return new Promise((resolve, reject) => {
+              this.failedQueue.push({ resolve, reject });
+            })
+              .then((token) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return this.client(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+
           originalRequest._retry = true;
+          this.isRefreshing = true;
 
           try {
             const refreshToken = localStorage.getItem('refreshToken');
             if (!refreshToken) {
+              this.processQueue(error, null);
               this.handleAuthError();
               return Promise.reject(error);
             }
@@ -81,11 +106,15 @@ class ApiClient {
               localStorage.setItem('user', JSON.stringify(user));
             }
 
+            this.processQueue(null, accessToken);
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return this.client(originalRequest);
           } catch (refreshError) {
+            this.processQueue(refreshError, null);
             this.handleAuthError();
             return Promise.reject(refreshError);
+          } finally {
+            this.isRefreshing = false;
           }
         }
 
@@ -93,7 +122,6 @@ class ApiClient {
         let errorMessage = 'Có lỗi xảy ra';
         if (error.response?.data) {
           const errorData = error.response.data as any;
-          // Handle validation errors specifically
           if (error.response.status === 422 && errorData.message) {
             errorMessage = errorData.message;
           } else {
@@ -114,7 +142,11 @@ class ApiClient {
   private handleAuthError() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    window.location.href = '/auth/login';
+
+    // Only redirect if not already on login page
+    if (!window.location.pathname.includes('/auth/login')) {
+      window.location.href = '/auth/login';
+    }
   }
 
   async get<T>(url: string, params?: any): Promise<T> {

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface UseApiState<T> {
   data: T | null;
@@ -16,29 +17,66 @@ export function useApi<T>(
     error: null,
   });
 
+  const { state: authState } = useAuth();
+  const cancelTokenRef = useRef<AbortController | null>(null);
+
   const fetchData = async () => {
+    // Cancel previous request
+    if (cancelTokenRef.current) {
+      cancelTokenRef.current.abort();
+    }
+
+    // Don't fetch if not authenticated
+    if (!authState.isAuthenticated) {
+      setState({
+        data: null,
+        loading: false,
+        error: null,
+      });
+      return;
+    }
+
+    // Create new cancel token
+    cancelTokenRef.current = new AbortController();
+
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const result = await apiCall();
-      setState({
-        data: result,
-        loading: false,
-        error: null,
-      });
+
+      // Check if request was cancelled
+      if (!cancelTokenRef.current?.signal.aborted) {
+        setState({
+          data: result,
+          loading: false,
+          error: null,
+        });
+      }
     } catch (error: any) {
-      setState({
-        data: null,
-        loading: false,
-        error:
-          error.response?.data?.message || error.message || 'Có lỗi xảy ra',
-      });
+      // Don't update state if request was cancelled
+      if (!cancelTokenRef.current?.signal.aborted) {
+        setState({
+          data: null,
+          loading: false,
+          error:
+            error.response?.data?.message || error.message || 'Có lỗi xảy ra',
+        });
+      }
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, dependencies);
+    if (authState.isInitialized) {
+      fetchData();
+    }
+
+    return () => {
+      // Cancel request on cleanup
+      if (cancelTokenRef.current) {
+        cancelTokenRef.current.abort();
+      }
+    };
+  }, [authState.isInitialized, authState.isAuthenticated, ...dependencies]);
 
   return {
     ...state,
