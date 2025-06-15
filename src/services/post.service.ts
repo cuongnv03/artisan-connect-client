@@ -10,6 +10,7 @@ import {
 import { PaginatedResponse } from '../types/common';
 
 export const postService = {
+  // === PUBLIC POST QUERIES ===
   async getPosts(query: GetPostsQuery = {}): Promise<PostPaginationResult> {
     const response = await apiClient.get<PaginatedResponse<Post>>(
       API_ENDPOINTS.POSTS.BASE,
@@ -30,6 +31,7 @@ export const postService = {
     return await apiClient.get<Post>(API_ENDPOINTS.POSTS.BY_SLUG(slug));
   },
 
+  // === POST CRUD (AUTHENTICATED) ===
   async createPost(data: CreatePostRequest): Promise<Post> {
     return await apiClient.post<Post>(API_ENDPOINTS.POSTS.BASE, data);
   },
@@ -42,6 +44,7 @@ export const postService = {
     await apiClient.delete(API_ENDPOINTS.POSTS.BY_ID(id));
   },
 
+  // === POST STATUS MANAGEMENT ===
   async publishPost(id: string): Promise<Post> {
     return await apiClient.post<Post>(API_ENDPOINTS.POSTS.PUBLISH(id));
   },
@@ -50,18 +53,27 @@ export const postService = {
     return await apiClient.post<Post>(API_ENDPOINTS.POSTS.ARCHIVE(id));
   },
 
-  async getMyPosts(query: GetPostsQuery = {}): Promise<PostPaginationResult> {
+  // === MY POSTS ===
+  async getMyPosts(query: GetPostsQuery = {}): Promise<{
+    posts: PostPaginationResult;
+    statusCounts: Record<string, number>;
+  }> {
+    // Server trả về object với posts và statusCounts
     const response = await apiClient.get<{
       posts: PaginatedResponse<Post>;
       statusCounts: Record<string, number>;
     }>(API_ENDPOINTS.POSTS.MY_POSTS, query);
 
     return {
-      data: response.posts.data,
-      meta: response.posts.meta,
+      posts: {
+        data: response.posts.data,
+        meta: response.posts.meta,
+      },
+      statusCounts: response.statusCounts,
     };
   },
 
+  // === FOLLOWED POSTS (FEED) ===
   async getFollowedPosts(
     query: GetPostsQuery = {},
   ): Promise<PostPaginationResult> {
@@ -76,12 +88,10 @@ export const postService = {
     };
   },
 
+  // === UTILITY METHODS ===
   async getPostStatusCounts(): Promise<Record<string, number>> {
-    const response = await apiClient.get<{
-      posts: PaginatedResponse<Post>;
-      statusCounts: Record<string, number>;
-    }>(API_ENDPOINTS.POSTS.MY_POSTS, { limit: 1 });
-
-    return response.statusCounts || {};
+    // Sử dụng getMyPosts với limit nhỏ để lấy statusCounts
+    const response = await this.getMyPosts({ limit: 1 });
+    return response.statusCounts;
   },
 };

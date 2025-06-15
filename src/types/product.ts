@@ -19,85 +19,104 @@ export enum AttributeType {
   EMAIL = 'EMAIL',
 }
 
-// Enhanced Product interface
+// Product interface
 export interface Product extends SoftDeleteEntity {
   sellerId: string;
   name: string;
-  slug?: string;
-  description?: string;
-  price: number;
-  discountPrice?: number;
+  slug?: string | null;
+  description?: string | null;
+  price: number; // Đã convert từ Decimal
+  discountPrice?: number | null;
   quantity: number;
-  status: ProductStatus;
-  images: string[];
-  tags: string[];
+  minOrderQty: number;
+  maxOrderQty?: number | null;
+  sku?: string | null;
+  barcode?: string | null;
+  weight?: number | null;
+  dimensions?: Record<string, any> | null;
   isCustomizable: boolean;
-  avgRating?: number;
-  reviewCount: number;
+  allowNegotiation: boolean;
+  shippingInfo?: Record<string, any> | null;
+  status: ProductStatus;
+  tags: string[];
+  images: string[];
+  featuredImage?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  attributes?: Record<string, any> | null;
+  specifications?: Record<string, any> | null;
+  customFields?: Record<string, any> | null;
+  hasVariants: boolean;
   viewCount: number;
   salesCount: number;
-
-  // New fields
-  specifications?: Record<string, any>;
-  customFields?: Record<string, any>;
-  hasVariants: boolean;
-  weight?: number;
-  dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-    unit?: string;
-  };
+  avgRating?: number | null;
+  reviewCount: number;
 
   // Relations
-  seller?: User;
-  categories?: Category[];
-  attributes?: ProductAttribute[];
+  seller?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    avatarUrl?: string | null;
+    artisanProfile?: {
+      shopName: string;
+      isVerified: boolean;
+    } | null;
+  };
+  categories?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+  }>;
   variants?: ProductVariant[];
   priceHistory?: PriceHistory[];
-}
-
-// Product Attributes
-export interface ProductAttribute extends BaseEntity {
-  productId: string;
-  key: string;
-  name: string;
-  value: string;
-  type: AttributeType;
-  unit?: string;
+  postMentions?: PostProductMention[];
+  isWishlisted?: boolean; // For authenticated users
 }
 
 // Product Variants
 export interface ProductVariant extends BaseEntity {
   productId: string;
   sku: string;
-  name?: string;
+  name?: string | null;
   price: number;
-  discountPrice?: number;
+  discountPrice?: number | null;
   quantity: number;
   images: string[];
-  weight?: number;
-  dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-    unit?: string;
-  };
+  weight?: number | null;
+  dimensions?: Record<string, any> | null;
+  attributes: Record<string, any>; // Thay đổi từ array sang object
   isActive: boolean;
   isDefault: boolean;
   sortOrder: number;
-  attributes: ProductVariantAttribute[];
 }
 
-export interface ProductVariantAttribute {
-  id: string;
-  variantId: string;
-  key: string;
+// Price History
+export interface PriceHistory extends BaseEntity {
+  productId: string;
+  price: number;
+  changeNote?: string | null;
+  changedBy?: string | null;
+}
+
+// Category
+export interface Category extends BaseEntity {
   name: string;
-  value: string;
+  slug: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  parentId?: string | null;
+  level: number;
+  sortOrder: number;
+  isActive: boolean;
+  parent?: Category | null;
+  children?: Category[];
+  productCount?: number;
+  attributeTemplates?: CategoryAttributeTemplate[];
 }
 
-// Attribute Templates
+// Category Attribute Template
 export interface CategoryAttributeTemplate extends BaseEntity {
   categoryId: string;
   name: string;
@@ -105,58 +124,61 @@ export interface CategoryAttributeTemplate extends BaseEntity {
   type: AttributeType;
   isRequired: boolean;
   isVariant: boolean;
-  options?: string[];
-  unit?: string;
+  options?: string[] | null;
+  unit?: string | null;
   sortOrder: number;
-  description?: string;
+  description?: string | null;
+  isCustom: boolean;
+  createdBy?: string | null;
 }
 
-export interface CustomAttributeTemplate extends BaseEntity {
-  artisanId: string;
-  name: string;
-  key: string;
-  type: AttributeType;
-  options?: string[];
-  unit?: string;
-  description?: string;
-  isActive: boolean;
-}
-
-// Price History
-export interface PriceHistory extends BaseEntity {
+// Post Product Mention
+export interface PostProductMention {
+  id: string;
+  postId: string;
   productId: string;
-  price: number;
-  changeNote?: string;
+  contextText?: string | null;
+  position?: number | null;
+  post: {
+    id: string;
+    title: string;
+    slug?: string | null;
+    type: string;
+    user: {
+      id: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+    };
+  };
 }
 
-// DTOs for API calls
+// DTOs
 export interface CreateProductRequest {
   name: string;
   description?: string;
   price: number;
   discountPrice?: number;
   quantity: number;
-  categories: string[];
-  images: string[];
-  tags?: string[];
+  minOrderQty?: number;
+  maxOrderQty?: number;
+  sku?: string;
+  barcode?: string;
+  weight?: number;
+  dimensions?: Record<string, any>;
   isCustomizable?: boolean;
+  allowNegotiation?: boolean;
+  shippingInfo?: Record<string, any>;
+  tags?: string[];
+  images: string[];
+  featuredImage?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  attributes?: Record<string, any>;
   specifications?: Record<string, any>;
   customFields?: Record<string, any>;
-  weight?: number;
-  dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-    unit?: string;
-  };
-  attributes?: CreateProductAttributeRequest[];
+  categoryIds: string[]; // Thay đổi từ categories sang categoryIds
   variants?: CreateProductVariantRequest[];
-}
-
-export interface CreateProductAttributeRequest {
-  key: string;
-  value: string;
-  unit?: string;
 }
 
 export interface CreateProductVariantRequest {
@@ -166,13 +188,11 @@ export interface CreateProductVariantRequest {
   quantity: number;
   images?: string[];
   weight?: number;
-  dimensions?: {
-    length?: number;
-    width?: number;
-    height?: number;
-    unit?: string;
-  };
-  attributes: { key: string; value: string }[];
+  dimensions?: Record<string, any>;
+  attributes: Record<string, any>; // Object thay vì array
+  isActive?: boolean;
+  isDefault?: boolean;
+  sortOrder?: number;
 }
 
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {
@@ -186,49 +206,33 @@ export interface UpdatePriceRequest {
 
 // Query interfaces
 export interface GetProductsQuery extends PaginationParams {
-  categoryId?: string;
   sellerId?: string;
+  categoryIds?: string | string[]; // Support both single and multiple
+  search?: string;
   status?: ProductStatus;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  inStock?: boolean;
+  hasVariants?: boolean;
   minPrice?: number;
   maxPrice?: number;
-  tags?: string[];
-  isCustomizable?: boolean;
-  inStock?: boolean;
 }
 
-export interface SearchProductsQuery extends GetProductsQuery {
+export interface SearchProductsQuery extends PaginationParams {
   q: string;
-}
-
-// Category interface (updated)
-export interface Category extends BaseEntity {
-  name: string;
-  slug: string;
-  description?: string;
-  imageUrl?: string;
-  parentId?: string;
-  level: number;
-  sortOrder: number;
-  isActive: boolean;
-  children?: Category[];
-  productCount?: number;
-  attributeTemplates?: CategoryAttributeTemplate[];
+  categoryIds?: string | string[];
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface ProductStats {
   totalProducts: number;
   publishedProducts: number;
   draftProducts: number;
+  outOfStockProducts: number;
   totalViews: number;
   totalSales: number;
-}
-export interface Review extends BaseEntity {
-  userId: string;
-  productId: string;
-  rating: number;
-  title?: string;
-  comment?: string;
-  images: string[];
-  user?: User;
-  product?: Product;
+  avgRating?: number;
 }

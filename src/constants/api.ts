@@ -28,8 +28,6 @@ export const API_ENDPOINTS = {
     FOLLOWERS: (userId: string) => `/users/${userId}/followers`,
     FOLLOWING: (userId: string) => `/users/${userId}/following`,
     FOLLOW_STATS: (userId: string) => `/users/${userId}/follow-stats`,
-    ACTIVITIES: '/users/activities',
-    ACTIVITIES_STATS: '/users/activities/stats',
     DELETE_ACCOUNT: '/users/account',
     BY_ID: (id: string) => `/users/${id}`,
   },
@@ -46,9 +44,7 @@ export const API_ENDPOINTS = {
     PROFILE_BY_USER: (userId: string) => `/artisans/profile/user/${userId}`,
     UPGRADE_REQUEST: '/artisans/upgrade-request',
     UPGRADE_REQUEST_STATUS: '/artisans/upgrade-request/status',
-    TEMPLATES: '/artisans/templates',
-    TEMPLATE_CUSTOMIZE: '/artisans/templates/customize',
-    STATS: '/artisans/stats',
+    // STATS: '/artisans/stats',
     // Admin routes
     ADMIN: {
       UPGRADE_REQUESTS: '/artisans/admin/upgrade-requests',
@@ -98,19 +94,6 @@ export const API_ENDPOINTS = {
     UPDATE_PRICE: (id: string) => `/products/${id}/price`,
     PUBLISH: (id: string) => `/products/${id}/publish`,
     UNPUBLISH: (id: string) => `/products/${id}/unpublish`,
-    VIEW: (id: string) => `/products/${id}/view`,
-
-    // Attributes
-    ATTRIBUTES: (productId: string) =>
-      `/attributes/products/${productId}/attributes`,
-    SET_ATTRIBUTES: (productId: string) =>
-      `/attributes/products/${productId}/attributes`,
-
-    // Variants
-    VARIANTS: (productId: string) => `/variants/products/${productId}/variants`,
-    VARIANT_BY_ID: (variantId: string) => `/variants/variants/${variantId}`,
-    GENERATE_VARIANTS: (productId: string) =>
-      `/variants/products/${productId}/variants/generate`,
   },
 
   // Categories
@@ -122,27 +105,9 @@ export const API_ENDPOINTS = {
 
     // Attribute Templates
     ATTRIBUTE_TEMPLATES: (categoryId: string) =>
-      `/attributes/categories/${categoryId}/templates`,
+      `/categories/${categoryId}/attributes`,
     ATTRIBUTE_TEMPLATE_BY_ID: (templateId: string) =>
-      `/attributes/categories/templates/${templateId}`,
-  },
-
-  // Attributes
-  ATTRIBUTES: {
-    CATEGORY_TEMPLATES: (categoryId: string) =>
-      `/attributes/categories/${categoryId}/templates`,
-    CUSTOM_TEMPLATES: '/attributes/custom-templates',
-    PRODUCT_ATTRIBUTES: (productId: string) =>
-      `/attributes/products/${productId}/attributes`,
-  },
-
-  // Variants
-  VARIANTS: {
-    PRODUCT_VARIANTS: (productId: string) =>
-      `/variants/products/${productId}/variants`,
-    VARIANT_BY_ID: (variantId: string) => `/variants/variants/${variantId}`,
-    GENERATE_VARIANTS: (productId: string) =>
-      `/variants/products/${productId}/variants/generate`,
+      `/categories/templates/${templateId}`,
   },
 
   // Cart

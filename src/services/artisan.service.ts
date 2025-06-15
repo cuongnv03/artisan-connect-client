@@ -13,6 +13,7 @@ import { PaginatedResponse } from '../types/common';
 import { User } from '../types/auth';
 
 export const artisanService = {
+  // Discovery methods
   async searchArtisans(
     query: SearchArtisansQuery,
   ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
@@ -46,6 +47,7 @@ export const artisanService = {
     );
   },
 
+  // Profile methods
   async getArtisanProfile(
     id: string,
   ): Promise<ArtisanProfile & { user: User }> {
@@ -122,21 +124,9 @@ export const artisanService = {
     );
   },
 
-  // Templates
-  async getAvailableTemplates(): Promise<any[]> {
-    return await apiClient.get<any[]>(API_ENDPOINTS.ARTISANS.TEMPLATES);
-  },
-
-  async customizeTemplate(data: any): Promise<any> {
-    return await apiClient.post<any>(
-      API_ENDPOINTS.ARTISANS.TEMPLATE_CUSTOMIZE,
-      data,
-    );
-  },
-
-  async getArtisanStats(): Promise<any> {
-    return await apiClient.get<any>(API_ENDPOINTS.ARTISANS.STATS);
-  },
+  // async getArtisanStats(): Promise<any> {
+  //   return await apiClient.get<any>(API_ENDPOINTS.ARTISANS.STATS);
+  // },
 
   // Admin methods
   async getUpgradeRequests(

@@ -33,45 +33,36 @@ export enum BlockType {
 
 export interface ContentBlock {
   id: string;
-  type: string;
-  data: {
-    text?: string;
-    url?: string;
-    caption?: string;
-    author?: string;
-    items?: string[];
-    html?: string;
-    embed?: string;
-    images?: Array<{ url: string; caption?: string }>;
-  };
+  type: BlockType; // Sử dụng enum thay vì string
+  data: any; // Server lưu dưới dạng any object
   order: number;
 }
 
-export interface ProductMention {
+export interface PostProductMention {
   id: string;
   postId: string;
   productId: string;
-  contextText?: string;
-  position?: number;
+  contextText?: string | null;
+  position?: number | null;
   product: {
     id: string;
     name: string;
-    slug?: string;
+    slug?: string | null;
     images: string[];
     price: number;
-    discountPrice?: number;
+    discountPrice?: number | null;
     status: string;
-    avgRating?: number;
+    avgRating?: number | null;
     reviewCount: number;
     seller: {
       id: string;
       firstName: string;
       lastName: string;
-      avatarUrl?: string;
+      avatarUrl?: string | null;
       artisanProfile?: {
         shopName: string;
         isVerified: boolean;
-      };
+      } | null;
     };
   };
 }
@@ -79,34 +70,38 @@ export interface ProductMention {
 export interface Post extends SoftDeleteEntity {
   userId: string;
   title: string;
-  slug?: string;
-  summary?: string;
-  content: ContentBlock[];
-  contentText?: string;
+  slug?: string | null;
+  summary?: string | null;
+  content: ContentBlock[]; // JSON array of content blocks
+  contentText?: string | null; // Extracted text for search
   type: PostType;
   status: PostStatus;
-  thumbnailUrl?: string;
-  coverImage?: string;
-  mediaUrls: string[];
+  thumbnailUrl?: string | null;
+  coverImage?: string | null;
+  mediaUrls: string[]; // Extracted from content blocks
   tags: string[];
   viewCount: number;
   likeCount: number;
   commentCount: number;
   shareCount: number;
-  publishedAt?: Date;
-  user?: User;
-  isLiked?: boolean;
-  isSaved?: boolean;
-  canEdit?: boolean;
-  productMentions?: ProductMention[];
-}
+  publishedAt?: Date | null;
 
-export interface PostAnalytics extends BaseEntity {
-  postId: string;
-  viewCount: number;
-  uniqueViewers: number;
-  avgReadTime?: number;
-  conversionCount: number;
+  // Relations (optional, populated by server)
+  user?: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string | null;
+    artisanProfile?: {
+      shopName: string;
+      isVerified: boolean;
+    } | null;
+  };
+  productMentions?: PostProductMention[];
+  isLiked?: boolean; // For authenticated users
+  isSaved?: boolean; // For authenticated users
+  canEdit?: boolean; // For authenticated users
 }
 
 // DTOs
@@ -118,25 +113,45 @@ export interface CreatePostRequest {
   status?: PostStatus;
   thumbnailUrl?: string;
   coverImage?: string;
-  mediaUrls?: string[];
   tags?: string[];
   publishNow?: boolean;
   productMentions?: Array<{
     productId: string;
     contextText?: string;
-    position: number;
+    position?: number;
   }>;
 }
 
-export interface UpdatePostRequest extends Partial<CreatePostRequest> {}
+export interface UpdatePostRequest {
+  title?: string;
+  summary?: string;
+  content?: ContentBlock[];
+  type?: PostType;
+  status?: PostStatus;
+  thumbnailUrl?: string;
+  coverImage?: string;
+  tags?: string[];
+  productMentions?: Array<{
+    productId: string;
+    contextText?: string;
+    position?: number;
+  }>;
+}
 
 export interface GetPostsQuery extends PaginationParams {
   userId?: string;
   type?: PostType | PostType[];
   status?: PostStatus | PostStatus[];
-  tags?: string[];
+  tags?: string | string[]; // Support both single and array
   search?: string;
   followedOnly?: boolean;
+  sortBy?:
+    | 'createdAt'
+    | 'publishedAt'
+    | 'viewCount'
+    | 'likeCount'
+    | 'commentCount';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface PostPaginationResult {

@@ -13,10 +13,14 @@ export interface ArtisanProfile extends BaseEntity {
   contactEmail?: string;
   contactPhone?: string;
   socialMedia?: Record<string, string>;
+  businessAddress?: string;
+  businessHours?: Record<string, any>;
+  shippingInfo?: Record<string, any>;
+  returnPolicy?: string;
   isVerified: boolean;
   rating?: number;
   reviewCount: number;
-  totalSales: number;
+  totalSales: number; // Thay đổi từ Decimal sang number cho client
   user?: User;
 }
 
@@ -35,6 +39,9 @@ export interface ArtisanUpgradeRequest extends BaseEntity {
   website?: string;
   socialMedia?: Record<string, string>;
   reason?: string;
+  images: string[];
+  certificates: string[];
+  identityProof?: string;
   status: UpgradeRequestStatus;
   adminNotes?: string;
   reviewedBy?: string;
@@ -42,7 +49,7 @@ export interface ArtisanUpgradeRequest extends BaseEntity {
   user?: User;
 }
 
-// DTOs
+// DTOs - CẬP NHẬT
 export interface CreateArtisanProfileRequest {
   shopName: string;
   shopDescription?: string;
@@ -52,6 +59,10 @@ export interface CreateArtisanProfileRequest {
   contactEmail?: string;
   contactPhone?: string;
   socialMedia?: Record<string, string>;
+  businessAddress?: string;
+  businessHours?: Record<string, any>;
+  shippingInfo?: Record<string, any>;
+  returnPolicy?: string;
 }
 
 export interface UpdateArtisanProfileRequest
@@ -68,6 +79,9 @@ export interface UpgradeRequestData {
   website?: string;
   socialMedia?: Record<string, string>;
   reason?: string;
+  images?: string[];
+  certificates?: string[];
+  identityProof?: string;
 }
 
 export interface SearchArtisansQuery extends PaginationParams {
@@ -76,7 +90,6 @@ export interface SearchArtisansQuery extends PaginationParams {
   verified?: boolean;
 }
 
-// Response wrapper cho upgrade request status
 export interface UpgradeRequestStatusResponse {
   hasRequest: boolean;
   status?: UpgradeRequestStatus;
