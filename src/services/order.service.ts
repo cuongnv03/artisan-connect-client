@@ -1,42 +1,31 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
 import {
-  Order,
   OrderWithDetails,
   OrderSummary,
-  OrderStatus,
+  OrderStats,
   OrderStatusHistory,
-  PaymentMethod,
   CreateOrderFromCartRequest,
   CreateOrderFromQuoteRequest,
   UpdateOrderStatusRequest,
   ProcessPaymentRequest,
-  OrderStats,
+  GetOrdersQuery,
+  GetOrderStatsQuery,
+  // Dispute types
+  OrderDisputeWithDetails,
+  CreateDisputeRequest,
+  UpdateDisputeRequest,
+  GetDisputesQuery,
+  // Return types
+  OrderReturnWithDetails,
+  CreateReturnRequest,
+  UpdateReturnRequest,
+  GetReturnsQuery,
 } from '../types/order';
 import { PaginatedResponse } from '../types/common';
 
-export interface GetOrdersQuery {
-  status?: OrderStatus | OrderStatus[];
-  paymentStatus?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  dateFrom?: string;
-  dateTo?: string;
-}
-
-export interface GetOrderStatsQuery {
-  userId?: string;
-  sellerId?: string;
-  period?: 'day' | 'week' | 'month' | 'year';
-  dateFrom?: string;
-  dateTo?: string;
-}
-
 export const orderService = {
   // === ORDER CREATION ===
-
   async createOrderFromCart(
     data: CreateOrderFromCartRequest,
   ): Promise<OrderWithDetails> {
@@ -56,8 +45,6 @@ export const orderService = {
   },
 
   // === ORDER RETRIEVAL ===
-
-  // Cập nhật để return OrderSummary thay vì Order
   async getMyOrders(
     query: GetOrdersQuery = {},
   ): Promise<PaginatedResponse<OrderSummary>> {
@@ -67,11 +54,11 @@ export const orderService = {
     );
   },
 
-  async getSellerOrders(
+  async getMyArtisanOrders(
     query: GetOrdersQuery = {},
   ): Promise<PaginatedResponse<OrderSummary>> {
     return await apiClient.get<PaginatedResponse<OrderSummary>>(
-      API_ENDPOINTS.ORDERS.SELLER_ORDERS,
+      API_ENDPOINTS.ORDERS.MY_ARTISAN_ORDERS,
       query,
     );
   },
@@ -88,7 +75,6 @@ export const orderService = {
     );
   },
 
-  // Cập nhật return type cho OrderStatusHistory
   async getOrderStatusHistory(id: string): Promise<OrderStatusHistory[]> {
     return await apiClient.get<OrderStatusHistory[]>(
       API_ENDPOINTS.ORDERS.HISTORY(id),
@@ -100,7 +86,6 @@ export const orderService = {
   },
 
   // === ORDER MANAGEMENT ===
-
   async updateOrderStatus(
     id: string,
     data: UpdateOrderStatusRequest,
@@ -114,14 +99,11 @@ export const orderService = {
   async cancelOrder(id: string, reason?: string): Promise<OrderWithDetails> {
     return await apiClient.post<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.CANCEL(id),
-      {
-        reason,
-      },
+      { reason },
     );
   },
 
   // === PAYMENT ===
-
   async processPayment(
     id: string,
     data: ProcessPaymentRequest,
@@ -129,6 +111,96 @@ export const orderService = {
     return await apiClient.post<OrderWithDetails>(
       API_ENDPOINTS.ORDERS.PAYMENT(id),
       data,
+    );
+  },
+
+  // === DISPUTE MANAGEMENT===
+  async createDispute(
+    data: CreateDisputeRequest,
+  ): Promise<OrderDisputeWithDetails> {
+    return await apiClient.post<OrderDisputeWithDetails>(
+      API_ENDPOINTS.ORDERS.DISPUTES.CREATE,
+      data,
+    );
+  },
+
+  async getMyDisputes(
+    query: GetDisputesQuery = {},
+  ): Promise<PaginatedResponse<OrderDisputeWithDetails>> {
+    return await apiClient.get<PaginatedResponse<OrderDisputeWithDetails>>(
+      API_ENDPOINTS.ORDERS.DISPUTES.MY,
+      query,
+    );
+  },
+
+  async getDispute(id: string): Promise<OrderDisputeWithDetails> {
+    return await apiClient.get<OrderDisputeWithDetails>(
+      API_ENDPOINTS.ORDERS.DISPUTES.BY_ID(id),
+    );
+  },
+
+  async updateDispute(
+    id: string,
+    data: UpdateDisputeRequest,
+  ): Promise<OrderDisputeWithDetails> {
+    return await apiClient.patch<OrderDisputeWithDetails>(
+      API_ENDPOINTS.ORDERS.DISPUTES.UPDATE(id),
+      data,
+    );
+  },
+
+  // Admin only
+  async getAllDisputes(
+    query: GetDisputesQuery = {},
+  ): Promise<PaginatedResponse<OrderDisputeWithDetails>> {
+    return await apiClient.get<PaginatedResponse<OrderDisputeWithDetails>>(
+      API_ENDPOINTS.ORDERS.DISPUTES.ALL,
+      query,
+    );
+  },
+
+  // === RETURN MANAGEMENT===
+  async createReturn(
+    data: CreateReturnRequest,
+  ): Promise<OrderReturnWithDetails> {
+    return await apiClient.post<OrderReturnWithDetails>(
+      API_ENDPOINTS.ORDERS.RETURNS.CREATE,
+      data,
+    );
+  },
+
+  async getMyReturns(
+    query: GetReturnsQuery = {},
+  ): Promise<PaginatedResponse<OrderReturnWithDetails>> {
+    return await apiClient.get<PaginatedResponse<OrderReturnWithDetails>>(
+      API_ENDPOINTS.ORDERS.RETURNS.MY,
+      query,
+    );
+  },
+
+  async getReturn(id: string): Promise<OrderReturnWithDetails> {
+    return await apiClient.get<OrderReturnWithDetails>(
+      API_ENDPOINTS.ORDERS.RETURNS.BY_ID(id),
+    );
+  },
+
+  async updateReturn(
+    id: string,
+    data: UpdateReturnRequest,
+  ): Promise<OrderReturnWithDetails> {
+    return await apiClient.patch<OrderReturnWithDetails>(
+      API_ENDPOINTS.ORDERS.RETURNS.UPDATE(id),
+      data,
+    );
+  },
+
+  // Admin only
+  async getAllReturns(
+    query: GetReturnsQuery = {},
+  ): Promise<PaginatedResponse<OrderReturnWithDetails>> {
+    return await apiClient.get<PaginatedResponse<OrderReturnWithDetails>>(
+      API_ENDPOINTS.ORDERS.RETURNS.ALL,
+      query,
     );
   },
 };

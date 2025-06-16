@@ -6,11 +6,13 @@ export interface CartItem {
   productId: string;
   variantId?: string | null;
   quantity: number;
-  price: number;
+  price: number; // Converted from Decimal
+  negotiationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   product?: ProductInCart;
   variant?: ProductVariantInCart;
+  negotiation?: NegotiationInCart;
 }
 
 export interface ProductInCart {
@@ -48,6 +50,14 @@ export interface ProductVariantInCart {
   }>;
 }
 
+export interface NegotiationInCart {
+  id: string;
+  originalPrice: number;
+  finalPrice: number;
+  status: string;
+  expiresAt?: Date | null;
+}
+
 export interface CartSummary {
   items: CartItem[];
   totalItems: number;
@@ -55,6 +65,7 @@ export interface CartSummary {
   subtotal: number;
   total: number;
   groupedBySeller: SellerCartGroup[];
+  hasNegotiatedItems: boolean;
 }
 
 export interface SellerCartGroup {
@@ -85,4 +96,22 @@ export interface CartValidation {
     productName: string;
     message: string;
   }>;
+  negotiationIssues?: Array<{
+    type: 'NEGOTIATION_EXPIRED' | 'NEGOTIATION_INVALID' | 'NEGOTIATION_USED';
+    negotiationId: string;
+    productName: string;
+    message: string;
+  }>;
+}
+
+// DTOs
+export interface AddToCartRequest {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+  negotiationId?: string;
+}
+
+export interface UpdateCartItemRequest {
+  quantity: number;
 }

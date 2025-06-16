@@ -1,8 +1,6 @@
 import { BaseEntity } from './common';
-import { User } from './auth';
-import { Address } from './user';
-import { CartItem, CartSummary } from './cart';
 
+// ENUMS
 export enum OrderStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
@@ -23,7 +21,7 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
-export enum PaymentMethod {
+export enum PaymentMethodType {
   CREDIT_CARD = 'CREDIT_CARD',
   DEBIT_CARD = 'DEBIT_CARD',
   BANK_TRANSFER = 'BANK_TRANSFER',
@@ -31,6 +29,52 @@ export enum PaymentMethod {
   CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
 }
 
+export enum DeliveryStatus {
+  PREPARING = 'PREPARING',
+  SHIPPED = 'SHIPPED',
+  IN_TRANSIT = 'IN_TRANSIT',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  DELIVERY_FAILED = 'DELIVERY_FAILED',
+  RETURNED = 'RETURNED',
+}
+
+// DISPUTE ENUMS
+export enum DisputeType {
+  PRODUCT_NOT_RECEIVED = 'PRODUCT_NOT_RECEIVED',
+  PRODUCT_DAMAGED = 'PRODUCT_DAMAGED',
+  PRODUCT_NOT_AS_DESCRIBED = 'PRODUCT_NOT_AS_DESCRIBED',
+  DELIVERY_ISSUE = 'DELIVERY_ISSUE',
+  SELLER_ISSUE = 'SELLER_ISSUE',
+  OTHER = 'OTHER',
+}
+
+export enum DisputeStatus {
+  OPEN = 'OPEN',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
+}
+
+// RETURN ENUMS
+export enum ReturnReason {
+  DEFECTIVE = 'DEFECTIVE',
+  NOT_AS_DESCRIBED = 'NOT_AS_DESCRIBED',
+  WRONG_ITEM = 'WRONG_ITEM',
+  DAMAGED_IN_SHIPPING = 'DAMAGED_IN_SHIPPING',
+  CHANGED_MIND = 'CHANGED_MIND',
+  OTHER = 'OTHER',
+}
+
+export enum ReturnStatus {
+  REQUESTED = 'REQUESTED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  PRODUCT_RETURNED = 'PRODUCT_RETURNED',
+  REFUND_PROCESSED = 'REFUND_PROCESSED',
+}
+
+// MAIN INTERFACES
 export interface Order extends BaseEntity {
   orderNumber: string;
   userId: string;
@@ -40,11 +84,23 @@ export interface Order extends BaseEntity {
   totalAmount: number;
   subtotal: number;
   shippingCost: number;
-  paymentMethod?: PaymentMethod;
+  taxAmount?: number;
+  discountAmount?: number;
+  paymentMethod?: PaymentMethodType;
   paymentReference?: string;
+  deliveryStatus: DeliveryStatus;
+  expectedDelivery?: Date;
+  actualDelivery?: Date;
+  isDeliveryLate: boolean;
+  deliveryNotes?: string;
+  trackingNumber?: string;
+  canReturn: boolean;
+  returnDeadline?: Date;
+  hasDispute: boolean;
+  isRated: boolean;
+  buyerSatisfaction?: number;
   notes?: string;
-  estimatedDelivery?: Date;
-  deliveredAt?: Date;
+  statusHistory?: any;
 }
 
 export interface OrderWithDetails extends Order {
@@ -55,10 +111,20 @@ export interface OrderWithDetails extends Order {
     email: string;
     phone?: string;
   };
-  shippingAddress?: Address;
+  shippingAddress?: {
+    id: string;
+    fullName: string;
+    phone?: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   items: OrderItemWithDetails[];
-  statusHistory: OrderStatusHistory[];
   paymentTransactions: PaymentTransaction[];
+  disputes: OrderDispute[];
+  returns: OrderReturn[];
 }
 
 export interface OrderSummary {
@@ -66,9 +132,10 @@ export interface OrderSummary {
   orderNumber: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  deliveryStatus: DeliveryStatus;
   totalAmount: number;
   itemCount: number;
-  createdAt: string;
+  createdAt: Date;
   customer?: {
     id: string;
     name: string;
@@ -81,21 +148,29 @@ export interface OrderSummary {
   };
 }
 
-export interface OrderItem extends BaseEntity {
+export interface OrderItemWithDetails {
+  id: string;
   orderId: string;
-  productId: string;
+  productId?: string;
+  variantId?: string;
   sellerId: string;
   quantity: number;
   price: number;
-}
-
-export interface OrderItemWithDetails extends OrderItem {
-  product: {
+  isCustomOrder: boolean;
+  customTitle?: string;
+  customDescription?: string;
+  product?: {
     id: string;
     name: string;
     slug?: string;
     images: string[];
     isCustomizable: boolean;
+  };
+  variant?: {
+    id: string;
+    sku: string;
+    name?: string;
+    attributes: Record<string, any>;
   };
   seller: {
     id: string;
@@ -107,13 +182,11 @@ export interface OrderItemWithDetails extends OrderItem {
       isVerified: boolean;
     };
   };
-}
-
-export interface OrderStatusHistory extends BaseEntity {
-  orderId: string;
-  status: OrderStatus;
-  note?: string;
-  createdBy?: string;
+  customOrder?: {
+    id: string;
+    title: string;
+    description: string;
+  };
 }
 
 export interface PaymentTransaction extends BaseEntity {
@@ -123,24 +196,77 @@ export interface PaymentTransaction extends BaseEntity {
   amount: number;
   currency: string;
   status: PaymentStatus;
-  paymentMethod: PaymentMethod;
+  paymentMethodType: PaymentMethodType;
   reference: string;
   externalReference?: string;
   failureReason?: string;
+  metadata?: any;
   processedAt?: Date;
+}
+
+// DISPUTE INTERFACES
+export interface OrderDispute extends BaseEntity {
+  orderId: string;
+  complainantId: string;
+  type: DisputeType;
+  reason: string;
+  evidence: string[];
+  status: DisputeStatus;
+  resolution?: string;
+  resolvedBy?: string;
+  resolvedAt?: Date;
+}
+
+export interface OrderDisputeWithDetails extends OrderDispute {
+  order: {
+    id: string;
+    orderNumber: string;
+  };
+  complainant: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+// RETURN INTERFACES
+export interface OrderReturn extends BaseEntity {
+  orderId: string;
+  requesterId: string;
+  reason: ReturnReason;
+  description?: string;
+  evidence: string[];
+  status: ReturnStatus;
+  approvedBy?: string;
+  refundAmount?: number;
+  refundReason?: string;
+}
+
+export interface OrderReturnWithDetails extends OrderReturn {
+  order: {
+    id: string;
+    orderNumber: string;
+  };
+  requester: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 // DTOs
 export interface CreateOrderFromCartRequest {
   addressId: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethodType;
   notes?: string;
 }
 
 export interface CreateOrderFromQuoteRequest {
   quoteRequestId: string;
   addressId: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethodType;
   notes?: string;
 }
 
@@ -156,7 +282,6 @@ export interface ProcessPaymentRequest {
   externalReference?: string;
 }
 
-// Thêm interface cho order stats
 export interface OrderStats {
   totalOrders: number;
   pendingOrders: number;
@@ -164,4 +289,77 @@ export interface OrderStats {
   cancelledOrders: number;
   totalRevenue: number;
   averageOrderValue: number;
+}
+
+// DISPUTE DTOs
+export interface CreateDisputeRequest {
+  orderId: string;
+  type: DisputeType;
+  reason: string;
+  evidence?: string[];
+}
+
+export interface UpdateDisputeRequest {
+  status: DisputeStatus;
+  resolution?: string;
+}
+
+// RETURN DTOs
+export interface CreateReturnRequest {
+  orderId: string;
+  reason: ReturnReason;
+  description?: string;
+  evidence?: string[];
+}
+
+export interface UpdateReturnRequest {
+  status: ReturnStatus;
+  refundAmount?: number;
+  refundReason?: string;
+}
+
+// QUERY INTERFACES
+export interface GetOrdersQuery {
+  page?: number;
+  limit?: number;
+  status?: OrderStatus | OrderStatus[];
+  paymentStatus?: PaymentStatus | PaymentStatus[];
+  deliveryStatus?: DeliveryStatus | DeliveryStatus[];
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface GetDisputesQuery {
+  page?: number;
+  limit?: number;
+  status?: DisputeStatus;
+  type?: DisputeType;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface GetReturnsQuery {
+  page?: number;
+  limit?: number;
+  status?: ReturnStatus;
+  reason?: ReturnReason;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface GetOrderStatsQuery {
+  userId?: string;
+  sellerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// STATUS HISTORY - CẬP NHẬT
+export interface OrderStatusHistory {
+  status: OrderStatus;
+  note?: string;
+  timestamp: string;
+  updatedBy?: string;
 }

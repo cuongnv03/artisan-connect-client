@@ -1,5 +1,6 @@
 import { apiClient } from '../utils/api';
-import { UploadResponse } from '../types/api';
+import { API_ENDPOINTS } from '../constants/api';
+import { UploadResponse } from '../types/common';
 
 export interface UploadOptions {
   folder?: string;
@@ -23,7 +24,10 @@ export const uploadService = {
     if (options.height) formData.append('height', options.height.toString());
     if (options.format) formData.append('format', options.format);
 
-    return await apiClient.upload<UploadResponse>('/upload/image', formData);
+    return await apiClient.upload<UploadResponse>(
+      API_ENDPOINTS.UPLOAD.IMAGE,
+      formData,
+    );
   },
 
   async uploadVideo(
@@ -35,18 +39,10 @@ export const uploadService = {
 
     if (options.folder) formData.append('folder', options.folder);
 
-    return await apiClient.upload<UploadResponse>('/upload/video', formData);
-  },
-
-  async uploadDocument(
-    file: File,
-    folder = 'documents',
-  ): Promise<UploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('folder', folder);
-
-    return await apiClient.upload<UploadResponse>('/upload/document', formData);
+    return await apiClient.upload<UploadResponse>(
+      API_ENDPOINTS.UPLOAD.VIDEO,
+      formData,
+    );
   },
 
   async uploadMultiple(
@@ -57,13 +53,9 @@ export const uploadService = {
     return await Promise.all(promises);
   },
 
-  async deleteFile(publicId: string): Promise<void> {
-    await apiClient.delete(`/upload/${publicId}`);
-  },
-
   // Helper methods
   validateImageFile(file: File): { valid: boolean; error?: string } {
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024; // 10MB (match server limit)
     const allowedTypes = [
       'image/jpeg',
       'image/jpg',
@@ -80,14 +72,14 @@ export const uploadService = {
     }
 
     if (file.size > maxSize) {
-      return { valid: false, error: 'File không được vượt quá 5MB' };
+      return { valid: false, error: 'File không được vượt quá 10MB' };
     }
 
     return { valid: true };
   },
 
   validateVideoFile(file: File): { valid: boolean; error?: string } {
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = 10 * 1024 * 1024; // 10MB (match server limit)
     const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
     if (!allowedTypes.includes(file.type)) {
@@ -98,7 +90,7 @@ export const uploadService = {
     }
 
     if (file.size > maxSize) {
-      return { valid: false, error: 'File video không được vượt quá 50MB' };
+      return { valid: false, error: 'File video không được vượt quá 10MB' };
     }
 
     return { valid: true };

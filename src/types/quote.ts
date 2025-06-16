@@ -1,38 +1,9 @@
-import { User } from './auth';
-import { BaseEntity } from './common';
-import { Product } from './product';
+// Deprecated: Use custom-order.ts instead
+// This file is kept for backward compatibility
+// All quote functionality has been moved to custom-order system
 
-export enum QuoteStatus {
-  PENDING = 'PENDING',
-  ACCEPTED = 'ACCEPTED',
-  REJECTED = 'REJECTED',
-  COUNTER_OFFERED = 'COUNTER_OFFERED',
-  EXPIRED = 'EXPIRED',
-}
-
-export interface QuoteRequest extends BaseEntity {
-  productId: string;
-  customerId: string;
-  artisanId: string;
-  requestedPrice?: number;
-  specifications?: string;
-  status: QuoteStatus;
-  counterOffer?: number;
-  finalPrice?: number;
-  customerMessage?: string;
-  artisanMessage?: string;
-  expiresAt?: Date;
-  product: Product;
-  customer: User;
-  artisan: User;
-}
-
-export interface QuoteStats {
-  totalQuotes: number;
-  pendingQuotes: number;
-  acceptedQuotes: number;
-  rejectedQuotes: number;
-  expiredQuotes: number;
-  averageNegotiationTime: number;
-  conversionRate: number;
-}
+export {
+  QuoteStatus,
+  CustomOrderRequest as QuoteRequest,
+  CustomOrderStats as QuoteStats,
+} from './custom-order';

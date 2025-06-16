@@ -7,6 +7,8 @@ export * from './cart.service';
 export * from './order.service';
 export * from './quote.service';
 export * from './social.service';
+export * from './price-negotiation.service';
+export * from './custom-order.service';
 export * from './message.service';
 export * from './notification.service';
 export * from './review.service';

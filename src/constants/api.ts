@@ -77,9 +77,12 @@ export const API_ENDPOINTS = {
     POST_COMMENTS: (postId: string) => `/social/posts/${postId}/comments`,
     COMMENT_REPLIES: (commentId: string) =>
       `/social/comments/${commentId}/replies`,
-    SAVED_POSTS: '/social/saved-posts',
-    TOGGLE_SAVE: '/social/saved-posts/toggle',
-    CHECK_SAVED: (postId: string) => `/social/saved-posts/check/${postId}`,
+    WISHLIST: '/social/wishlist',
+    WISHLIST_TOGGLE: '/social/wishlist/toggle',
+    WISHLIST_ITEM: (itemType: string, itemId: string) =>
+      `/social/wishlist/${itemType}/${itemId}`,
+    WISHLIST_CHECK: (itemType: string, itemId: string) =>
+      `/social/wishlist/check/${itemType}/${itemId}`,
   },
 
   // Products
@@ -110,6 +113,28 @@ export const API_ENDPOINTS = {
       `/categories/templates/${templateId}`,
   },
 
+  // Price Negotiation
+  PRICE_NEGOTIATION: {
+    BASE: '/negotiations',
+    MY_NEGOTIATIONS: '/negotiations/my-negotiations',
+    STATS: '/negotiations/stats',
+    BY_ID: (id: string) => `/negotiations/${id}`,
+    RESPOND: (id: string) => `/negotiations/${id}/respond`,
+    CANCEL: (id: string) => `/negotiations/${id}/cancel`,
+  },
+
+  // Custom Order
+  CUSTOM_ORDER: {
+    BASE: '/custom-orders',
+    MY_ORDERS: '/custom-orders/my-orders',
+    STATS: '/custom-orders/stats',
+    BY_ID: (id: string) => `/custom-orders/${id}`,
+    RESPOND: (id: string) => `/custom-orders/${id}/respond`,
+    HISTORY: (id: string) => `/custom-orders/${id}/history`,
+    ACCEPT_COUNTER: (id: string) => `/custom-orders/${id}/accept-counter`,
+    CANCEL: (id: string) => `/custom-orders/${id}/cancel`,
+  },
+
   // Cart
   CART: {
     BASE: '/cart',
@@ -117,6 +142,7 @@ export const API_ENDPOINTS = {
     COUNT: '/cart/count',
     VALIDATE: '/cart/validate',
     ITEM: (productId: string) => `/cart/${productId}`,
+    NEGOTIATED: (negotiationId: string) => `/cart/negotiated/${negotiationId}`,
   },
 
   // Orders
@@ -124,7 +150,7 @@ export const API_ENDPOINTS = {
     FROM_CART: '/orders/from-cart',
     FROM_QUOTE: '/orders/from-quote',
     MY_ORDERS: '/orders/my-orders',
-    SELLER_ORDERS: '/orders/seller-orders',
+    MY_ARTISAN_ORDERS: '/orders/my-artisan-orders',
     STATS: '/orders/stats',
     BY_NUMBER: (orderNumber: string) => `/orders/number/${orderNumber}`,
     BY_ID: (id: string) => `/orders/${id}`,
@@ -132,6 +158,26 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
     CANCEL: (id: string) => `/orders/${id}/cancel`,
     PAYMENT: (id: string) => `/orders/${id}/payment`,
+
+    // DISPUTE ENDPOINTS
+    DISPUTES: {
+      CREATE: '/orders/disputes',
+      MY: '/orders/disputes/my',
+      BY_ID: (id: string) => `/orders/disputes/${id}`,
+      UPDATE: (id: string) => `/orders/disputes/${id}`,
+      // Admin
+      ALL: '/orders/admin/disputes',
+    },
+
+    // RETURN ENDPOINTS
+    RETURNS: {
+      CREATE: '/orders/returns',
+      MY: '/orders/returns/my',
+      BY_ID: (id: string) => `/orders/returns/${id}`,
+      UPDATE: (id: string) => `/orders/returns/${id}`,
+      // Admin
+      ALL: '/orders/admin/returns',
+    },
   },
 
   // Quotes
@@ -155,6 +201,8 @@ export const API_ENDPOINTS = {
       `/reviews/product/${productId}/statistics`,
     USER_REVIEWS: '/reviews/user/me',
     REVIEWABLE_PRODUCTS: '/reviews/user/reviewable-products',
+    USER_PRODUCT_REVIEW: (productId: string) =>
+      `/reviews/user-product/${productId}`,
   },
 
   // Notifications
@@ -174,26 +222,16 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `/messages/${id}/read`,
     MARK_CONVERSATION_READ: (userId: string) =>
       `/messages/conversations/${userId}/read`,
-    MEDIA: '/messages/media',
-    QUOTE_DISCUSSION: '/messages/quote-discussion',
     CUSTOM_ORDER: '/messages/custom-order',
-    NEGOTIATIONS: '/messages/negotiations',
-    NEGOTIATION_HISTORY: (negotiationId: string) =>
-      `/messages/negotiations/${negotiationId}/history`,
-    UPDATE_PROPOSAL: (negotiationId: string) =>
-      `/messages/negotiations/${negotiationId}/proposal`,
-    CANCEL_NEGOTIATION: (negotiationId: string) =>
-      `/messages/negotiations/${negotiationId}/cancel`,
   },
 
   // Analytics
   ANALYTICS: {
-    TRENDING: '/analytics/trending',
-    TRACK_VIEW: '/analytics/track/view',
-    TRACK_CONVERSION: '/analytics/track/conversion',
-    POST_ANALYTICS: (postId: string) => `/analytics/posts/${postId}`,
-    POST_INSIGHTS: (postId: string) => `/analytics/posts/${postId}/insights`,
-    SUMMARY: '/analytics/summary',
+    USER: '/analytics/user/me',
+    ARTISAN_DASHBOARD: '/analytics/artisan/dashboard',
+    ARTISAN_DASHBOARD_BY_ID: (artisanId: string) =>
+      `/analytics/artisan/${artisanId}/dashboard`,
+    PLATFORM_DASHBOARD: '/analytics/platform/dashboard',
   },
 
   // Upload
@@ -201,6 +239,5 @@ export const API_ENDPOINTS = {
     IMAGE: '/upload/image',
     VIDEO: '/upload/video',
     MULTIPLE: '/upload/multiple',
-    DELETE: (publicId: string) => `/upload/${publicId}`,
   },
 } as const;

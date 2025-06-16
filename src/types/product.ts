@@ -236,3 +236,38 @@ export interface ProductStats {
   totalSales: number;
   avgRating?: number;
 }
+
+// Review interfaces
+export interface Review {
+  id: string;
+  userId: string;
+  productId: string;
+  rating: number;
+  title?: string;
+  comment?: string;
+  images: string[];
+  helpfulCount: number;
+  isVerifiedPurchase: boolean;
+  orderItemId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+  };
+}
+
+export interface ReviewStatistics {
+  totalReviews: number;
+  averageRating: number;
+  verifiedPurchaseCount: number;
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}

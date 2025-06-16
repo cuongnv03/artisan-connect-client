@@ -1,6 +1,12 @@
 import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
-import { CartItem, CartSummary, CartValidation } from '../types/cart';
+import {
+  CartItem,
+  CartSummary,
+  CartValidation,
+  AddToCartRequest,
+  UpdateCartItemRequest,
+} from '../types/cart';
 
 export const cartService = {
   async getCart(): Promise<{ items: CartItem[] }> {
@@ -18,26 +24,23 @@ export const cartService = {
     return response.count;
   },
 
-  async addToCart(
-    productId: string,
-    quantity: number,
-    variantId?: string,
+  async addToCart(data: AddToCartRequest): Promise<CartItem> {
+    return await apiClient.post<CartItem>(API_ENDPOINTS.CART.BASE, data);
+  },
+
+  async addNegotiatedItemToCart(
+    negotiationId: string,
+    quantity?: number,
   ): Promise<CartItem> {
-    const payload: any = {
-      productId,
-      quantity,
-    };
-
-    if (variantId) {
-      payload.variantId = variantId;
-    }
-
-    return await apiClient.post<CartItem>(API_ENDPOINTS.CART.BASE, payload);
+    return await apiClient.post<CartItem>(
+      API_ENDPOINTS.CART.NEGOTIATED(negotiationId),
+      { quantity },
+    );
   },
 
   async updateCartItem(
     productId: string,
-    quantity: number,
+    data: UpdateCartItemRequest,
     variantId?: string,
   ): Promise<CartItem> {
     const params = new URLSearchParams();
@@ -49,9 +52,7 @@ export const cartService = {
       params.toString() ? `?${params.toString()}` : ''
     }`;
 
-    return await apiClient.patch<CartItem>(url, {
-      quantity,
-    });
+    return await apiClient.patch<CartItem>(url, data);
   },
 
   async removeFromCart(productId: string, variantId?: string): Promise<void> {
