@@ -183,7 +183,7 @@ export const usePostForm = (initialPost?: Post) => {
       } else {
         await postService.createPost(postData as CreatePostRequest);
         success('Bài viết đã được tạo thành công!');
-        navigate('/posts');
+        navigate('/posts/me');
       }
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra khi lưu bài viết');

@@ -57,7 +57,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? Math.round((1 - product.discountPrice / product.price) * 100)
     : 0;
 
-  const productUrl = `/products/${product.slug || product.id}`;
+  const productUrl = `/products/${product.id}`;
 
   return (
     <Card

@@ -16,7 +16,7 @@ export const CreatePostPage: React.FC = () => {
         </p>
       </div>
 
-      <PostForm onCancel={() => navigate('/posts')} />
+      <PostForm onCancel={() => navigate('/posts/me')} />
     </div>
   );
 };

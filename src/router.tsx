@@ -31,6 +31,13 @@ import { PostsManagementPage } from './pages/posts/admin/PostsManagementPage';
 // Product pages
 import { ShopPage } from './pages/products/customer/ShopPage';
 import { SearchPage } from './pages/products/customer/SearchPage';
+import { CategoryPage } from './pages/products/customer/CategoryPage';
+import { ProductDetailPage } from './pages/products/customer/ProductDetailPage';
+
+// Artisan Product Pages
+import { ProductsPage as ArtisanProductsPage } from './pages/products/artisan/ProductsPage';
+import { CreateProductPage } from './pages/products/artisan/CreateProductPage';
+import { EditProductPage } from './pages/products/artisan/EditProductPage';
 
 // Profile pages
 import { ProfilePage } from './pages/profile/ProfilePage';
@@ -193,51 +200,53 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            // {
-            //   path: 'category/:categorySlug',
-            //   element: (
-            //     <ProtectedRoute>
-            //       <CategoryPage />
-            //     </ProtectedRoute>
-            //   ),
-            // },
-            // {
-            //   path: ':productId',
-            //   element: (
-            //     <ProtectedRoute>
-            //       <ProductDetailPage />
-            //     </ProtectedRoute>
-            //   ),
-            // },
+            {
+              path: 'category/:categorySlug',
+              element: (
+                <ProtectedRoute>
+                  <CategoryPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':productId',
+              element: (
+                <ProtectedRoute>
+                  <ProductDetailPage />
+                </ProtectedRoute>
+              ),
+            },
 
-            // // Artisan routes
-            // {
-            //   path: 'artisan',
-            //   children: [
-            //     {
-            //       index: true,
-            //       element: (
-            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-            //           <ArtisanProductsPage />
-            //         </ProtectedRoute>
-            //       ),
-            //     },
-            //     {
-            //       path: 'create',
-            //       element: (
-            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-            //           <CreateProductPage />
-            //         </ProtectedRoute>
-            //       ),
-            //     },
-            //     {
-            //       path: ':productId/edit',
-            //       element: (
-            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-            //           <EditProductPage />
-            //         </ProtectedRoute>
-            //       ),
-            //     },
+            // Artisan routes
+            {
+              path: 'manage',
+              children: [
+                {
+                  index: true,
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <ArtisanProductsPage />
+                    </ProtectedRoute>
+                  ),
+                },
+                {
+                  path: 'create',
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <CreateProductPage />
+                    </ProtectedRoute>
+                  ),
+                },
+                {
+                  path: ':productId/edit',
+                  element: (
+                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                      <EditProductPage />
+                    </ProtectedRoute>
+                  ),
+                },
+              ],
+            },
           ],
         },
 

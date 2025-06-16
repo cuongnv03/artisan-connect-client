@@ -86,7 +86,7 @@ export const usePostDetail = () => {
     } catch (err: any) {
       console.error('Error loading post:', err);
       error(err.message || 'Không thể tải bài viết');
-      navigate('/posts');
+      navigate('/posts/me');
     } finally {
       setLoading(false);
     }

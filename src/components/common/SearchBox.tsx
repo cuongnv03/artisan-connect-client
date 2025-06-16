@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Input } from '../ui/Input';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { Button } from '../ui/Button';
 
 interface SearchBoxProps {
   value: string;
   onChange: (value: string) => void;
-  onSubmit?: (value: string) => void;
+  onSubmit: (value: string) => void;
   placeholder?: string;
   className?: string;
-  showClearButton?: boolean;
 }
 
 export const SearchBox: React.FC<SearchBoxProps> = ({
@@ -18,44 +16,38 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   onSubmit,
   placeholder = 'Tìm kiếm...',
   className = '',
-  showClearButton = true,
 }) => {
+  const [internalValue, setInternalValue] = useState(value);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.(value);
+    onSubmit(internalValue);
   };
 
-  const handleClear = () => {
-    onChange('');
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInternalValue(newValue);
+    onChange(newValue);
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
+    <form onSubmit={handleSubmit} className={`relative ${className}`}>
       <div className="relative">
-        <Input
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
           type="text"
+          value={internalValue}
+          onChange={handleChange}
           placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          leftIcon={<MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />}
-          rightIcon={
-            <div className="flex items-center space-x-2">
-              {showClearButton && value && (
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
-              )}
-              <Button type="submit" size="sm">
-                Tìm
-              </Button>
-            </div>
-          }
-          className="pr-20"
+          className="block w-full pl-10 pr-24 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary"
         />
+        <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+          <Button type="submit" size="sm">
+            Tìm kiếm
+          </Button>
+        </div>
       </div>
     </form>
   );
