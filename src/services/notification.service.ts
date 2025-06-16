@@ -170,23 +170,29 @@ export const notificationService = {
     icon?: string;
     color?: string;
   } {
-    const typeConfig = {
+    const typeConfig: Record<
+      NotificationType,
+      { icon: string; color: string }
+    > = {
       [NotificationType.LIKE]: { icon: '👍', color: 'blue' },
       [NotificationType.COMMENT]: { icon: '💬', color: 'green' },
       [NotificationType.FOLLOW]: { icon: '👥', color: 'purple' },
+      [NotificationType.MENTION]: { icon: '📢', color: 'orange' },
       [NotificationType.ORDER_UPDATE]: { icon: '📦', color: 'orange' },
       [NotificationType.PAYMENT_SUCCESS]: { icon: '💳', color: 'green' },
       [NotificationType.PAYMENT_FAILED]: { icon: '❌', color: 'red' },
+      [NotificationType.QUOTE_REQUEST]: { icon: '📝', color: 'blue' },
+      [NotificationType.QUOTE_RESPONSE]: { icon: '📋', color: 'indigo' },
       [NotificationType.CUSTOM_ORDER]: { icon: '🎨', color: 'indigo' },
-      [NotificationType.PRICE_NEGOTIATION]: { icon: '💰', color: 'yellow' },
+      [NotificationType.CUSTOM_ORDER_UPDATE]: { icon: '🔄', color: 'purple' },
       [NotificationType.MESSAGE]: { icon: '✉️', color: 'blue' },
+      [NotificationType.DISPUTE]: { icon: '⚖️', color: 'red' },
+      [NotificationType.RETURN]: { icon: '↩️', color: 'orange' },
+      [NotificationType.PRICE_NEGOTIATION]: { icon: '💰', color: 'yellow' },
       [NotificationType.SYSTEM]: { icon: '⚙️', color: 'gray' },
     };
 
-    const config = typeConfig[notification.type] || {
-      icon: '🔔',
-      color: 'gray',
-    };
+    const config = typeConfig[notification.type];
 
     return {
       title: notification.title,
