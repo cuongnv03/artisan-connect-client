@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
     SEARCH: '/artisans/search',
     TOP: '/artisans/top',
     FEATURED: '/artisans/featured',
+    SUGGESTIONS: '/artisans/suggestions',
     SPECIALTY: (specialty: string) => `/artisans/specialty/${specialty}`,
     PROFILE: '/artisans/profile',
     PROFILE_BY_ID: (id: string) => `/artisans/profile/${id}`,

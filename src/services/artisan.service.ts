@@ -47,6 +47,14 @@ export const artisanService = {
     );
   },
 
+  async getSuggestedArtisans(
+    query?: SuggestedArtisansQuery,
+  ): Promise<PaginatedResponse<ArtisanProfile & { user: User }>> {
+    return await apiClient.get<
+      PaginatedResponse<ArtisanProfile & { user: User }>
+    >(API_ENDPOINTS.ARTISANS.SUGGESTIONS, query);
+  },
+
   // Profile methods
   async getArtisanProfile(
     id: string,

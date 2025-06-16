@@ -49,7 +49,7 @@ export interface ArtisanUpgradeRequest extends BaseEntity {
   user?: User;
 }
 
-// DTOs - CẬP NHẬT
+// DTOs
 export interface CreateArtisanProfileRequest {
   shopName: string;
   shopDescription?: string;
@@ -88,6 +88,14 @@ export interface SearchArtisansQuery extends PaginationParams {
   q?: string;
   specialty?: string;
   verified?: boolean;
+}
+
+export interface SuggestedArtisansQuery extends PaginationParams {
+  excludeFollowed?: boolean; // Loại trừ những artisan đã follow
+  baseOnInterests?: boolean; // Dựa trên sở thích của user
+  baseOnActivity?: boolean; // Dựa trên hoạt động gần đây
+  specialties?: string[]; // Lọc theo specialty
+  verified?: boolean; // Chỉ lấy artisan đã verified
 }
 
 export interface UpgradeRequestStatusResponse {
