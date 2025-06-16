@@ -10,17 +10,7 @@ export interface GetAnalyticsQuery {
   period?: '7d' | '30d' | '3m' | '6m' | '1y';
 }
 
-export interface TrendingPostsQuery {
-  period: 'day' | 'week' | 'month';
-  limit?: number;
-}
-
 export const analyticsService = {
-  async getTrendingPosts(query: TrendingPostsQuery): Promise<any[]> {
-    // Mock implementation - thay thế bằng API call thực
-    return Promise.resolve([]);
-  },
-
   // === USER ANALYTICS ===
   async getUserAnalytics(): Promise<UserAnalytics> {
     return await apiClient.get<UserAnalytics>(API_ENDPOINTS.ANALYTICS.USER);

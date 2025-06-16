@@ -35,23 +35,6 @@ export const DiscoverHero: React.FC<DiscoverHeroProps> = ({
           placeholder="Tìm kiếm nghệ nhân, sản phẩm, bài viết..."
         />
       </div>
-
-      <div className="flex justify-center gap-4 mb-8">
-        <Button
-          variant="outline"
-          onClick={() => navigate('/discover/trending')}
-          leftIcon={<FireIcon className="w-4 h-4" />}
-        >
-          Xu hướng
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => navigate('/shop')}
-          leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
-        >
-          Cửa hàng
-        </Button>
-      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useHomeFeed } from '../../hooks/home/useHomeFeed';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import {
@@ -21,6 +21,9 @@ export const HomePage: React.FC = () => {
     loadMore,
     refresh,
   } = useHomeFeed();
+
+  // Memoize key để force re-render khi cần
+  const suggestionsKey = useMemo(() => `suggestions-${Date.now()}`, []);
 
   if (loading) {
     return (
@@ -79,7 +82,7 @@ export const HomePage: React.FC = () => {
 
         {/* Suggestions Section - 1/3 */}
         <aside className="hidden lg:block lg:w-1/3">
-          <ArtisanSuggestions />
+          <ArtisanSuggestions key={suggestionsKey} />
         </aside>
       </div>
     </div>

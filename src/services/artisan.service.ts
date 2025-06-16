@@ -7,6 +7,7 @@ import {
   UpdateArtisanProfileRequest,
   UpgradeRequestData,
   SearchArtisansQuery,
+  SuggestedArtisansQuery,
   UpgradeRequestStatusResponse,
 } from '../types/artisan';
 import { PaginatedResponse } from '../types/common';

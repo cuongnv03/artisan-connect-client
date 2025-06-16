@@ -49,14 +49,15 @@ class ApiClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
+        // console.log('API Client response:', response.data); // Debug this
         if (
           response.data &&
           response.data.success &&
           response.data.data !== undefined
         ) {
-          return response.data.data;
+          return response.data.data; // Return data property
         }
-        return response.data;
+        return response.data; // Return full response
       },
       async (error: AxiosError) => {
         const originalRequest = error.config as any;

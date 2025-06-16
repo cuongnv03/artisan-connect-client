@@ -108,14 +108,6 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            {
-              path: 'trending',
-              element: (
-                <ProtectedRoute>
-                  <TrendingPage />
-                </ProtectedRoute>
-              ),
-            },
           ],
         },
 
