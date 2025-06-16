@@ -47,8 +47,12 @@ export const PostsList: React.FC<PostsListProps> = ({
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} onUpdate={onUpdate} />
+      {posts.map((post, index) => (
+        <PostCard
+          key={`post-${post.id}-${index}`} // Fix duplicate key với index
+          post={post}
+          onUpdate={onUpdate}
+        />
       ))}
     </div>
   );

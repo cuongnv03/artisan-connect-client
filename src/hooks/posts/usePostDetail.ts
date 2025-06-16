@@ -15,24 +15,41 @@ const isUUID = (str: string): boolean => {
 };
 
 export const usePostDetail = () => {
-  const { postId } = useParams<{ postId: string }>();
+  // Lấy tất cả possible params
+  const params = useParams<{
+    postId?: string;
+    id?: string;
+    slug?: string;
+  }>();
+
+  // Xác định postId từ các params khác nhau
+  const postId = params.postId || params.id || params.slug;
+
   const navigate = useNavigate();
   const { state: authState } = useAuth();
   const { success, error } = useToastContext();
 
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
-    if (postId) {
+    console.log('usePostDetail params:', params);
+    console.log('Resolved postId:', postId);
+
+    if (postId && postId.trim() && postId !== 'undefined') {
+      console.log('Loading post with ID:', postId);
+      setLoading(true);
       loadPost();
+    } else {
+      console.log('No valid postId provided:', postId);
+      setLoading(false);
     }
-  }, [postId]);
+  }, [postId, params.postId, params.id, params.slug]);
 
   useEffect(() => {
     if (post?.id) {
@@ -41,23 +58,34 @@ export const usePostDetail = () => {
   }, [post?.id]);
 
   const loadPost = async () => {
-    if (!postId) return;
+    if (!postId || !postId.trim() || postId === 'undefined') {
+      console.log('Invalid postId for loading:', postId);
+      setLoading(false);
+      return;
+    }
 
     try {
+      console.log('Calling API for post:', postId, 'Is UUID:', isUUID(postId));
+
       let postData: Post;
 
       if (isUUID(postId)) {
+        console.log('Fetching by ID');
         postData = await postService.getPost(postId);
       } else {
+        console.log('Fetching by slug');
         postData = await postService.getPostBySlug(postId);
       }
+
+      console.log('Post data received:', postData);
 
       setPost(postData);
       setIsLiked(Boolean(postData.isLiked));
       setIsSaved(Boolean(postData.isSaved));
       setLikeCount(postData.likeCount);
     } catch (err: any) {
-      error('Không thể tải bài viết');
+      console.error('Error loading post:', err);
+      error(err.message || 'Không thể tải bài viết');
       navigate('/posts');
     } finally {
       setLoading(false);

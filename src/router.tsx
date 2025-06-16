@@ -15,7 +15,6 @@ import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 // Main pages
 import { DiscoverPage } from './pages/discover/DiscoverPage';
 import { SearchResultsPage } from './pages/discover/SearchResultsPage';
-import { TrendingPage } from './pages/discover/TrendingPage';
 
 // Customer Posts
 import { PostsPage as CustomerPostsPage } from './pages/posts/customer/PostsPage';
@@ -29,10 +28,9 @@ import { PostDetailPage } from './pages/posts/artisan/PostDetailPage';
 // Admin Posts
 import { PostsManagementPage } from './pages/posts/admin/PostsManagementPage';
 
-import { ShopPage } from './pages/shop/ShopPage';
-import { ProductDetailPage } from './pages/shop/ProductDetailPage';
-import { CategoryPage } from './pages/shop/CategoryPage';
-import { SearchPage } from './pages/shop/SearchPage';
+// Product pages
+import { ShopPage } from './pages/products/customer/ShopPage';
+import { SearchPage } from './pages/products/customer/SearchPage';
 
 // Profile pages
 import { ProfilePage } from './pages/profile/ProfilePage';
@@ -57,9 +55,6 @@ import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { UpgradeRequestPage } from './pages/artisan/UpgradeRequestPage';
 import { DashboardPage as ArtisanDashboardPage } from './pages/artisan/DashboardPage';
 import { CustomizePage as ArtisanCustomizePage } from './pages/artisan/CustomizePage';
-import { ProductsPage as ArtisanProductsPage } from './pages/artisan/ProductsPage';
-import { CreateProductPage } from './pages/artisan/CreateProductPage';
-import { EditProductPage } from './pages/artisan/EditProductPage';
 import { AnalyticsPage as ArtisanAnalyticsPage } from './pages/artisan/AnalyticsPage';
 
 // Admin pages
@@ -156,7 +151,7 @@ export const router = createBrowserRouter(
               ),
             },
             {
-              path: ':id/edit', // /posts/:id/edit
+              path: ':postId/edit', // /posts/:id/edit
               element: (
                 <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
                   <EditPostPage />
@@ -165,7 +160,7 @@ export const router = createBrowserRouter(
             },
             // Artisan chi tiết (khác customer)
             {
-              path: 'manage/:id', // /posts/manage/:id - Chi tiết cho artisan
+              path: 'manage/:postId', // /posts/manage/:id - Chi tiết cho artisan
               element: (
                 <ProtectedRoute
                   allowedRoles={[UserRole.ARTISAN, UserRole.ADMIN]}
@@ -177,46 +172,74 @@ export const router = createBrowserRouter(
           ],
         },
 
-        // // Shop routes
-        // {
-        //   path: 'shop',
-        //   children: [
-        //     {
-        //       index: true,
-        //       element: (
-        //         <ProtectedRoute>
-        //           <ShopPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'search',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <SearchPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'category/:categorySlug',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <CategoryPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        // Product routes
+        {
+          path: 'products',
+          children: [
+            // Customer routes
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <ShopPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'search',
+              element: (
+                <ProtectedRoute>
+                  <SearchPage />
+                </ProtectedRoute>
+              ),
+            },
+            // {
+            //   path: 'category/:categorySlug',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <CategoryPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
+            // {
+            //   path: ':productId',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <ProductDetailPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
 
-        // // Product routes
-        // {
-        //   path: 'products/:productId',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <ProductDetailPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
+            // // Artisan routes
+            // {
+            //   path: 'artisan',
+            //   children: [
+            //     {
+            //       index: true,
+            //       element: (
+            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+            //           <ArtisanProductsPage />
+            //         </ProtectedRoute>
+            //       ),
+            //     },
+            //     {
+            //       path: 'create',
+            //       element: (
+            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+            //           <CreateProductPage />
+            //         </ProtectedRoute>
+            //       ),
+            //     },
+            //     {
+            //       path: ':productId/edit',
+            //       element: (
+            //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+            //           <EditProductPage />
+            //         </ProtectedRoute>
+            //       ),
+            //     },
+          ],
+        },
 
         // // Profile routes
         // {

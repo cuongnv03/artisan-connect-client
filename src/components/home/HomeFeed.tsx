@@ -4,7 +4,6 @@ import { Post } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePostModal } from '../../hooks/posts';
 import { PostCard as CustomerPostCard } from '../posts/customer/PostCard';
-import { PostCard } from '../posts/artisan/PostCard';
 import { PostModal } from '../posts/customer/PostModal';
 import { EmptyState } from '../common/EmptyState';
 import { Button } from '../ui/Button';
@@ -67,7 +66,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     <div className="space-y-6">
       {posts.map((post, index) => (
         <CustomerPostCard
-          key={`${post.id}-${index}`}
+          key={`feed-post-${post.id}-${index}`} // Fix key với prefix
           post={post}
           onClick={handlePostClick}
           onCommentClick={handleCommentClick}

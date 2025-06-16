@@ -29,6 +29,7 @@ export const PostMeta: React.FC<PostMetaProps> = ({
   showActions = false,
 }) => {
   const { success, error } = useToastContext();
+  // Logic like đơn giản như cũ - không có callback
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const [likeCount, setLikeCount] = useState(post.likeCount);

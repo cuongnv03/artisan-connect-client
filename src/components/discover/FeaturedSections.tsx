@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { PostCard } from '../posts/customer/PostCard';
-import { ProductCard } from '../common/ProductCard';
+import { ProductCard } from '../products/customer/ProductCard/ProductCard';
 
 interface FeaturedSectionsProps {
   content: {

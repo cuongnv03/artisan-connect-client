@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { UserCard } from '../common/UserCard';
 import { PostCard } from '../posts/customer/PostCard';
-import { ProductCard } from '../common/ProductCard';
+import { ProductCard } from '../products/customer/ProductCard/ProductCard';
 import { SearchType } from '../../contexts/DiscoverContext';
 
 interface SearchResultsProps {

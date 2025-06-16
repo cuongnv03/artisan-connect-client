@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePostsList, usePostModal } from '../../../hooks/posts';
-import { PostCard } from '../../../components/posts/customer/PostCard';
-import { PostModal } from '../../../components/posts/customer/PostModal';
 import { PostsList } from '../../../components/posts/customer/PostsList';
+import { PostModal } from '../../../components/posts/customer/PostModal';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../../components/common/EmptyState';
 import { postService } from '../../../services/post.service';
@@ -13,11 +12,27 @@ export const PostsPage: React.FC = () => {
   const { slug } = useParams<{ slug?: string }>();
   const [singlePost, setSinglePost] = useState<any>(null);
   const [loadingSingle, setLoadingSingle] = useState(false);
+  const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
 
-  // Nếu có slug, load post đó và hiển thị modal
-  React.useEffect(() => {
+  // Chỉ load single post nếu có slug, không load danh sách
+  const shouldLoadList = !slug;
+
+  const { posts, loading, hasMore, loadMore } = usePostsList(
+    shouldLoadList
+      ? {
+          status: PostStatus.PUBLISHED,
+          sortBy: 'publishedAt',
+          sortOrder: 'desc',
+        }
+      : { page: 1, limit: 0 },
+  ); // Load empty nếu có slug
+
+  // Load single post nếu có slug
+  useEffect(() => {
     if (slug) {
       loadSinglePost();
+    } else {
+      setSinglePost(null);
     }
   }, [slug]);
 
@@ -36,14 +51,36 @@ export const PostsPage: React.FC = () => {
     }
   };
 
-  const { posts, loading, hasMore, loadMore } = usePostsList({
-    status: PostStatus.PUBLISHED,
-    sortBy: 'publishedAt',
-    sortOrder: 'desc',
-  });
+  const handleCloseModal = () => {
+    closeModal();
+    setSinglePost(null);
+    // Navigate back nếu cần
+    if (slug) {
+      window.history.pushState({}, '', '/posts');
+    }
+  };
 
-  const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
+  // Nếu đang load single post
+  if (slug && loadingSingle) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
+  // Nếu có slug nhưng không có singlePost, chỉ hiển thị modal
+  if (slug) {
+    return (
+      <PostModal
+        post={singlePost}
+        isOpen={isOpen || !!singlePost}
+        onClose={handleCloseModal}
+      />
+    );
+  }
+
+  // Danh sách posts bình thường
   if (loading && posts.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -52,7 +89,7 @@ export const PostsPage: React.FC = () => {
     );
   }
 
-  if (posts.length === 0) {
+  if (posts.length === 0 && !loading) {
     return (
       <EmptyState
         title="Chưa có bài viết nào"
@@ -76,16 +113,9 @@ export const PostsPage: React.FC = () => {
       />
 
       <PostModal
-        post={selectedPost || singlePost}
-        isOpen={isOpen || (!!singlePost && !!slug)}
-        onClose={() => {
-          closeModal();
-          setSinglePost(null);
-          // Navigate back nếu cần
-          if (slug) {
-            window.history.pushState({}, '', '/posts');
-          }
-        }}
+        post={selectedPost}
+        isOpen={isOpen && !slug} // Chỉ hiển thị nếu không có slug
+        onClose={closeModal}
       />
     </div>
   );
