@@ -88,309 +88,309 @@ export const router = createBrowserRouter(
           ),
         },
 
-        // Discover routes
-        {
-          path: 'discover',
-          children: [
-            {
-              index: true,
-              element: (
-                <ProtectedRoute>
-                  <DiscoverPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'search',
-              element: (
-                <ProtectedRoute>
-                  <SearchResultsPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'trending',
-              element: (
-                <ProtectedRoute>
-                  <TrendingPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Discover routes
+        // {
+        //   path: 'discover',
+        //   children: [
+        //     {
+        //       index: true,
+        //       element: (
+        //         <ProtectedRoute>
+        //           <DiscoverPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'search',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <SearchResultsPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'trending',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <TrendingPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Posts routes
-        {
-          path: 'create-post',
-          element: (
-            <ProtectedRoute>
-              <CreatePostPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: 'posts',
-          children: [
-            {
-              path: 'my-posts',
-              element: (
-                <ProtectedRoute>
-                  <MyPostsPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':postId',
-              element: (
-                <ProtectedRoute>
-                  <PostDetailPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':postId/edit',
-              element: (
-                <ProtectedRoute>
-                  <EditPostPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Posts routes
+        // {
+        //   path: 'create-post',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <CreatePostPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
+        // {
+        //   path: 'posts',
+        //   children: [
+        //     {
+        //       path: 'my-posts',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <MyPostsPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: ':postId',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <PostDetailPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: ':postId/edit',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <EditPostPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Shop routes
-        {
-          path: 'shop',
-          children: [
-            {
-              index: true,
-              element: (
-                <ProtectedRoute>
-                  <ShopPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'search',
-              element: (
-                <ProtectedRoute>
-                  <SearchPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'category/:categorySlug',
-              element: (
-                <ProtectedRoute>
-                  <CategoryPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Shop routes
+        // {
+        //   path: 'shop',
+        //   children: [
+        //     {
+        //       index: true,
+        //       element: (
+        //         <ProtectedRoute>
+        //           <ShopPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'search',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <SearchPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'category/:categorySlug',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <CategoryPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Product routes
-        {
-          path: 'products/:productId',
-          element: (
-            <ProtectedRoute>
-              <ProductDetailPage />
-            </ProtectedRoute>
-          ),
-        },
+        // // Product routes
+        // {
+        //   path: 'products/:productId',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <ProductDetailPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        // Profile routes
-        {
-          path: 'profile',
-          children: [
-            {
-              index: true,
-              element: (
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':userId',
-              element: (
-                <ProtectedRoute>
-                  <ProfilePage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'edit',
-              element: (
-                <ProtectedRoute>
-                  <EditProfilePage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Profile routes
+        // {
+        //   path: 'profile',
+        //   children: [
+        //     {
+        //       index: true,
+        //       element: (
+        //         <ProtectedRoute>
+        //           <ProfilePage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: ':userId',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <ProfilePage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'edit',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <EditProfilePage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Settings
-        {
-          path: 'settings',
-          element: (
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          ),
-        },
+        // // Settings
+        // {
+        //   path: 'settings',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <SettingsPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        // Cart & Checkout
-        {
-          path: 'cart',
-          element: (
-            <ProtectedRoute>
-              <CartPage />
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: 'checkout',
-          element: (
-            <ProtectedRoute>
-              <CheckoutPage />
-            </ProtectedRoute>
-          ),
-        },
+        // // Cart & Checkout
+        // {
+        //   path: 'cart',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <CartPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
+        // {
+        //   path: 'checkout',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <CheckoutPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        // Orders
-        {
-          path: 'orders',
-          children: [
-            {
-              index: true,
-              element: (
-                <ProtectedRoute>
-                  <OrdersPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':orderId',
-              element: (
-                <ProtectedRoute>
-                  <OrderDetailPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'tracking/:orderNumber',
-              element: (
-                <ProtectedRoute>
-                  <TrackingPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Orders
+        // {
+        //   path: 'orders',
+        //   children: [
+        //     {
+        //       index: true,
+        //       element: (
+        //         <ProtectedRoute>
+        //           <OrdersPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: ':orderId',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <OrderDetailPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'tracking/:orderNumber',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <TrackingPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Messages
-        {
-          path: 'messages',
-          children: [
-            {
-              index: true,
-              element: (
-                <ProtectedRoute>
-                  <MessagesPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':userId',
-              element: (
-                <ProtectedRoute>
-                  <ConversationPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Messages
+        // {
+        //   path: 'messages',
+        //   children: [
+        //     {
+        //       index: true,
+        //       element: (
+        //         <ProtectedRoute>
+        //           <MessagesPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: ':userId',
+        //       element: (
+        //         <ProtectedRoute>
+        //           <ConversationPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
 
-        // Notifications
-        {
-          path: 'notifications',
-          element: (
-            <ProtectedRoute>
-              <NotificationsPage />
-            </ProtectedRoute>
-          ),
-        },
+        // // Notifications
+        // {
+        //   path: 'notifications',
+        //   element: (
+        //     <ProtectedRoute>
+        //       <NotificationsPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        // Artisan upgrade request
-        {
-          path: 'upgrade-to-artisan',
-          element: (
-            <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
-              <UpgradeRequestPage />
-            </ProtectedRoute>
-          ),
-        },
+        // // Artisan upgrade request
+        // {
+        //   path: 'upgrade-to-artisan',
+        //   element: (
+        //     <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+        //       <UpgradeRequestPage />
+        //     </ProtectedRoute>
+        //   ),
+        // },
 
-        // Artisan routes
-        {
-          path: 'artisan',
-          children: [
-            {
-              path: 'dashboard',
-              element: (
-                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanDashboardPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'customize',
-              element: (
-                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanCustomizePage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'products',
-              children: [
-                {
-                  index: true,
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <ArtisanProductsPage />
-                    </ProtectedRoute>
-                  ),
-                },
-                {
-                  path: 'create',
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <CreateProductPage />
-                    </ProtectedRoute>
-                  ),
-                },
-                {
-                  path: ':productId/edit',
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <EditProductPage />
-                    </ProtectedRoute>
-                  ),
-                },
-              ],
-            },
-            {
-              path: 'analytics',
-              element: (
-                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanAnalyticsPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
+        // // Artisan routes
+        // {
+        //   path: 'artisan',
+        //   children: [
+        //     {
+        //       path: 'dashboard',
+        //       element: (
+        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //           <ArtisanDashboardPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'customize',
+        //       element: (
+        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //           <ArtisanCustomizePage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //     {
+        //       path: 'products',
+        //       children: [
+        //         {
+        //           index: true,
+        //           element: (
+        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //               <ArtisanProductsPage />
+        //             </ProtectedRoute>
+        //           ),
+        //         },
+        //         {
+        //           path: 'create',
+        //           element: (
+        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //               <CreateProductPage />
+        //             </ProtectedRoute>
+        //           ),
+        //         },
+        //         {
+        //           path: ':productId/edit',
+        //           element: (
+        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //               <EditProductPage />
+        //             </ProtectedRoute>
+        //           ),
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       path: 'analytics',
+        //       element: (
+        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+        //           <ArtisanAnalyticsPage />
+        //         </ProtectedRoute>
+        //       ),
+        //     },
+        //   ],
+        // },
       ],
     },
 
@@ -412,7 +412,7 @@ export const router = createBrowserRouter(
           element: <ForgotPasswordPage />,
         },
         {
-          path: 'reset-password',
+          path: 'reset-password/:token',
           element: <ResetPasswordPage />,
         },
         {
@@ -423,56 +423,56 @@ export const router = createBrowserRouter(
     },
 
     // Admin routes
-    {
-      path: '/admin',
-      element: (
-        <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-          <AdminLayout />
-        </ProtectedRoute>
-      ),
-      children: [
-        {
-          index: true,
-          element: <Navigate to="/admin/dashboard" replace />,
-        },
-        {
-          path: 'dashboard',
-          element: <AdminDashboardPage />,
-        },
-        {
-          path: 'users',
-          element: <UsersManagementPage />,
-        },
-        {
-          path: 'artisan-requests',
-          element: <ArtisanRequestsPage />,
-        },
-      ],
-    },
+    // {
+    //   path: '/admin',
+    //   element: (
+    //     <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+    //       <AdminLayout />
+    //     </ProtectedRoute>
+    //   ),
+    //   children: [
+    //     {
+    //       index: true,
+    //       element: <Navigate to="/admin/dashboard" replace />,
+    //     },
+    //     {
+    //       path: 'dashboard',
+    //       element: <AdminDashboardPage />,
+    //     },
+    //     {
+    //       path: 'users',
+    //       element: <UsersManagementPage />,
+    //     },
+    //     {
+    //       path: 'artisan-requests',
+    //       element: <ArtisanRequestsPage />,
+    //     },
+    //   ],
+    // },
 
-    // Redirects for legacy routes
-    {
-      path: '/login',
-      element: <Navigate to="/auth/login" replace />,
-    },
-    {
-      path: '/register',
-      element: <Navigate to="/auth/register" replace />,
-    },
+    // // Redirects for legacy routes
+    // {
+    //   path: '/login',
+    //   element: <Navigate to="/auth/login" replace />,
+    // },
+    // {
+    //   path: '/register',
+    //   element: <Navigate to="/auth/register" replace />,
+    // },
 
-    // Error routes
-    {
-      path: '/unauthorized',
-      element: <UnauthorizedPage />,
-    },
-    {
-      path: '/server-error',
-      element: <ServerErrorPage />,
-    },
-    {
-      path: '*',
-      element: <NotFoundPage />,
-    },
+    // // Error routes
+    // {
+    //   path: '/unauthorized',
+    //   element: <UnauthorizedPage />,
+    // },
+    // {
+    //   path: '/server-error',
+    //   element: <ServerErrorPage />,
+    // },
+    // {
+    //   path: '*',
+    //   element: <NotFoundPage />,
+    // },
   ],
   {
     future: {
