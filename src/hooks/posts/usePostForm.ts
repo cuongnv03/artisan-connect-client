@@ -179,11 +179,11 @@ export const usePostForm = (initialPost?: Post) => {
           postData as UpdatePostRequest,
         );
         success('Bài viết đã được cập nhật thành công!');
-        navigate(`/artisan/posts/${initialPost.id}`);
+        navigate(`/posts/manage/${initialPost.id}`);
       } else {
         await postService.createPost(postData as CreatePostRequest);
         success('Bài viết đã được tạo thành công!');
-        navigate('/artisan/posts');
+        navigate('/posts');
       }
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra khi lưu bài viết');

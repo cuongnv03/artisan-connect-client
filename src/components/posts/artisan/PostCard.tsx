@@ -89,7 +89,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1">
                 <Link
-                  to={`/artisan/posts/${post.id}`}
+                  to={`/posts/manage/${post.id}`}
                   className="text-lg font-semibold text-gray-900 hover:text-primary line-clamp-2"
                 >
                   {post.title}

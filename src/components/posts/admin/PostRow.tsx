@@ -29,13 +29,13 @@ export const PostRow: React.FC<PostRowProps> = ({
       label: 'Xem chi tiết',
       value: 'view',
       icon: <EyeIcon className="w-4 h-4" />,
-      onClick: () => window.open(`/artisan/posts/${post.id}`, '_blank'),
+      onClick: () => window.open(`/posts/manage/${post.id}`, '_blank'),
     },
     {
       label: 'Chỉnh sửa',
       value: 'edit',
       icon: <PencilIcon className="w-4 h-4" />,
-      onClick: () => window.open(`/artisan/posts/${post.id}/edit`, '_blank'),
+      onClick: () => window.open(`/posts/${post.id}/edit`, '_blank'),
     },
     {
       label: 'Xóa',

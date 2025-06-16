@@ -1,25 +1,99 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import {
+  HeartIcon,
+  ChatBubbleOvalLeftIcon,
+  BookmarkIcon,
+  EyeIcon,
+} from '@heroicons/react/24/outline';
+import {
+  HeartIcon as HeartIconSolid,
+  BookmarkIcon as BookmarkIconSolid,
+} from '@heroicons/react/24/solid';
 import { Post } from '../../../types/post';
+import { WishlistItemType } from '../../../types/social';
 import { Avatar } from '../../ui/Avatar';
 import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
+import { socialService } from '../../../services/social.service';
+import { useToastContext } from '../../../contexts/ToastContext';
 
 interface PostCardProps {
   post: Post;
   onClick: (post: Post) => void;
+  onCommentClick?: (post: Post) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
+export const PostCard: React.FC<PostCardProps> = ({
+  post,
+  onClick,
+  onCommentClick,
+}) => {
+  const { success, error } = useToastContext();
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const [isSaved, setIsSaved] = useState(post.isSaved || false);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isLiking) return;
+    setIsLiking(true);
+
+    try {
+      const result = await socialService.toggleLike({ postId: post.id });
+      setIsLiked(result.liked);
+      setLikeCount((prev) => (result.liked ? prev + 1 : prev - 1));
+    } catch (err: any) {
+      error('Không thể thích bài viết');
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isSaving) return;
+    setIsSaving(true);
+
+    try {
+      const newIsSaved = !isSaved;
+      setIsSaved(newIsSaved);
+      await socialService.toggleWishlistItem({
+        itemType: WishlistItemType.POST,
+        postId: post.id,
+      });
+      success(newIsSaved ? 'Đã lưu bài viết' : 'Đã bỏ lưu bài viết');
+    } catch (err: any) {
+      setIsSaved(!isSaved);
+      error('Không thể lưu bài viết');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleComment = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onCommentClick) {
+      onCommentClick(post);
+    } else {
+      onClick(post);
+    }
+  };
+
+  const handleCardClick = () => {
+    onClick(post);
+  };
+
   return (
-    <Card
-      className="cursor-pointer hover:shadow-lg transition-all duration-200"
-      onClick={() => onClick(post)}
-    >
+    <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden">
       {/* Cover Image */}
       {post.coverImage && (
-        <div className="h-48 overflow-hidden rounded-t-lg">
+        <div className="h-48 overflow-hidden" onClick={handleCardClick}>
           <img
             src={post.coverImage}
             alt={post.title}
@@ -55,21 +129,32 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
           </div>
         </div>
 
-        {/* Title */}
-        <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+        {/* Title - Clickable */}
+        <h3
+          className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 hover:text-primary transition-colors cursor-pointer"
+          onClick={handleCardClick}
+        >
           {post.title}
         </h3>
 
-        {/* Summary */}
+        {/* Summary - Clickable */}
         {post.summary && (
-          <p className="text-gray-600 mb-4 line-clamp-3">{post.summary}</p>
+          <p
+            className="text-gray-600 mb-4 line-clamp-3 cursor-pointer hover:text-gray-800 transition-colors"
+            onClick={handleCardClick}
+          >
+            {post.summary}
+          </p>
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
           <div className="flex items-center space-x-4">
-            <span>{post.viewCount} lượt xem</span>
-            <span>{post.likeCount} thích</span>
+            <div className="flex items-center">
+              <EyeIcon className="w-4 h-4 mr-1" />
+              <span>{post.viewCount}</span>
+            </div>
+            <span>{likeCount} thích</span>
             <span>{post.commentCount} bình luận</span>
           </div>
 
@@ -82,6 +167,59 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center space-x-4">
+            {/* Like Button */}
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                isLiked
+                  ? 'text-red-500 bg-red-50 hover:bg-red-100'
+                  : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
+              } ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {isLiked ? (
+                <HeartIconSolid className="w-5 h-5" />
+              ) : (
+                <HeartIcon className="w-5 h-5" />
+              )}
+              <span className="text-sm font-medium">
+                {likeCount > 0 ? likeCount : 'Thích'}
+              </span>
+            </button>
+
+            {/* Comment Button */}
+            <button
+              onClick={handleComment}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+            >
+              <ChatBubbleOvalLeftIcon className="w-5 h-5" />
+              <span className="text-sm font-medium">
+                {post.commentCount > 0 ? post.commentCount : 'Bình luận'}
+              </span>
+            </button>
+          </div>
+
+          {/* Save Button */}
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className={`p-2 rounded-lg transition-colors ${
+              isSaved
+                ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100'
+                : 'text-gray-500 hover:text-yellow-500 hover:bg-yellow-50'
+            } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isSaved ? (
+              <BookmarkIconSolid className="w-5 h-5" />
+            ) : (
+              <BookmarkIcon className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
     </Card>

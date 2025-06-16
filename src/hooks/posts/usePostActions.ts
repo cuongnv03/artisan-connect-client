@@ -65,11 +65,11 @@ export const usePostActions = () => {
   };
 
   const editPost = (postId: string) => {
-    navigate(`/artisan/posts/${postId}/edit`);
+    navigate(`/posts/${postId}/edit`);
   };
 
   const viewPost = (postId: string) => {
-    navigate(`/artisan/posts/${postId}`);
+    navigate(`/posts/manage/${postId}`);
   };
 
   const getAvailableActions = (post: Post) => {

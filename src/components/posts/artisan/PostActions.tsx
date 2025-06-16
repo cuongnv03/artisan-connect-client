@@ -84,7 +84,7 @@ export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
         onClick={() => {
           // Handle share logic
           navigator.clipboard.writeText(
-            window.location.origin + `/artisan/posts/${post.id}`,
+            window.location.origin + `/posts/manage/${post.id}`,
           );
         }}
       >

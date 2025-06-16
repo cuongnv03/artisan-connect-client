@@ -58,7 +58,7 @@ export const usePostDetail = () => {
       setLikeCount(postData.likeCount);
     } catch (err: any) {
       error('Không thể tải bài viết');
-      navigate('/artisan/posts');
+      navigate('/posts');
     } finally {
       setLoading(false);
     }
@@ -138,7 +138,7 @@ export const usePostDetail = () => {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/artisan/posts/${
+    const shareUrl = `${window.location.origin}/posts/manage/${
       post?.slug || postId
     }`;
 

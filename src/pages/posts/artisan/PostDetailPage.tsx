@@ -33,7 +33,7 @@ export const PostDetailPage: React.FC = () => {
     try {
       await postService.deletePost(post.id);
       success('Đã xóa bài viết');
-      navigate('/artisan/posts');
+      navigate('/posts');
     } catch (err: any) {
       error('Không thể xóa bài viết');
     } finally {
@@ -48,7 +48,7 @@ export const PostDetailPage: React.FC = () => {
           label: 'Chỉnh sửa',
           value: 'edit',
           icon: <PencilIcon className="w-4 h-4" />,
-          onClick: () => navigate(`/artisan/posts/${post?.id}/edit`),
+          onClick: () => navigate(`/posts/${post?.id}/edit`),
         },
         {
           label: 'Xóa',
@@ -79,7 +79,7 @@ export const PostDetailPage: React.FC = () => {
         <p className="text-gray-600 mb-4">
           Bài viết này không tồn tại hoặc đã bị xóa.
         </p>
-        <Button onClick={() => navigate('/artisan/posts')}>
+        <Button onClick={() => navigate('/posts')}>
           Quay lại danh sách bài viết
         </Button>
       </div>
@@ -92,10 +92,7 @@ export const PostDetailPage: React.FC = () => {
       <Card className="p-8 mb-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-4">
-            <Link
-              to="/artisan/posts"
-              className="text-gray-500 hover:text-gray-700"
-            >
+            <Link to="/posts" className="text-gray-500 hover:text-gray-700">
               ← Quay lại danh sách
             </Link>
           </div>

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal } from '../../ui/Modal';
 import { Post } from '../../../types/post';
 import { PostContent } from '../shared/PostContent';
 import { PostMeta } from '../shared/PostMeta';
-import { CommentSection } from '../shared/CommentSection';
+import { CommentSection } from './CommentSection';
 import { ProductMentionCard } from '../shared/ProductMentionCard';
 
 interface PostModalProps {
@@ -25,11 +25,20 @@ export const PostModal: React.FC<PostModalProps> = ({
       onClose={onClose}
       size="xl"
       showCloseButton={true}
-      title={post.title}
+      title=""
+      closeOnOverlayClick={true}
+      closeOnEscape={true}
     >
-      <div className="max-h-[80vh] overflow-y-auto">
-        {/* Post Meta */}
-        <PostMeta post={post} showActions={true} />
+      <div className="max-h-[85vh] overflow-y-auto">
+        {/* Post Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            {post.title}
+          </h1>
+
+          {/* Post Meta */}
+          <PostMeta post={post} showActions={true} />
+        </div>
 
         {/* Cover Image */}
         {post.coverImage && (
@@ -42,12 +51,14 @@ export const PostModal: React.FC<PostModalProps> = ({
           </div>
         )}
 
-        {/* Post Content (không hiển thị summary) */}
-        <PostContent content={post.content} />
+        {/* Post Content */}
+        <div className="mb-6">
+          <PostContent content={post.content} />
+        </div>
 
         {/* Product Mentions */}
         {post.productMentions && post.productMentions.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mb-6 pt-6 border-t border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Sản phẩm được đề cập</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {post.productMentions.map((mention) => (
@@ -57,8 +68,8 @@ export const PostModal: React.FC<PostModalProps> = ({
           </div>
         )}
 
-        {/* COMMENT SECTION */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
+        {/* Comment Section */}
+        <div className="pt-6 border-t border-gray-200">
           <CommentSection postId={post.id} />
         </div>
       </div>

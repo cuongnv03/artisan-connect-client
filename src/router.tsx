@@ -167,7 +167,9 @@ export const router = createBrowserRouter(
             {
               path: 'manage/:id', // /posts/manage/:id - Chi tiết cho artisan
               element: (
-                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                <ProtectedRoute
+                  allowedRoles={[UserRole.ARTISAN, UserRole.ADMIN]}
+                >
                   <PostDetailPage />
                 </ProtectedRoute>
               ),

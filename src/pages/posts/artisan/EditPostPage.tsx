@@ -28,7 +28,7 @@ export const EditPostPage: React.FC = () => {
       setPost(postData);
     } catch (err) {
       error('Không thể tải bài viết');
-      navigate('/artisan/posts');
+      navigate('/posts');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export const EditPostPage: React.FC = () => {
         <p className="text-gray-600 mb-4">
           Bài viết này không tồn tại hoặc bạn không có quyền chỉnh sửa.
         </p>
-        <Button onClick={() => navigate('/artisan/posts')}>
+        <Button onClick={() => navigate('/posts')}>
           Quay lại danh sách bài viết
         </Button>
       </div>
@@ -74,7 +74,7 @@ export const EditPostPage: React.FC = () => {
 
       <PostForm
         initialPost={post}
-        onCancel={() => navigate(`/artisan/posts/${postId}`)}
+        onCancel={() => navigate(`/posts/manage/${postId}`)}
       />
     </div>
   );

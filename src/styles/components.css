@@ -558,3 +558,36 @@
     border: 1px solid;
   }
 }
+
+/* Post Modal Custom Styles */
+.post-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.post-modal-content {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 66.666667%; /* 2/3 of viewport width */
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .post-modal-content {
+    width: 95vw;
+    max-height: 95vh;
+  }
+}

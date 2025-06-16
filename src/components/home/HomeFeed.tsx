@@ -40,6 +40,11 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     }
   };
 
+  const handleCommentClick = (post: Post) => {
+    // Luôn mở modal khi click comment, bất kể role
+    openModal(post);
+  };
+
   if (posts.length === 0) {
     return (
       <EmptyState
@@ -60,27 +65,17 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
   return (
     <div className="space-y-6">
-      {posts.map((post, index) =>
-        authState.user?.role === 'CUSTOMER' ? (
-          <CustomerPostCard
-            key={`${post.id}-${index}`}
-            post={post}
-            onClick={handlePostClick}
-          />
-        ) : (
-          <PostCard
-            key={`${post.id}-${index}`}
-            post={post}
-            showAuthor={true}
-            onClick={() => handlePostClick(post)}
-          />
-        ),
-      )}
+      {posts.map((post, index) => (
+        <CustomerPostCard
+          key={`${post.id}-${index}`}
+          post={post}
+          onClick={handlePostClick}
+          onCommentClick={handleCommentClick}
+        />
+      ))}
 
-      {/* Modal for customers */}
-      {authState.user?.role === 'CUSTOMER' && (
-        <PostModal post={selectedPost} isOpen={isOpen} onClose={closeModal} />
-      )}
+      {/* Modal for all users */}
+      <PostModal post={selectedPost} isOpen={isOpen} onClose={closeModal} />
 
       {/* Load More */}
       {hasMore && (

@@ -42,7 +42,7 @@ export const MyPostsPage: React.FC = () => {
           </p>
         </div>
 
-        <Link to="/artisan/posts/create">
+        <Link to="/posts/create">
           <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
             Tạo bài viết mới
           </Button>
@@ -77,7 +77,7 @@ export const MyPostsPage: React.FC = () => {
         posts={posts}
         loading={loading}
         onUpdate={refresh}
-        onCreateNew={() => (window.location.href = '/artisan/posts/create')}
+        onCreateNew={() => (window.location.href = '/posts/create')}
       />
     </div>
   );
