@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
-import { useEmailVerification } from '../../hooks/useAuth';
+import { useEmailVerification } from '../../hooks/auth/useAuth';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
 import { ROUTE_PATHS } from '../../constants/routes';

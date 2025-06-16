@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth as useAuthContext } from '../contexts/AuthContext';
-import { useToastContext } from '../contexts/ToastContext';
-import { ROUTE_PATHS } from '../constants/routes';
+import { useAuth as useAuthContext } from '../../contexts/AuthContext';
+import { useToastContext } from '../../contexts/ToastContext';
+import { ROUTE_PATHS } from '../../constants/routes';
 import {
   LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-} from '../types/auth';
+} from '../../types/auth';
 
 export const useAuthForm = () => {
   const { login, register, clearError } = useAuthContext();
@@ -54,7 +54,7 @@ export const usePasswordReset = () => {
   const handleForgotPassword = async (data: ForgotPasswordRequest) => {
     setIsLoading(true);
     try {
-      const { authService } = await import('../services/auth.service');
+      const { authService } = await import('../../services/auth.service');
       await authService.forgotPassword(data);
       success(
         'Đã gửi email khôi phục mật khẩu. Vui lòng kiểm tra hộp thư của bạn.',
@@ -70,7 +70,7 @@ export const usePasswordReset = () => {
   const handleResetPassword = async (data: ResetPasswordRequest) => {
     setIsLoading(true);
     try {
-      const { authService } = await import('../services/auth.service');
+      const { authService } = await import('../../services/auth.service');
       await authService.resetPassword(data);
       success(
         'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập với mật khẩu mới.',
@@ -98,7 +98,7 @@ export const useEmailVerification = () => {
   const verifyEmail = async (token: string) => {
     setIsLoading(true);
     try {
-      const { authService } = await import('../services/auth.service');
+      const { authService } = await import('../../services/auth.service');
       await authService.verifyEmail(token);
       success('Email đã được xác thực thành công!');
       return true;

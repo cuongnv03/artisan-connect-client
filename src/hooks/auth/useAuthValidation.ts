@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { validationRules, createValidator } from '../utils/validation';
+import { validationRules, createValidator } from '../../utils/validation';
 import {
   LoginRequest,
   RegisterRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
-} from '../types/auth';
+} from '../../types/auth';
 
 export const useAuthValidation = () => {
   const validateLoginForm = useMemo(() => {

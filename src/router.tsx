@@ -88,36 +88,36 @@ export const router = createBrowserRouter(
           ),
         },
 
-        // // Discover routes
-        // {
-        //   path: 'discover',
-        //   children: [
-        //     {
-        //       index: true,
-        //       element: (
-        //         <ProtectedRoute>
-        //           <DiscoverPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'search',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <SearchResultsPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'trending',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <TrendingPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        // Discover routes
+        {
+          path: 'discover',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <DiscoverPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'search',
+              element: (
+                <ProtectedRoute>
+                  <SearchResultsPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'trending',
+              element: (
+                <ProtectedRoute>
+                  <TrendingPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
 
         // // Posts routes
         // {
