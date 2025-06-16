@@ -33,12 +33,12 @@ export enum BlockType {
 
 export interface ContentBlock {
   id: string;
-  type: BlockType; // Sử dụng enum thay vì string
-  data: any; // Server lưu dưới dạng any object
+  type: BlockType;
+  data: any;
   order: number;
 }
 
-export interface PostProductMention {
+export interface ProductMention {
   id: string;
   postId: string;
   productId: string;
@@ -72,13 +72,13 @@ export interface Post extends SoftDeleteEntity {
   title: string;
   slug?: string | null;
   summary?: string | null;
-  content: ContentBlock[]; // JSON array of content blocks
-  contentText?: string | null; // Extracted text for search
+  content: ContentBlock[];
+  contentText?: string | null;
   type: PostType;
   status: PostStatus;
   thumbnailUrl?: string | null;
   coverImage?: string | null;
-  mediaUrls: string[]; // Extracted from content blocks
+  mediaUrls: string[];
   tags: string[];
   viewCount: number;
   likeCount: number;
@@ -86,7 +86,7 @@ export interface Post extends SoftDeleteEntity {
   shareCount: number;
   publishedAt?: Date | null;
 
-  // Relations (optional, populated by server)
+  // Relations
   user?: {
     id: string;
     username: string;
@@ -98,10 +98,10 @@ export interface Post extends SoftDeleteEntity {
       isVerified: boolean;
     } | null;
   };
-  productMentions?: PostProductMention[];
-  isLiked?: boolean; // For authenticated users
-  isSaved?: boolean; // For authenticated users
-  canEdit?: boolean; // For authenticated users
+  productMentions?: ProductMention[];
+  isLiked?: boolean;
+  isSaved?: boolean;
+  canEdit?: boolean;
 }
 
 // DTOs
@@ -142,7 +142,7 @@ export interface GetPostsQuery extends PaginationParams {
   userId?: string;
   type?: PostType | PostType[];
   status?: PostStatus | PostStatus[];
-  tags?: string | string[]; // Support both single and array
+  tags?: string | string[];
   search?: string;
   followedOnly?: boolean;
   sortBy?:

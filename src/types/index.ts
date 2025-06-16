@@ -48,3 +48,41 @@ export * from './analytics';
 
 // Quote types (deprecated - for backward compatibility)
 export * from './quote';
+
+// ===== COMMONLY USED TYPE ALIASES =====
+export type { ApiError, ApiSuccess, FileUpload } from './api';
+export type { User, UserRole, UserStatus } from './auth';
+export type { Post, PostType, PostStatus, ContentBlock } from './post';
+export type { Product, ProductStatus, Category } from './product';
+export type { Order, OrderStatus } from './order';
+export type { ArtisanProfile, UpgradeRequestStatus } from './artisan';
+export type { Message, MessageType, Conversation } from './message';
+export type { Notification, NotificationType } from './notification';
+export type { Comment, Like, WishlistItemType } from './social';
+export type { CartItem, CartSummary, CartValidation } from './cart';
+export type {
+  OrderWithDetails,
+  OrderSummary,
+  OrderItemWithDetails,
+  OrderDispute,
+  OrderReturn,
+  DisputeType,
+  DisputeStatus,
+  ReturnReason,
+  ReturnStatus,
+} from './order';
+export type {
+  CustomOrderRequest,
+  CustomOrderWithDetails,
+  QuoteStatus,
+} from './custom-order';
+export type {
+  PriceNegotiation,
+  PriceNegotiationWithDetails,
+  NegotiationStatus,
+} from './price-negotiation';
+export type {
+  UserAnalytics,
+  ArtisanBusinessAnalytics,
+  PlatformAnalytics,
+} from './analytics';

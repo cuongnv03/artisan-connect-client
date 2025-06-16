@@ -12,14 +12,6 @@ export interface ApiSuccess<T = any> {
   data: T;
 }
 
-export interface UploadResponse {
-  url: string;
-  publicId?: string;
-  filename: string;
-  size: number;
-  mimeType: string;
-}
-
 export interface FileUpload {
   file: File;
   preview?: string;
