@@ -1,7 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Post } from '../../types';
-import { PostCard } from '../common/PostCard';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePostModal } from '../../hooks/posts';
+import { PostCard as CustomerPostCard } from '../posts/customer/PostCard';
+import { PostCard } from '../posts/artisan/PostCard';
+import { PostModal } from '../posts/customer/PostModal';
 import { EmptyState } from '../common/EmptyState';
 import { Button } from '../ui/Button';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
@@ -23,6 +27,18 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   onLoadMore,
 }) => {
   const navigate = useNavigate();
+  const { state: authState } = useAuth();
+  const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
+
+  const handlePostClick = (post: Post) => {
+    if (authState.user?.role === 'ARTISAN') {
+      // Artisan chuyển tới trang detail riêng
+      navigate(`/posts/manage/${post.id}`);
+    } else {
+      // Customer mở modal
+      openModal(post);
+    }
+  };
 
   if (posts.length === 0) {
     return (
@@ -44,9 +60,27 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
 
   return (
     <div className="space-y-6">
-      {posts.map((post, index) => (
-        <PostCard key={`${post.id}-${index}`} post={post} showAuthor={true} />
-      ))}
+      {posts.map((post, index) =>
+        authState.user?.role === 'CUSTOMER' ? (
+          <CustomerPostCard
+            key={`${post.id}-${index}`}
+            post={post}
+            onClick={handlePostClick}
+          />
+        ) : (
+          <PostCard
+            key={`${post.id}-${index}`}
+            post={post}
+            showAuthor={true}
+            onClick={() => handlePostClick(post)}
+          />
+        ),
+      )}
+
+      {/* Modal for customers */}
+      {authState.user?.role === 'CUSTOMER' && (
+        <PostModal post={selectedPost} isOpen={isOpen} onClose={closeModal} />
+      )}
 
       {/* Load More */}
       {hasMore && (

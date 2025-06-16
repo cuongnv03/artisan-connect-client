@@ -13,11 +13,24 @@ import {
   ShoppingCartIcon,
   UserCircleIcon,
   ChevronDownIcon,
+  HeartIcon,
+  ArrowTrendingUpIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
+import { SECONDARY_NAVIGATION, ROUTE_PATHS } from '../../constants/routes';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
 }
+
+const SECONDARY_ICON_MAP = {
+  'shopping-cart': ShoppingCartIcon,
+  heart: HeartIcon,
+  'message-circle': ChatBubbleLeftIcon,
+  bell: BellIcon,
+  'trending-up': ArrowTrendingUpIcon,
+  'bar-chart': ChartBarIcon,
+};
 
 export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
   const { state, logout } = useAuth();
@@ -37,7 +50,9 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/discover?q=${encodeURIComponent(searchQuery)}`);
+      navigate(
+        `${ROUTE_PATHS.APP.DISCOVER}?q=${encodeURIComponent(searchQuery)}`,
+      );
     }
   };
 
@@ -51,6 +66,28 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
         return 'Khách hàng';
     }
   };
+
+  const getBadgeCount = (badge?: string) => {
+    switch (badge) {
+      case 'cartCount':
+        return cartState.itemCount;
+      case 'messageCount':
+        return messageState.unreadCount;
+      case 'notificationCount':
+        return notificationState.unreadCount;
+      default:
+        return 0;
+    }
+  };
+
+  const getSecondaryNavigation = () => {
+    const userRole = user?.role || 'CUSTOMER';
+    return (
+      SECONDARY_NAVIGATION[userRole as keyof typeof SECONDARY_NAVIGATION] || []
+    );
+  };
+
+  const secondaryNavItems = getSecondaryNavigation();
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -69,15 +106,17 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
               </button>
             )}
 
-            {/* Logo */}
-            <Link to="/" className="flex items-center ml-2 md:ml-0">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AC</span>
-              </div>
-              <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">
-                Artisan Connect
-              </span>
-            </Link>
+            {/* Logo - Only show when NOT authenticated */}
+            {!isAuthenticated && (
+              <Link to="/" className="flex items-center ml-2 md:ml-0">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">AC</span>
+                </div>
+                <span className="ml-2 text-xl font-bold text-gray-900 hidden sm:block">
+                  Artisan Connect
+                </span>
+              </Link>
+            )}
           </div>
 
           {/* Center - Search */}
@@ -104,96 +143,65 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
           <div className="flex items-center space-x-1 md:space-x-4">
             {isAuthenticated ? (
               <>
-                {/* Navigation icons */}
+                {/* Secondary Navigation - Desktop */}
                 <div className="hidden md:flex items-center space-x-1">
-                  {/* Cart */}
-                  <Link
-                    to="/cart"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <ShoppingCartIcon className="h-6 w-6" />
-                    {cartState.itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {cartState.itemCount > 99 ? '99+' : cartState.itemCount}
-                      </span>
-                    )}
-                  </Link>
+                  {secondaryNavItems.map((item) => {
+                    const IconComponent =
+                      SECONDARY_ICON_MAP[
+                        item.icon as keyof typeof SECONDARY_ICON_MAP
+                      ];
+                    const badgeCount = item.badge
+                      ? getBadgeCount(item.badge)
+                      : 0;
 
-                  {/* Messages */}
-                  <Link
-                    to="/messages"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <ChatBubbleLeftIcon className="h-6 w-6" />
-                    {messageState.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {messageState.unreadCount > 99
-                          ? '99+'
-                          : messageState.unreadCount}
-                      </span>
-                    )}
-                  </Link>
+                    if (!IconComponent) return null;
 
-                  {/* Notifications */}
-                  <Link
-                    to="/notifications"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <BellIcon className="h-6 w-6" />
-                    {notificationState.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {notificationState.unreadCount > 99
-                          ? '99+'
-                          : notificationState.unreadCount}
-                      </span>
-                    )}
-                  </Link>
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
+                        title={item.label}
+                      >
+                        <IconComponent className="h-6 w-6" />
+                        {badgeCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                            {badgeCount > 99 ? '99+' : badgeCount}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
 
-                {/* Mobile navigation icons */}
+                {/* Secondary Navigation - Mobile */}
                 <div className="flex md:hidden items-center space-x-1">
-                  {/* Cart */}
-                  <Link
-                    to="/cart"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <ShoppingCartIcon className="h-5 w-5" />
-                    {cartState.itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {cartState.itemCount > 9 ? '9+' : cartState.itemCount}
-                      </span>
-                    )}
-                  </Link>
+                  {secondaryNavItems.slice(0, 3).map((item) => {
+                    const IconComponent =
+                      SECONDARY_ICON_MAP[
+                        item.icon as keyof typeof SECONDARY_ICON_MAP
+                      ];
+                    const badgeCount = item.badge
+                      ? getBadgeCount(item.badge)
+                      : 0;
 
-                  {/* Messages */}
-                  <Link
-                    to="/messages"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <ChatBubbleLeftIcon className="h-5 w-5" />
-                    {messageState.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {messageState.unreadCount > 9
-                          ? '9+'
-                          : messageState.unreadCount}
-                      </span>
-                    )}
-                  </Link>
+                    if (!IconComponent) return null;
 
-                  {/* Notifications */}
-                  <Link
-                    to="/notifications"
-                    className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
-                  >
-                    <BellIcon className="h-5 w-5" />
-                    {notificationState.unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
-                        {notificationState.unreadCount > 9
-                          ? '9+'
-                          : notificationState.unreadCount}
-                      </span>
-                    )}
-                  </Link>
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg relative"
+                      >
+                        <IconComponent className="h-5 w-5" />
+                        {badgeCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                            {badgeCount > 9 ? '9+' : badgeCount}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
 
                 {/* Profile dropdown */}
@@ -246,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
 
                       <div className="py-1">
                         <Link
-                          to="/profile"
+                          to={ROUTE_PATHS.APP.PROFILE.MY_PROFILE}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
@@ -256,14 +264,14 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                         {user?.role === 'ARTISAN' && (
                           <>
                             <Link
-                              to="/artisan/dashboard"
+                              to={ROUTE_PATHS.APP.ARTISAN.DASHBOARD}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setIsProfileMenuOpen(false)}
                             >
                               Bảng điều khiển nghệ nhân
                             </Link>
                             <Link
-                              to="/artisan/customize"
+                              to={ROUTE_PATHS.APP.ARTISAN.SHOP_CUSTOMIZE}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setIsProfileMenuOpen(false)}
                             >
@@ -274,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
 
                         {user?.role === 'CUSTOMER' && (
                           <Link
-                            to="/upgrade-to-artisan"
+                            to={ROUTE_PATHS.APP.ARTISAN.UPGRADE_REQUEST}
                             className="block px-4 py-2 text-sm text-primary hover:bg-gray-100"
                             onClick={() => setIsProfileMenuOpen(false)}
                           >
@@ -284,7 +292,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
 
                         {user?.role === 'ADMIN' && (
                           <Link
-                            to="/admin"
+                            to={ROUTE_PATHS.ADMIN.ROOT}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => setIsProfileMenuOpen(false)}
                           >
@@ -293,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                         )}
 
                         <Link
-                          to="/settings"
+                          to={ROUTE_PATHS.APP.PROFILE.SETTINGS}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
@@ -321,14 +329,14 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate('/auth/login')}
+                  onClick={() => navigate(ROUTE_PATHS.AUTH.LOGIN)}
                 >
                   Đăng nhập
                 </Button>
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => navigate('/auth/register')}
+                  onClick={() => navigate(ROUTE_PATHS.AUTH.REGISTER)}
                 >
                   Đăng ký
                 </Button>

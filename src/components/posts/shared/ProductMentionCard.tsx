@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { StarIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import { ProductMention } from '../../types/post';
-import { Badge } from '../ui/Badge';
-import { Card } from '../ui/Card';
-import { Avatar } from '../ui/Avatar';
-import { formatPrice } from '../../utils/format';
+import { ProductMention } from '../../../types/post';
+import { Badge } from '../../ui/Badge';
+import { Card } from '../../ui/Card';
+import { Avatar } from '../../ui/Avatar';
+import { formatPrice } from '../../../utils/format';
 
 interface ProductMentionCardProps {
   mention: ProductMention;

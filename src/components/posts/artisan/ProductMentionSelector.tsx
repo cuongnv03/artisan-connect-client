@@ -4,14 +4,14 @@ import {
   XMarkIcon,
   PlusIcon,
 } from '@heroicons/react/24/outline';
-import { productService } from '../../services/product.service';
-import { useDebounce } from '../../hooks/useDebounce';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { formatPrice } from '../../utils/format';
+import { productService } from '../../../services/product.service';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { Button } from '../../ui/Button';
+import { Card } from '../../ui/Card';
+import { Badge } from '../../ui/Badge';
+import { Avatar } from '../../ui/Avatar';
+import { LoadingSpinner } from '../../ui/LoadingSpinner';
+import { formatPrice } from '../../../utils/format';
 
 export interface ProductMentionData {
   productId: string;

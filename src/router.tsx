@@ -17,10 +17,17 @@ import { DiscoverPage } from './pages/discover/DiscoverPage';
 import { SearchResultsPage } from './pages/discover/SearchResultsPage';
 import { TrendingPage } from './pages/discover/TrendingPage';
 
-import { CreatePostPage } from './pages/posts/CreatePostPage';
-import { EditPostPage } from './pages/posts/EditPostPage';
-import { PostDetailPage } from './pages/posts/PostDetailPage';
-import { MyPostsPage } from './pages/posts/MyPostsPage';
+// Customer Posts
+import { PostsPage as CustomerPostsPage } from './pages/posts/customer/PostsPage';
+
+// Artisan Posts
+import { MyPostsPage } from './pages/posts/artisan/MyPostsPage';
+import { CreatePostPage } from './pages/posts/artisan/CreatePostPage';
+import { EditPostPage } from './pages/posts/artisan/EditPostPage';
+import { PostDetailPage } from './pages/posts/artisan/PostDetailPage';
+
+// Admin Posts
+import { PostsManagementPage } from './pages/posts/admin/PostsManagementPage';
 
 import { ShopPage } from './pages/shop/ShopPage';
 import { ProductDetailPage } from './pages/shop/ProductDetailPage';
@@ -111,44 +118,62 @@ export const router = createBrowserRouter(
           ],
         },
 
-        // // Posts routes
-        // {
-        //   path: 'create-post',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <CreatePostPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'posts',
-        //   children: [
-        //     {
-        //       path: 'my-posts',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <MyPostsPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: ':postId',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <PostDetailPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: ':postId/edit',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <EditPostPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        // Customer Posts Routes
+        {
+          path: 'posts',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <CustomerPostsPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':slug', // Cho customer xem chi tiết
+              element: (
+                <ProtectedRoute>
+                  <CustomerPostsPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Artisan routes trong posts
+            {
+              path: 'me', // /posts/me - My posts cho artisan
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <MyPostsPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'create', // /posts/create
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <CreatePostPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':id/edit', // /posts/:id/edit
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <EditPostPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Artisan chi tiết (khác customer)
+            {
+              path: 'manage/:id', // /posts/manage/:id - Chi tiết cho artisan
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <PostDetailPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
 
         // // Shop routes
         // {
@@ -415,32 +440,36 @@ export const router = createBrowserRouter(
     },
 
     // Admin routes
-    // {
-    //   path: '/admin',
-    //   element: (
-    //     <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-    //       <AdminLayout />
-    //     </ProtectedRoute>
-    //   ),
-    //   children: [
-    //     {
-    //       index: true,
-    //       element: <Navigate to="/admin/dashboard" replace />,
-    //     },
-    //     {
-    //       path: 'dashboard',
-    //       element: <AdminDashboardPage />,
-    //     },
-    //     {
-    //       path: 'users',
-    //       element: <UsersManagementPage />,
-    //     },
-    //     {
-    //       path: 'artisan-requests',
-    //       element: <ArtisanRequestsPage />,
-    //     },
-    //   ],
-    // },
+    {
+      path: '/admin',
+      element: (
+        <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+          <AdminLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        // {
+        //   index: true,
+        //   element: <Navigate to="/admin/dashboard" replace />,
+        // },
+        // {
+        //   path: 'dashboard',
+        //   element: <AdminDashboardPage />,
+        // },
+        // {
+        //   path: 'users',
+        //   element: <UsersManagementPage />,
+        // },
+        // {
+        //   path: 'artisan-requests',
+        //   element: <ArtisanRequestsPage />,
+        // },
+        {
+          path: 'posts',
+          element: <PostsManagementPage />,
+        },
+      ],
+    },
 
     // // Redirects for legacy routes
     // {

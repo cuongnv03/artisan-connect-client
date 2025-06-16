@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
+import { useMessage } from '../../contexts/MessageContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import {
   HomeIcon,
   MagnifyingGlassIcon,
@@ -20,7 +23,9 @@ import {
   DocumentTextIcon,
   TagIcon,
   CreditCardIcon,
-  PresentationChartBarIcon,
+  UserPlusIcon,
+  ArrowTrendingUpIcon,
+  HeartIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -34,212 +39,97 @@ import {
   BellIcon as BellIconSolid,
   CogIcon as CogIconSolid,
 } from '@heroicons/react/24/solid';
+import {
+  getNavigationMenu,
+  isActiveMenu,
+  ROUTE_PATHS,
+} from '../../constants/routes';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface NavItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<any>;
-  activeIcon: React.ComponentType<any>;
-  badge?: number;
-  description?: string;
+interface IconMap {
+  [key: string]: React.ComponentType<any>;
 }
+
+const ICON_MAP: IconMap = {
+  home: HomeIcon,
+  search: MagnifyingGlassIcon,
+  'shopping-bag': ShoppingBagIcon,
+  'shopping-cart': ShoppingCartIcon,
+  edit: DocumentTextIcon,
+  package: TagIcon,
+  'trending-up': ArrowTrendingUpIcon,
+  palette: PaintBrushIcon,
+  'bar-chart': ChartBarIcon,
+  'user-plus': UserPlusIcon,
+  'message-circle': ChatBubbleLeftIcon,
+  bell: BellIcon,
+  user: UserIcon,
+  settings: CogIcon,
+  heart: HeartIcon,
+  clipboard: ClipboardDocumentListIcon,
+  star: StarIcon,
+  dashboard: PresentationChartLineIcon,
+  users: UsersIcon,
+  'user-check': UserPlusIcon,
+  'credit-card': CreditCardIcon,
+};
+
+const SOLID_ICON_MAP: IconMap = {
+  home: HomeIconSolid,
+  search: MagnifyingGlassIconSolid,
+  'shopping-bag': ShoppingBagIconSolid,
+  'shopping-cart': ShoppingCartIconSolid,
+  edit: DocumentTextIcon,
+  package: TagIcon,
+  'trending-up': ArrowTrendingUpIcon,
+  palette: PaintBrushIcon,
+  'bar-chart': ChartBarIcon,
+  'user-plus': UserPlusIcon,
+  'message-circle': ChatBubbleLeftIconSolid,
+  bell: BellIconSolid,
+  user: UserIconSolid,
+  settings: CogIconSolid,
+  heart: HeartIcon,
+  clipboard: ClipboardDocumentListIconSolid,
+  star: StarIcon,
+  dashboard: PresentationChartLineIcon,
+  users: UsersIcon,
+  'user-check': UserPlusIcon,
+  'credit-card': CreditCardIcon,
+};
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { state } = useAuth();
+  const { state: cartState } = useCart();
+  const { state: messageState } = useMessage();
+  const { state: notificationState } = useNotification();
   const { user } = state;
   const location = useLocation();
 
-  const getNavigationItems = (): NavItem[] => {
-    const commonItems: NavItem[] = [
-      {
-        name: 'Trang chủ',
-        href: '/home',
-        icon: HomeIcon,
-        activeIcon: HomeIconSolid,
-        description: 'Feed bài viết từ nghệ nhân bạn theo dõi',
-      },
-      {
-        name: 'Khám phá',
-        href: '/discover',
-        icon: MagnifyingGlassIcon,
-        activeIcon: MagnifyingGlassIconSolid,
-        description: 'Tìm kiếm nghệ nhân, sản phẩm, bài viết',
-      },
-      {
-        name: 'Cửa hàng',
-        href: '/shop',
-        icon: ShoppingBagIcon,
-        activeIcon: ShoppingBagIconSolid,
-        description: 'Duyệt và mua sắm sản phẩm',
-      },
-      {
-        name: 'Bài viết',
-        href: '/posts/my-posts',
-        icon: PlusCircleIcon,
-        activeIcon: PlusCircleIconSolid,
-        description: 'Quản lý bài viết',
-      },
-    ];
+  const navigationItems = getNavigationMenu(user?.role || 'CUSTOMER');
 
-    const roleSpecificItems: NavItem[] = [];
-
-    if (user?.role === 'CUSTOMER') {
-      roleSpecificItems.push(
-        {
-          name: 'Giỏ hàng',
-          href: '/cart',
-          icon: ShoppingCartIcon,
-          activeIcon: ShoppingCartIconSolid,
-          badge: 0, // TODO: get from cart context
-        },
-        {
-          name: 'Đơn hàng',
-          href: '/orders',
-          icon: ClipboardDocumentListIcon,
-          activeIcon: ClipboardDocumentListIconSolid,
-          description: 'Đơn hàng bạn đã đặt',
-        },
-        {
-          name: 'Trở thành nghệ nhân',
-          href: '/upgrade-to-artisan',
-          icon: StarIcon,
-          activeIcon: StarIcon,
-          description: 'Yêu cầu nâng cấp tài khoản',
-        },
-      );
+  const getBadgeCount = (badge?: string) => {
+    switch (badge) {
+      case 'cartCount':
+        return cartState.itemCount;
+      case 'messageCount':
+        return messageState.unreadCount;
+      case 'notificationCount':
+        return notificationState.unreadCount;
+      default:
+        return 0;
     }
-
-    if (user?.role === 'ARTISAN') {
-      roleSpecificItems.push(
-        {
-          name: 'Bảng điều khiển',
-          href: '/artisan/dashboard',
-          icon: CreditCardIcon,
-          activeIcon: CreditCardIcon,
-          description: 'Thống kê và phân tích',
-        },
-        {
-          name: 'Quản lý sản phẩm',
-          href: '/artisan/products',
-          icon: TagIcon,
-          activeIcon: TagIcon,
-          description: 'Sản phẩm của bạn',
-        },
-        {
-          name: 'Giỏ hàng',
-          href: '/cart',
-          icon: ShoppingCartIcon,
-          activeIcon: ShoppingCartIconSolid,
-          badge: 0,
-        },
-        {
-          name: 'Đơn hàng',
-          href: '/orders',
-          icon: ClipboardDocumentListIcon,
-          activeIcon: ClipboardDocumentListIconSolid,
-          description: 'Đơn hàng bán và mua',
-        },
-        {
-          name: 'Phân tích',
-          href: '/artisan/analytics',
-          icon: ChartBarIcon,
-          activeIcon: ChartBarIcon,
-          description: 'Phân tích hiệu suất bán hàng',
-        },
-        {
-          name: 'Tùy chỉnh trang',
-          href: '/artisan/customize',
-          icon: PaintBrushIcon,
-          activeIcon: PaintBrushIcon,
-          description: 'Tùy chỉnh giao diện cá nhân',
-        },
-      );
-    }
-
-    if (user?.role === 'ADMIN') {
-      roleSpecificItems.push(
-        {
-          name: 'Dashboard Admin',
-          href: '/admin/dashboard',
-          icon: PresentationChartLineIcon,
-          activeIcon: PresentationChartLineIcon,
-          description: 'Tổng quan hệ thống',
-        },
-        {
-          name: 'Quản lý người dùng',
-          href: '/admin/users',
-          icon: UsersIcon,
-          activeIcon: UsersIcon,
-          description: 'Quản lý tài khoản người dùng',
-        },
-        {
-          name: 'Duyệt nghệ nhân',
-          href: '/admin/artisan-requests',
-          icon: StarIcon,
-          activeIcon: StarIcon,
-          description: 'Phê duyệt yêu cầu nghệ nhân',
-          badge: 0, // TODO: get pending requests count
-        },
-        {
-          name: 'Quản lý nội dung',
-          href: '/admin/content',
-          icon: DocumentTextIcon,
-          activeIcon: DocumentTextIcon,
-          description: 'Kiểm duyệt bài viết, sản phẩm',
-        },
-      );
-    }
-
-    const communicationItems: NavItem[] = [
-      {
-        name: 'Tin nhắn',
-        href: '/messages',
-        icon: ChatBubbleLeftIcon,
-        activeIcon: ChatBubbleLeftIconSolid,
-        badge: 0, // TODO: get unread count
-      },
-      {
-        name: 'Thông báo',
-        href: '/notifications',
-        icon: BellIcon,
-        activeIcon: BellIconSolid,
-        badge: 0, // TODO: get unread count
-      },
-    ];
-
-    const settingsItems: NavItem[] = [
-      {
-        name: 'Trang cá nhân',
-        href: '/profile',
-        icon: UserIcon,
-        activeIcon: UserIconSolid,
-      },
-      {
-        name: 'Cài đặt',
-        href: '/settings',
-        icon: CogIcon,
-        activeIcon: CogIconSolid,
-      },
-    ];
-
-    return [
-      ...commonItems,
-      ...roleSpecificItems,
-      ...communicationItems,
-      ...settingsItems,
-    ];
   };
 
-  const navigationItems = getNavigationItems();
-
-  const isActiveLink = (href: string) => {
-    if (href === '/home' && location.pathname === '/') return true;
-    return location.pathname.startsWith(href);
+  const getIcon = (iconName: string, isActive: boolean) => {
+    const IconComponent = isActive
+      ? SOLID_ICON_MAP[iconName] || ICON_MAP[iconName]
+      : ICON_MAP[iconName];
+    return IconComponent || HomeIcon;
   };
 
   return (
@@ -255,50 +145,122 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={`
-          fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-50 transform transition-transform duration-300 ease-in-out
           md:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
+          {/* Logo Section - Fixed at top */}
+          <div className="flex-shrink-0 px-4 py-4 border-b border-gray-200">
+            <Link
+              to="/"
+              className="flex items-center"
+              onClick={() => onClose()}
+            >
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">AC</span>
+              </div>
+              <span className="ml-2 text-xl font-bold text-gray-900">
+                Artisan Connect
+              </span>
+            </Link>
+          </div>
+
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-hidden">
-            {navigationItems.map((item) => {
-              const isActive = isActiveLink(item.href);
-              const IconComponent = isActive ? item.activeIcon : item.icon;
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigationItems.map((item, index) => {
+              // Handle separator
+              if (item.type === 'separator') {
+                return (
+                  <div key={`separator-${index}`} className="my-4">
+                    <div className="border-t border-gray-200"></div>
+                    <div className="mt-4 px-3">
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Kinh doanh
+                      </h3>
+                    </div>
+                  </div>
+                );
+              }
+
+              const isActive = isActiveMenu(item.path, location.pathname);
+              const IconComponent = getIcon(item.icon, isActive);
+              const badgeCount = item.badge ? getBadgeCount(item.badge) : 0;
 
               return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`
-                    group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                    ${
-                      isActive
-                        ? 'bg-primary text-white'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                    }
-                  `}
-                  onClick={() => onClose()}
-                >
-                  <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
-                  <span className="flex-1">{item.name}</span>
-
-                  {item.badge !== undefined && item.badge > 0 && (
-                    <span
-                      className={`
-                      ml-2 px-2 py-0.5 text-xs rounded-full
+                <div key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`
+                      group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                       ${
-                        isActive
-                          ? 'bg-white text-primary'
-                          : 'bg-red-500 text-white'
+                        item.highlight
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                          : item.business
+                          ? isActive
+                            ? 'bg-primary text-white'
+                            : 'text-gray-700 hover:bg-primary hover:text-white'
+                          : isActive
+                          ? 'bg-primary text-white'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                       }
                     `}
-                    >
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
+                    onClick={() => onClose()}
+                  >
+                    <IconComponent className="mr-3 h-5 w-5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{item.label}</span>
+                        {badgeCount > 0 && (
+                          <span
+                            className={`
+                              ml-2 px-2 py-0.5 text-xs rounded-full
+                              ${
+                                isActive || item.highlight
+                                  ? 'bg-white text-primary'
+                                  : 'bg-red-500 text-white'
+                              }
+                            `}
+                          >
+                            {badgeCount > 99 ? '99+' : badgeCount}
+                          </span>
+                        )}
+                      </div>
+                      {item.subtitle && (
+                        <p className="text-xs opacity-75 mt-0.5 truncate">
+                          {item.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+
+                  {/* Submenu */}
+                  {item.submenu && isActive && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      {item.submenu.map((subItem) => {
+                        const isSubActive = location.pathname === subItem.path;
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            className={`
+                              block px-3 py-1.5 text-sm rounded-md transition-colors
+                              ${
+                                isSubActive
+                                  ? 'bg-primary bg-opacity-20 text-primary font-medium'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }
+                            `}
+                            onClick={() => onClose()}
+                          >
+                            {subItem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </nav>

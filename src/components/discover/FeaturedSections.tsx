@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
-import { PostCard } from '../common/PostCard';
+import { PostCard } from '../posts/customer/PostCard';
 import { ProductCard } from '../common/ProductCard';
 
 interface FeaturedSectionsProps {

@@ -7,8 +7,8 @@ import {
   ChatBubbleLeftRightIcon,
   MinusIcon,
 } from '@heroicons/react/24/outline';
-import { Button } from '../ui/Button';
-import { ContentBlock, BlockType } from '../../types/post';
+import { Button } from '../../ui/Button';
+import { ContentBlock, BlockType } from '../../../types/post';
 
 interface ContentEditorProps {
   content: ContentBlock[];

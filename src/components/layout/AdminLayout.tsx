@@ -12,6 +12,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { NAVIGATION_MENUS, ROUTE_PATHS } from '../../constants/routes';
 
 export const AdminLayout: React.FC = () => {
   const { state } = useAuth();
@@ -31,45 +32,26 @@ export const AdminLayout: React.FC = () => {
     return <Navigate to="/login" replace />;
   }
 
-  const adminNavItems = [
-    {
-      name: 'Tổng quan',
-      href: '/admin/dashboard',
-      icon: PresentationChartLineIcon,
-      description: 'Dashboard và thống kê tổng quát',
-    },
-    {
-      name: 'Người dùng',
-      href: '/admin/users',
-      icon: UsersIcon,
-      description: 'Quản lý tài khoản người dùng',
-    },
-    {
-      name: 'Duyệt nghệ nhân',
-      href: '/admin/artisan-requests',
-      icon: StarIcon,
-      description: 'Phê duyệt yêu cầu trở thành nghệ nhân',
-      badge: 0, // TODO: get pending count
-    },
-    {
-      name: 'Nội dung',
-      href: '/admin/content',
-      icon: DocumentTextIcon,
-      description: 'Kiểm duyệt bài viết và sản phẩm',
-    },
-    {
-      name: 'Thống kê',
-      href: '/admin/analytics',
-      icon: ChartBarIcon,
-      description: 'Phân tích và báo cáo chi tiết',
-    },
-    {
-      name: 'Cài đặt hệ thống',
-      href: '/admin/settings',
-      icon: CogIcon,
-      description: 'Cấu hình hệ thống',
-    },
-  ];
+  const adminNavItems = NAVIGATION_MENUS.ADMIN.map((item) => ({
+    name: item.label,
+    href: item.path,
+    icon:
+      item.icon === 'dashboard'
+        ? PresentationChartLineIcon
+        : item.icon === 'users'
+        ? UsersIcon
+        : item.icon === 'user-check'
+        ? StarIcon
+        : item.icon === 'edit'
+        ? DocumentTextIcon
+        : item.icon === 'package'
+        ? DocumentTextIcon
+        : item.icon === 'shopping-cart'
+        ? ChartBarIcon
+        : PresentationChartLineIcon,
+    description: item.subtitle || '',
+    badge: 0, // TODO: get actual counts from API
+  }));
 
   const isActiveLink = (href: string) => {
     return location.pathname.startsWith(href);
@@ -99,7 +81,7 @@ export const AdminLayout: React.FC = () => {
               </div>
 
               <Link
-                to="/home"
+                to={ROUTE_PATHS.APP.HOME}
                 className="text-sm text-gray-500 hover:text-gray-700"
               >
                 Về trang chính

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { UserCard } from '../common/UserCard';
-import { PostCard } from '../common/PostCard';
+import { PostCard } from '../posts/customer/PostCard';
 import { ProductCard } from '../common/ProductCard';
 import { SearchType } from '../../contexts/DiscoverContext';
 

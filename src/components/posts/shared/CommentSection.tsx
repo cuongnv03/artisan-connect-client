@@ -1,0 +1,203 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useToastContext } from '../../../contexts/ToastContext';
+import { socialService } from '../../../services/social.service';
+import { Comment } from '../../../types/social';
+import { Avatar } from '../../ui/Avatar';
+import { Button } from '../../ui/Button';
+import { LoadingSpinner } from '../../ui/LoadingSpinner';
+import { CommentItem } from './CommentItem';
+import { useForm } from '../../../hooks/useForm';
+
+interface CommentSectionProps {
+  postId: string;
+}
+
+interface CommentFormData {
+  content: string;
+}
+
+export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
+  const { state: authState } = useAuth();
+  const { success, error } = useToastContext();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
+  const loadComments = async () => {
+    setLoading(true);
+    try {
+      const result = await socialService.getPostComments(postId, {
+        parentId: null,
+        page: 1,
+        limit: 50,
+        includeReplies: false,
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
+      });
+
+      // Load replies for each comment
+      const commentsWithReplies = await Promise.all(
+        result.data.map(async (comment) => {
+          if (comment.replyCount > 0) {
+            try {
+              const repliesResult = await socialService.getCommentReplies(
+                comment.id,
+                { page: 1, limit: 10, sortBy: 'createdAt', sortOrder: 'asc' },
+              );
+              return { ...comment, replies: repliesResult.data || [] };
+            } catch (err) {
+              return { ...comment, replies: [] };
+            }
+          }
+          return { ...comment, replies: [] };
+        }),
+      );
+
+      setComments(commentsWithReplies);
+    } catch (err: any) {
+      error('Không thể tải bình luận');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCommentSubmit = async (values: CommentFormData) => {
+    try {
+      await socialService.createComment({
+        postId,
+        content: values.content,
+      });
+      resetForm();
+      await loadComments();
+      success('Đã thêm bình luận');
+    } catch (err: any) {
+      error('Không thể thêm bình luận');
+    }
+  };
+
+  const handleReplyComment = async (parentId: string, content: string) => {
+    try {
+      await socialService.createComment({
+        postId,
+        parentId,
+        content,
+      });
+      await loadComments();
+      success('Đã thêm phản hồi');
+    } catch (err) {
+      error('Không thể thêm phản hồi');
+    }
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      const result = await socialService.toggleLike({ commentId });
+
+      setComments((prevComments) =>
+        updateCommentInTree(prevComments, commentId, (comment) => ({
+          ...comment,
+          isLiked: result.liked,
+          likeCount: result.liked
+            ? comment.likeCount + 1
+            : comment.likeCount - 1,
+        })),
+      );
+    } catch (err) {
+      error('Không thể thích bình luận');
+    }
+  };
+
+  const updateCommentInTree = (
+    comments: Comment[],
+    commentId: string,
+    updateFn: (comment: Comment) => Comment,
+  ): Comment[] => {
+    return comments.map((comment) => {
+      if (comment.id === commentId) {
+        return updateFn(comment);
+      }
+      if (comment.replies && comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: updateCommentInTree(comment.replies, commentId, updateFn),
+        };
+      }
+      return comment;
+    });
+  };
+
+  const { values, handleChange, handleSubmit, resetForm, isSubmitting } =
+    useForm<CommentFormData>({
+      initialValues: { content: '' },
+      onSubmit: handleCommentSubmit,
+    });
+
+  const topLevelComments = comments.filter((comment) => !comment.parentId);
+
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        Bình luận ({topLevelComments.length})
+      </h3>
+
+      {/* Add Comment Form */}
+      {authState.isAuthenticated && (
+        <form onSubmit={handleSubmit} className="mb-6">
+          <div className="flex space-x-3">
+            <Avatar
+              src={authState.user?.avatarUrl}
+              alt={`${authState.user?.firstName} ${authState.user?.lastName}`}
+              size="md"
+            />
+            <div className="flex-1">
+              <textarea
+                name="content"
+                rows={3}
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                placeholder="Viết bình luận của bạn..."
+                value={values.content}
+                onChange={handleChange}
+              />
+              <div className="mt-2 flex justify-end">
+                <Button
+                  type="submit"
+                  size="sm"
+                  loading={isSubmitting}
+                  disabled={!values.content.trim()}
+                >
+                  Gửi bình luận
+                </Button>
+              </div>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Comments List */}
+      {loading ? (
+        <div className="text-center py-4">
+          <LoadingSpinner />
+        </div>
+      ) : topLevelComments.length > 0 ? (
+        <div className="space-y-4">
+          {topLevelComments.map((comment) => (
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              onReply={handleReplyComment}
+              onLikeComment={handleLikeComment}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center py-4">
+          Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+        </p>
+      )}
+    </div>
+  );
+};
