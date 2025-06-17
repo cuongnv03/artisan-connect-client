@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';

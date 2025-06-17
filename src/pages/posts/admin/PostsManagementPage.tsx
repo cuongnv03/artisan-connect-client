@@ -9,7 +9,7 @@ import { Pagination } from '../../../components/ui/Pagination';
 import { Card } from '../../../components/ui/Card';
 import { ConfirmModal } from '../../../components/ui/Modal';
 import { PostStatus } from '../../../types/post';
-import { useDebounce } from '../../../hooks/useDebounce';
+import { useDebounce } from '../../../hooks/common/useDebounce';
 
 export const PostsManagementPage: React.FC = () => {
   const { success, error } = useToastContext();

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 import { useAuthForm } from '../../hooks/auth/useAuth';
 import { useAuthValidation } from '../../hooks/auth/useAuthValidation';
 import { Button } from '../ui/Button';

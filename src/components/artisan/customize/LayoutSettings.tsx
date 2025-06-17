@@ -1,5 +1,5 @@
 import React from 'react';
-import { LAYOUT_OPTIONS } from '../../../data/templates';
+import { LAYOUT_OPTIONS } from '../../../templates/templates';
 import { Card } from '../../ui/Card';
 import { ThemeConfig } from '../../../types/theme';
 

@@ -16,7 +16,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterPanel } from '../../components/common/FilterPanel';
 import { useFeaturedContent } from '../../hooks/discover/useFeaturedContent';
 import { useDiscoverSearch } from '../../hooks/discover/useDiscoverSearch';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce } from '../../hooks/common/useDebounce';
 
 const DiscoverPageContent: React.FC = () => {
   const { state, setSearchQuery, setActiveTab, setFilters, setCurrentPage } =

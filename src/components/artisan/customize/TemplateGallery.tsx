@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckIcon } from '@heroicons/react/24/outline';
-import { TEMPLATES } from '../../../data/templates';
+import { TEMPLATES } from '../../../templates/templates';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';

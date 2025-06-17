@@ -3,7 +3,7 @@ import { Post } from '../../../types/post';
 import { PostCard } from './PostCard';
 import { LoadingSpinner } from '../../ui/LoadingSpinner';
 import { Button } from '../../ui/Button';
-import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll';
+import { useInfiniteScroll } from '../../../hooks/common/useInfiniteScroll';
 
 interface PostsListProps {
   posts: Post[];

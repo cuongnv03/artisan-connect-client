@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from '../../../../hooks/useForm';
+import { useForm } from '../../../../hooks/common/useForm';
 import { usePriceNegotiation } from '../../../../hooks/price-negotiation/usePriceNegotiation';
 import { CreateNegotiationRequest } from '../../../../types/price-negotiation';
 import { Product } from '../../../../types/product';

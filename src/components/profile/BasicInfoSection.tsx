@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProfileManagement } from '../../hooks/profile/useProfileManagement';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';

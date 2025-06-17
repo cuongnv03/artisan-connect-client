@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Notification } from '../types/notification';
 import { notificationService } from '../services/notification.service';
-import { useSocket } from '../hooks/useSocket';
+import { useSocket } from '../hooks/common/useSocket';
 import { useAuth } from './AuthContext';
 import { formatNotificationDisplay } from '../utils/notificationFormatter';
 

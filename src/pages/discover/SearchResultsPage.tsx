@@ -18,7 +18,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterPanel } from '../../components/common/FilterPanel';
 import { Button } from '../../components/ui/Button';
 import { useDiscoverSearch } from '../../hooks/discover/useDiscoverSearch';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce } from '../../hooks/common/useDebounce';
 
 const SearchResultsPageContent: React.FC = () => {
   const { state, setSearchQuery, setActiveTab, setFilters, setCurrentPage } =

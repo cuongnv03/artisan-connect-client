@@ -8,7 +8,7 @@ import { Tabs } from '../../../components/ui/Tabs';
 import { SearchBox } from '../../../components/common/SearchBox';
 import { PostsList } from '../../../components/posts/artisan/PostsList';
 import { PostStatus } from '../../../types/post';
-import { useDebounce } from '../../../hooks/useDebounce';
+import { useDebounce } from '../../../hooks/common/useDebounce';
 
 export const MyPostsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');

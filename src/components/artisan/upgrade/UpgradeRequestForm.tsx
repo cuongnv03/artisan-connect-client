@@ -5,7 +5,7 @@ import {
   DocumentTextIcon,
   StarIcon,
 } from '@heroicons/react/24/outline';
-import { useForm } from '../../../hooks/useForm';
+import { useForm } from '../../../hooks/common/useForm';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Card } from '../../ui/Card';

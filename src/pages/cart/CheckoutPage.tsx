@@ -26,7 +26,7 @@ import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Modal } from '../../components/ui/Modal';
 import { AddressForm } from '../../components/profile/AddressForm';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 
 interface CheckoutFormData {
   addressId: string;

@@ -10,7 +10,7 @@ import {
 import {
   Toast as ToastType,
   ToastType as ToastTypeEnum,
-} from '../../hooks/useToast';
+} from '../../hooks/common/useToast';
 
 interface ToastProps {
   toast: ToastType;

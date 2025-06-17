@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemeConfig } from '../types/theme';
-import { TEMPLATES } from '../data/templates';
+import { TEMPLATES } from '../templates/templates';
 
 interface ThemeContextType {
   currentTheme: ThemeConfig | null;

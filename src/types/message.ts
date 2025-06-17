@@ -9,7 +9,7 @@ export enum MessageType {
   QUOTE_DISCUSSION = 'QUOTE_DISCUSSION',
 }
 
-// Base Message interface (entity)
+// Base Message interface (khớp với Prisma schema)
 export interface Message extends BaseEntity {
   senderId: string;
   receiverId: string;
@@ -17,28 +17,14 @@ export interface Message extends BaseEntity {
   type: MessageType;
   attachments: string[];
   quoteRequestId?: string;
-  productMentions?: Record<string, any>;
+  productMentions?: Record<string, any>; // Đổi từ metadata thành productMentions
   isRead: boolean;
   readAt?: Date;
   isEdited: boolean;
   editedAt?: Date;
 }
 
-export interface MessageWithUsers {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  type: MessageType;
-  attachments: string[];
-  quoteRequestId?: string;
-  productMentions?: Record<string, any>;
-  isRead: boolean;
-  readAt?: Date;
-  isEdited: boolean;
-  editedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+export interface MessageWithUsers extends Message {
   sender: {
     id: string;
     username: string;
@@ -87,7 +73,7 @@ export interface SendMessageRequest {
   type?: MessageType;
   attachments?: string[];
   quoteRequestId?: string;
-  productMentions?: Record<string, any>;
+  productMentions?: Record<string, any>; // Đổi từ metadata
 }
 
 export interface SendCustomOrderRequest {
@@ -120,4 +106,28 @@ export interface MessageQueryOptions {
   isRead?: boolean;
   dateFrom?: Date;
   dateTo?: Date;
+  sortOrder?: 'asc' | 'desc';
+}
+
+// Custom Order types for messaging
+export interface CustomOrderProposal {
+  productName: string;
+  description: string;
+  estimatedPrice: number;
+  timeline: string;
+  specifications?: Record<string, any>;
+  attachments?: string[];
+  deadline?: Date;
+}
+
+export interface CustomOrderResponse {
+  accepted: boolean;
+  message: string;
+  canProceed: boolean;
+  requiresMoreInfo?: boolean;
+  additionalQuestions?: string[];
+  counterOffer?: {
+    price: number;
+    duration: string;
+  };
 }

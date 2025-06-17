@@ -1,5 +1,5 @@
 import React from 'react';
-import { COLOR_PRESETS } from '../../../data/templates';
+import { COLOR_PRESETS } from '../../../templates/templates';
 import { Card } from '../../ui/Card';
 import { ThemeConfig } from '../../../types/theme';
 

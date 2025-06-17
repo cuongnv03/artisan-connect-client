@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToastContext } from '../../contexts/ToastContext';
 import { postService } from '../../services/post.service';
 import { uploadService } from '../../services/upload.service';
-import { useForm } from '../useForm';
+import { useForm } from '../common/useForm';
 import {
   CreatePostRequest,
   UpdatePostRequest,

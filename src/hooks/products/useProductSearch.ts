@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { productService } from '../../services/product.service';
 import { Product, SearchProductsQuery } from '../../types/product';
 import { PaginatedResponse } from '../../types/common';
-import { useDebounce } from '../useDebounce';
+import { useDebounce } from '../common/useDebounce';
 
 export interface UseProductSearchReturn {
   products: Product[];

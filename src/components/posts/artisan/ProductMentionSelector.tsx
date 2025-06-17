@@ -5,7 +5,7 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline';
 import { productService } from '../../../services/product.service';
-import { useDebounce } from '../../../hooks/useDebounce';
+import { useDebounce } from '../../../hooks/common/useDebounce';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';

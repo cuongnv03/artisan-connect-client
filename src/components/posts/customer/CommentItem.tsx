@@ -7,7 +7,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { Comment } from '../../../types/social';
 import { Avatar } from '../../ui/Avatar';
 import { Button } from '../../ui/Button';
-import { useForm } from '../../../hooks/useForm';
+import { useForm } from '../../../hooks/common/useForm';
 
 interface CommentItemProps {
   comment: Comment;

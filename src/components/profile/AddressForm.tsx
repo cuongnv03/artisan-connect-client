@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Address, CreateAddressRequest } from '../../types/user';

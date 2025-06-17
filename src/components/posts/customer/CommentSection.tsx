@@ -7,7 +7,7 @@ import { Avatar } from '../../ui/Avatar';
 import { Button } from '../../ui/Button';
 import { LoadingSpinner } from '../../ui/LoadingSpinner';
 import { CommentItem } from './CommentItem';
-import { useForm } from '../../../hooks/useForm';
+import { useForm } from '../../../hooks/common/useForm';
 
 interface CommentSectionProps {
   postId: string;

@@ -492,28 +492,28 @@ export const router = createBrowserRouter(
           ),
         },
 
-        // // Messages
-        // {
-        //   path: 'messages',
-        //   children: [
-        //     {
-        //       index: true,
-        //       element: (
-        //         <ProtectedRoute>
-        //           <MessagesPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: ':userId',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <ConversationPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        // Messages
+        {
+          path: 'messages',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <MessagesPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':userId',
+              element: (
+                <ProtectedRoute>
+                  <ConversationPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
       ],
     },
 

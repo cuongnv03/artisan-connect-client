@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { useForm } from '../../hooks/useForm';
+import { useForm } from '../../hooks/common/useForm';
 import { usePasswordReset } from '../../hooks/auth/useAuth';
 import { useAuthValidation } from '../../hooks/auth/useAuthValidation';
 import { Button } from '../ui/Button';

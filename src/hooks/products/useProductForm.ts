@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from '../useForm';
+import { useForm } from '../common/useForm';
 import { useToastContext } from '../../contexts/ToastContext';
 import { productService } from '../../services/product.service';
 import {
