@@ -21,16 +21,21 @@ export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
 
   const handlePublish = async () => {
     const success = await publishPost(post.id);
-    if (success) {
-      onUpdate?.();
+    if (success && onUpdate) {
+      onUpdate();
     }
   };
 
   const handleArchive = async () => {
     const success = await archivePost(post.id);
-    if (success) {
-      onUpdate?.();
+    if (success && onUpdate) {
+      onUpdate();
     }
+  };
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/posts/${post.slug || post.id}`;
+    navigator.clipboard.writeText(shareUrl);
   };
 
   return (
@@ -81,12 +86,7 @@ export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
         variant="ghost"
         size="sm"
         leftIcon={<ShareIcon className="w-4 h-4" />}
-        onClick={() => {
-          // Handle share logic
-          navigator.clipboard.writeText(
-            window.location.origin + `/posts/manage/${post.id}`,
-          );
-        }}
+        onClick={handleShare}
       >
         Chia sẻ
       </Button>

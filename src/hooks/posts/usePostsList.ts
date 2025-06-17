@@ -21,11 +21,25 @@ export const usePostsList = (query: GetPostsQuery = {}) => {
       setLoading(true);
       try {
         const currentPage = resetPage ? 1 : pagination.page;
-        const result = await postService.getPosts({
-          ...query,
-          page: currentPage,
-          limit: pagination.limit,
-        });
+
+        // Use my posts API for personal posts management
+        const isMyPosts = !query.userId && !query.followedOnly;
+
+        let result;
+        if (isMyPosts) {
+          const response = await postService.getMyPosts({
+            ...query,
+            page: currentPage,
+            limit: pagination.limit,
+          });
+          result = response.posts;
+        } else {
+          result = await postService.getPosts({
+            ...query,
+            page: currentPage,
+            limit: pagination.limit,
+          });
+        }
 
         if (resetPage) {
           setPosts(result.data);
@@ -41,25 +55,39 @@ export const usePostsList = (query: GetPostsQuery = {}) => {
         });
       } catch (error) {
         console.error('Error loading posts:', error);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
     },
-    [authState.isAuthenticated, query, pagination.page, pagination.limit],
+    [authState.isAuthenticated, query, pagination.limit], // Remove pagination.page from dependencies
   );
 
   const loadMore = useCallback(() => {
-    if (pagination.page < pagination.totalPages) {
+    if (pagination.page < pagination.totalPages && !loading) {
       setPagination((prev) => ({ ...prev, page: prev.page + 1 }));
     }
-  }, [pagination.page, pagination.totalPages]);
+  }, [pagination.page, pagination.totalPages, loading]);
 
   const refresh = useCallback(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
     loadPosts(true);
   }, [loadPosts]);
 
+  // Load posts when query changes or page changes
   useEffect(() => {
-    loadPosts();
+    if (pagination.page === 1) {
+      loadPosts(true);
+    } else {
+      loadPosts(false);
+    }
+  }, [JSON.stringify(query)]); // Use JSON.stringify to detect deep changes
+
+  // Load more when page changes (but not on first load)
+  useEffect(() => {
+    if (pagination.page > 1) {
+      loadPosts(false);
+    }
   }, [pagination.page]);
 
   return {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Post } from '../../../types/post';
 import { usePostForm } from '../../../hooks/posts';
 import { Button } from '../../ui/Button';
@@ -36,6 +36,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     addTag,
     removeTag,
   } = usePostForm(initialPost);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const handleTagKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -149,11 +150,16 @@ export const PostForm: React.FC<PostFormProps> = ({
         )}
         <FileUpload
           files={coverImages}
-          onFilesChange={setCoverImages}
+          onFilesChange={(files) => {
+            setCoverImages(files);
+            // Đừng trigger submit khi upload xong
+          }}
           accept="image"
           multiple={false}
           maxFiles={1}
           maxSize={5}
+          onUploadStart={() => setIsImageUploading(true)}
+          onUploadComplete={() => setIsImageUploading(false)}
         />
       </Card>
 
@@ -196,8 +202,14 @@ export const PostForm: React.FC<PostFormProps> = ({
         <Button type="button" variant="outline" onClick={onCancel}>
           Hủy
         </Button>
-        <Button type="submit" loading={form.isSubmitting || isUploading}>
-          {isUploading
+        <Button
+          type="submit"
+          loading={form.isSubmitting || isUploading || isImageUploading}
+          disabled={isImageUploading}
+        >
+          {isImageUploading
+            ? 'Đang tải ảnh...'
+            : isUploading
             ? 'Đang tải lên...'
             : initialPost
             ? 'Cập nhật'

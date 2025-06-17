@@ -614,26 +614,26 @@ export const router = createBrowserRouter(
       path: '/admin',
       element: (
         <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
-          <AdminLayout />
+          <MainLayout />
         </ProtectedRoute>
       ),
       children: [
-        // {
-        //   index: true,
-        //   element: <Navigate to="/admin/dashboard" replace />,
-        // },
-        // {
-        //   path: 'dashboard',
-        //   element: <AdminDashboardPage />,
-        // },
-        // {
-        //   path: 'users',
-        //   element: <UsersManagementPage />,
-        // },
-        // {
-        //   path: 'artisan-requests',
-        //   element: <ArtisanRequestsPage />,
-        // },
+        {
+          index: true,
+          element: <Navigate to="/admin/dashboard" replace />,
+        },
+        {
+          path: 'dashboard',
+          element: <AdminDashboardPage />,
+        },
+        {
+          path: 'users',
+          element: <UsersManagementPage />,
+        },
+        {
+          path: 'artisan-requests',
+          element: <ArtisanRequestsPage />,
+        },
         {
           path: 'products',
           children: [

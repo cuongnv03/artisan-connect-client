@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { usePostsList } from '../../../hooks/posts';
@@ -15,19 +15,37 @@ export const MyPostsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('all');
   const debouncedQuery = useDebounce(searchQuery, 500);
 
-  const { posts, loading, refresh } = usePostsList({
-    q: debouncedQuery || undefined,
-    status: activeTab !== 'all' ? (activeTab as PostStatus) : undefined,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
+  // Memoize query để tránh re-render không cần thiết
+  const postsQuery = useMemo(() => {
+    const query: any = {
+      sortBy: 'updatedAt', // Use updatedAt for my posts
+      sortOrder: 'desc',
+    };
+
+    if (debouncedQuery) {
+      query.q = debouncedQuery;
+    }
+
+    if (activeTab !== 'all') {
+      query.status = activeTab as PostStatus;
+    }
+
+    return query;
+  }, [debouncedQuery, activeTab]);
+
+  const { posts, loading, refresh } = usePostsList(postsQuery);
 
   const tabItems = [
     { key: 'all', label: 'Tất cả', content: null },
-    { key: PostStatus.PUBLISHED, label: 'Đã đăng', content: null },
     { key: PostStatus.DRAFT, label: 'Bản nháp', content: null },
+    { key: PostStatus.PUBLISHED, label: 'Đã đăng', content: null },
     { key: PostStatus.ARCHIVED, label: 'Lưu trữ', content: null },
   ];
+
+  const handleTabChange = (tabKey: string) => {
+    console.log('Changing tab to:', tabKey); // Debug log
+    setActiveTab(tabKey);
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -67,7 +85,7 @@ export const MyPostsPage: React.FC = () => {
         <Tabs
           items={tabItems}
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={handleTabChange}
           variant="line"
         />
       </div>

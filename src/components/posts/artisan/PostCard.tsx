@@ -7,6 +7,8 @@ import {
   PencilIcon,
   TrashIcon,
   EllipsisHorizontalIcon,
+  ArchiveBoxIcon,
+  DocumentIcon,
 } from '@heroicons/react/24/outline';
 import { Post, PostStatus } from '../../../types/post';
 import { usePostActions } from '../../../hooks/posts';
@@ -57,8 +59,27 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
   const dropdownItems = actions.map((action) => ({
     label: action.label,
     value: action.key,
-    onClick:
-      action.key === 'delete' ? () => setShowDeleteModal(true) : action.onClick,
+    onClick: async () => {
+      if (action.key === 'delete') {
+        setShowDeleteModal(true);
+      } else if (action.key === 'archive') {
+        // Handle archive action
+        const { archivePost } = usePostActions();
+        const success = await archivePost(post.id);
+        if (success && onUpdate) {
+          onUpdate();
+        }
+      } else if (action.key === 'publish') {
+        // Handle publish action
+        const { publishPost } = usePostActions();
+        const success = await publishPost(post.id);
+        if (success && onUpdate) {
+          onUpdate();
+        }
+      } else {
+        action.onClick();
+      }
+    },
     icon:
       action.icon === 'eye' ? (
         <EyeIcon className="w-4 h-4" />
@@ -66,6 +87,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
         <PencilIcon className="w-4 h-4" />
       ) : action.icon === 'trash' ? (
         <TrashIcon className="w-4 h-4" />
+      ) : action.icon === 'archive' ? (
+        <ArchiveBoxIcon className="w-4 h-4" />
+      ) : action.icon === 'upload' ? (
+        <DocumentIcon className="w-4 h-4" />
       ) : null,
   }));
 

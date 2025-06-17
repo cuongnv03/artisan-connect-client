@@ -17,16 +17,30 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       return [];
     }
 
-    // Format mới: {blocks: [...]}
+    // Format: {blocks: [...]}
     if (content.blocks && Array.isArray(content.blocks)) {
       console.log('Found blocks format:', content.blocks);
       return content.blocks;
     }
 
-    // Nếu content đã là array (đã được parse)
+    // Already an array of blocks
     if (Array.isArray(content)) {
       console.log('Found array format:', content);
       return content;
+    }
+
+    // String format - try to parse
+    if (typeof content === 'string') {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.blocks && Array.isArray(parsed.blocks)) {
+          return parsed.blocks;
+        } else if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (error) {
+        console.warn('Failed to parse content string:', error);
+      }
     }
 
     console.warn('Unknown content format:', content);

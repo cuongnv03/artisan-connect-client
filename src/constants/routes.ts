@@ -493,6 +493,11 @@ export const NAVIGATION_MENUS = {
       icon: 'edit',
     },
     {
+      path: ROUTE_PATHS.ADMIN.CATEGORIES,
+      label: 'Danh mục',
+      icon: 'folder',
+    },
+    {
       path: ROUTE_PATHS.ADMIN.PRODUCTS_MANAGEMENT,
       label: 'Sản phẩm',
       icon: 'package',

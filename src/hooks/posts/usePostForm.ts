@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToastContext } from '../../contexts/ToastContext';
 import { postService } from '../../services/post.service';
@@ -30,9 +30,7 @@ export const usePostForm = (initialPost?: Post) => {
   const navigate = useNavigate();
   const { success, error } = useToastContext();
 
-  const [content, setContent] = useState<ContentBlock[]>(
-    initialPost?.content || [],
-  );
+  const [content, setContent] = useState<ContentBlock[]>([]);
   const [productMentions, setProductMentions] = useState<ProductMentionData[]>(
     [],
   );
@@ -40,6 +38,46 @@ export const usePostForm = (initialPost?: Post) => {
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
+
+  // Load existing post data
+  useEffect(() => {
+    if (initialPost) {
+      console.log('Loading initial post data:', initialPost);
+
+      // Load content
+      let existingContent: ContentBlock[] = [];
+      if (initialPost.content) {
+        if (Array.isArray(initialPost.content)) {
+          existingContent = initialPost.content;
+        } else if (
+          initialPost.content.blocks &&
+          Array.isArray(initialPost.content.blocks)
+        ) {
+          existingContent = initialPost.content.blocks;
+        }
+      }
+
+      console.log('Setting content:', existingContent);
+      setContent(existingContent);
+
+      // Load product mentions
+      if (
+        initialPost.productMentions &&
+        initialPost.productMentions.length > 0
+      ) {
+        const mentions = initialPost.productMentions.map((mention) => ({
+          productId: mention.productId,
+          contextText: mention.contextText || '',
+          position: mention.position || 0,
+          product: mention.product,
+        }));
+        setProductMentions(mentions);
+      }
+
+      // Don't load images as files since they're already uploaded
+      // We'll use the URLs directly in the form
+    }
+  }, [initialPost]);
 
   const validateForm = (values: PostFormData) => {
     const errors: Record<string, string> = {};
@@ -88,29 +126,43 @@ export const usePostForm = (initialPost?: Post) => {
           }
         }
 
+        // Handle existing images (already uploaded)
+        if (block.type === 'image' && block.data?.url) {
+          return {
+            id: block.id,
+            type: block.type,
+            data: {
+              url: block.data.url,
+              caption: block.data.caption || '',
+            },
+            order: index,
+          };
+        }
+
         // Handle other block types
         let blockData: any = {};
         switch (block.type) {
           case 'paragraph':
           case 'heading':
-            blockData = { text: block.content || '' };
+            blockData = { text: block.data?.text || block.content || '' };
             break;
           case 'quote':
             blockData = {
-              text: block.content || '',
-              author: block.metadata?.author || '',
+              text: block.data?.text || block.content || '',
+              author: block.data?.author || block.metadata?.author || '',
             };
             break;
           case 'list':
             blockData = {
-              items: block.metadata?.items || [block.content || ''],
+              items: block.data?.items ||
+                block.metadata?.items || [block.content || ''],
             };
             break;
           case 'divider':
             blockData = {};
             break;
           default:
-            blockData = { text: block.content || '' };
+            blockData = { text: block.data?.text || block.content || '' };
         }
 
         return {
@@ -186,6 +238,7 @@ export const usePostForm = (initialPost?: Post) => {
         navigate('/posts/me');
       }
     } catch (err: any) {
+      console.error('Error saving post:', err);
       error(err.message || 'Có lỗi xảy ra khi lưu bài viết');
     } finally {
       setIsUploading(false);

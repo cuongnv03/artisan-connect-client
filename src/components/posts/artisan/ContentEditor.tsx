@@ -74,9 +74,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
               className="w-full border-none resize-none focus:outline-none placeholder-gray-400"
               rows={3}
               placeholder="Nhập nội dung đoạn văn..."
-              value={block.content || ''}
+              value={block.data?.text || block.content || ''}
               onChange={(e) =>
-                updateBlock(block.id, { content: e.target.value })
+                updateBlock(block.id, {
+                  data: { ...block.data, text: e.target.value },
+                  content: e.target.value,
+                })
               }
             />
             <BlockControls onRemove={() => removeBlock(block.id)} />
@@ -90,9 +93,12 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
               type="text"
               className="w-full border-none font-semibold text-xl focus:outline-none placeholder-gray-400"
               placeholder="Nhập tiêu đề..."
-              value={block.content || ''}
+              value={block.data?.text || block.content || ''}
               onChange={(e) =>
-                updateBlock(block.id, { content: e.target.value })
+                updateBlock(block.id, {
+                  data: { ...block.data, text: e.target.value },
+                  content: e.target.value,
+                })
               }
             />
             <BlockControls onRemove={() => removeBlock(block.id)} />
@@ -107,19 +113,22 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                 className="w-full bg-transparent border-none resize-none focus:outline-none placeholder-gray-400 italic"
                 rows={2}
                 placeholder="Nhập trích dẫn..."
-                value={block.content || ''}
+                value={block.data?.text || block.content || ''}
                 onChange={(e) =>
-                  updateBlock(block.id, { content: e.target.value })
+                  updateBlock(block.id, {
+                    data: { ...block.data, text: e.target.value },
+                    content: e.target.value,
+                  })
                 }
               />
               <input
                 type="text"
                 className="w-full bg-transparent border-none text-sm focus:outline-none placeholder-gray-400 mt-2"
                 placeholder="Tác giả (tùy chọn)..."
-                value={block.metadata?.author || ''}
+                value={block.data?.author || ''}
                 onChange={(e) =>
                   updateBlock(block.id, {
-                    metadata: { ...block.metadata, author: e.target.value },
+                    data: { ...block.data, author: e.target.value },
                   })
                 }
               />
@@ -131,10 +140,10 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
       case BlockType.IMAGE:
         return (
           <div key={block.id} className={commonClasses}>
-            {block.metadata?.url ? (
+            {block.data?.url || block.metadata?.url ? (
               <div className="relative">
                 <img
-                  src={block.metadata.url}
+                  src={block.data?.url || block.metadata?.url}
                   alt="Uploaded content"
                   className="w-full max-h-96 object-cover rounded-lg"
                 />
@@ -142,10 +151,10 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
                   type="text"
                   className="w-full mt-2 border-none text-sm focus:outline-none placeholder-gray-400"
                   placeholder="Thêm mô tả cho ảnh (tùy chọn)..."
-                  value={block.metadata?.caption || ''}
+                  value={block.data?.caption || block.metadata?.caption || ''}
                   onChange={(e) =>
                     updateBlock(block.id, {
-                      metadata: { ...block.metadata, caption: e.target.value },
+                      data: { ...block.data, caption: e.target.value },
                     })
                   }
                 />
@@ -167,55 +176,48 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
         );
 
       case BlockType.LIST:
+        const items = block.data?.items || [block.content || ''];
         return (
           <div key={block.id} className={commonClasses}>
             <div className="space-y-2">
-              {((block.metadata?.items as string[]) || ['']).map(
-                (item, itemIndex) => (
-                  <div key={itemIndex} className="flex items-center gap-2">
-                    <span className="text-primary">•</span>
-                    <input
-                      type="text"
-                      className="flex-1 border-none focus:outline-none placeholder-gray-400"
-                      placeholder="Nhập mục danh sách..."
-                      value={item}
-                      onChange={(e) => {
-                        const items = [
-                          ...((block.metadata?.items as string[]) || ['']),
-                        ];
-                        items[itemIndex] = e.target.value;
+              {items.map((item: string, itemIndex: number) => (
+                <div key={itemIndex} className="flex items-center gap-2">
+                  <span className="text-primary">•</span>
+                  <input
+                    type="text"
+                    className="flex-1 border-none focus:outline-none placeholder-gray-400"
+                    placeholder="Nhập mục danh sách..."
+                    value={item}
+                    onChange={(e) => {
+                      const newItems = [...items];
+                      newItems[itemIndex] = e.target.value;
+                      updateBlock(block.id, {
+                        data: { ...block.data, items: newItems },
+                      });
+                    }}
+                  />
+                  {itemIndex > 0 && (
+                    <button
+                      onClick={() => {
+                        const newItems = items.filter(
+                          (_, i) => i !== itemIndex,
+                        );
                         updateBlock(block.id, {
-                          metadata: { ...block.metadata, items },
+                          data: { ...block.data, items: newItems },
                         });
                       }}
-                    />
-                    {itemIndex > 0 && (
-                      <button
-                        onClick={() => {
-                          const items = [
-                            ...((block.metadata?.items as string[]) || ['']),
-                          ];
-                          items.splice(itemIndex, 1);
-                          updateBlock(block.id, {
-                            metadata: { ...block.metadata, items },
-                          });
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <MinusIcon className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ),
-              )}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <MinusIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
               <button
                 onClick={() => {
-                  const items = [
-                    ...((block.metadata?.items as string[]) || ['']),
-                    '',
-                  ];
+                  const newItems = [...items, ''];
                   updateBlock(block.id, {
-                    metadata: { ...block.metadata, items },
+                    data: { ...block.data, items: newItems },
                   });
                 }}
                 className="text-primary hover:text-primary-dark text-sm"
