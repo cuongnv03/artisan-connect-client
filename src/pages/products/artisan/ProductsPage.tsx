@@ -249,16 +249,6 @@ export const ProductsPage: React.FC = () => {
           </Button>
         </div>
       )}
-
-      {/* Debug info - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card className="p-4 mt-6 bg-gray-50">
-          <p className="text-sm text-gray-600">
-            <strong>Debug:</strong> API Mode: My Products | Products Count:{' '}
-            {products.length} | Total: {pagination.total}
-          </p>
-        </Card>
-      )}
     </div>
   );
 };

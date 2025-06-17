@@ -126,14 +126,14 @@ export const API_ENDPOINTS = {
 
   // Custom Order
   CUSTOM_ORDER: {
-    BASE: '/custom-orders',
-    MY_ORDERS: '/custom-orders/my-orders',
-    STATS: '/custom-orders/stats',
-    BY_ID: (id: string) => `/custom-orders/${id}`,
-    RESPOND: (id: string) => `/custom-orders/${id}/respond`,
-    HISTORY: (id: string) => `/custom-orders/${id}/history`,
-    ACCEPT_COUNTER: (id: string) => `/custom-orders/${id}/accept-counter`,
-    CANCEL: (id: string) => `/custom-orders/${id}/cancel`,
+    BASE: '/customs',
+    MY_ORDERS: '/customs/my-orders',
+    STATS: '/customs/stats',
+    BY_ID: (id: string) => `/customs/${id}`,
+    RESPOND: (id: string) => `/customs/${id}/respond`,
+    HISTORY: (id: string) => `/customs/${id}/history`,
+    ACCEPT_COUNTER: (id: string) => `/customs/${id}/accept-counter`,
+    CANCEL: (id: string) => `/customs/${id}/cancel`,
   },
 
   // Cart

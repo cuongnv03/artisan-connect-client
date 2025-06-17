@@ -122,7 +122,7 @@ export const artisanService = {
       }
       throw error;
     }
-  }, 
+  },
 
   async updateUpgradeRequest(
     data: UpgradeRequestData,
@@ -150,6 +150,14 @@ export const artisanService = {
     return await apiClient.get<
       PaginatedResponse<ArtisanUpgradeRequest & { user: User }>
     >(API_ENDPOINTS.ARTISANS.ADMIN.UPGRADE_REQUESTS, { page, limit, status });
+  },
+
+  async getUpgradeRequestById(
+    requestId: string,
+  ): Promise<ArtisanUpgradeRequest & { user: User }> {
+    return await apiClient.get<ArtisanUpgradeRequest & { user: User }>(
+      `${API_ENDPOINTS.ARTISANS.ADMIN.UPGRADE_REQUESTS}/${requestId}`,
+    );
   },
 
   async approveUpgradeRequest(id: string, adminNotes?: string): Promise<void> {

@@ -102,6 +102,7 @@ import { CreateCustomOrderPage } from './pages/custom-orders/customer/CreateCust
 import { ArtisanCustomOrdersPage } from './pages/custom-orders/artisan/ArtisanCustomOrdersPage';
 import { CustomOrderStatsPage } from './pages/custom-orders/artisan/CustomOrderStatsPage';
 import { CustomOrderDetailPage } from './pages/custom-orders/common/CustomOrderDetailPage';
+import { ArtisanRequestDetailPage } from './pages/admin/ArtisanRequestDetailPage';
 
 export const router = createBrowserRouter(
   [
@@ -633,6 +634,10 @@ export const router = createBrowserRouter(
         {
           path: 'artisan-requests',
           element: <ArtisanRequestsPage />,
+        },
+        {
+          path: 'artisan-requests/:id',
+          element: <ArtisanRequestDetailPage />,
         },
         {
           path: 'products',

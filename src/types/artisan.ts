@@ -1,27 +1,23 @@
 import { BaseEntity, PaginationParams } from './common';
 import { User } from './auth';
 
-export interface ArtisanProfile extends BaseEntity {
+export interface ArtisanUpgradeRequest extends BaseEntity {
   userId: string;
   shopName: string;
   shopDescription?: string;
-  shopLogoUrl?: string;
-  shopBannerUrl?: string;
   specialties: string[];
   experience?: number;
   website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
   socialMedia?: Record<string, string>;
-  businessAddress?: string;
-  businessHours?: Record<string, any>;
-  shippingInfo?: Record<string, any>;
-  returnPolicy?: string;
-  isVerified: boolean;
-  rating?: number;
-  reviewCount: number;
-  totalSales: number;
-  user?: User;
+  reason?: string;
+  images: string[];
+  certificates: string[];
+  identityProof?: string;
+  status: UpgradeRequestStatus;
+  adminNotes?: string;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  user?: User & { phone?: string }; // Add phone field
 }
 
 export enum UpgradeRequestStatus {

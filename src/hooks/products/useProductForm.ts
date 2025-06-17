@@ -7,6 +7,7 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
   Product,
+  ProductStatus,
 } from '../../types/product';
 
 export interface UseProductFormOptions {
@@ -52,6 +53,30 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
       errors.images = 'Vui lòng thêm ít nhất một hình ảnh';
     }
 
+    // Validate variants
+    if (values.variants && values.variants.length > 0) {
+      const variantErrors: any[] = [];
+      values.variants.forEach((variant, index) => {
+        const vErrors: any = {};
+
+        if (variant.price !== undefined && variant.price < 0) {
+          vErrors.price = 'Giá biến thể phải >= 0';
+        }
+
+        if (variant.quantity < 0) {
+          vErrors.quantity = 'Số lượng biến thể phải >= 0';
+        }
+
+        if (Object.keys(vErrors).length > 0) {
+          variantErrors[index] = vErrors;
+        }
+      });
+
+      if (variantErrors.length > 0) {
+        errors.variants = variantErrors;
+      }
+    }
+
     return errors;
   };
 
@@ -60,21 +85,33 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
     try {
       let product: Product;
 
+      const submitData = {
+        ...values,
+        // Ensure status is set
+        status: values.status || ProductStatus.DRAFT,
+      };
+
       if (isEditing) {
         product = await productService.updateProduct(
           productId!,
-          values as UpdateProductRequest,
+          submitData as UpdateProductRequest,
         );
         success('Cập nhật sản phẩm thành công!');
       } else {
-        product = await productService.createProduct(values);
-        success('Tạo sản phẩm thành công!');
+        product = await productService.createProduct(submitData);
+        success(
+          `${
+            submitData.status === ProductStatus.PUBLISHED
+              ? 'Tạo và xuất bản'
+              : 'Tạo'
+          } sản phẩm thành công!`,
+        );
       }
 
       if (onSuccess) {
         onSuccess(product);
       } else {
-        navigate('/products/manage'); // Correct route
+        navigate('/products/manage');
       }
     } catch (err: any) {
       showError(
@@ -95,11 +132,24 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
       quantity: 0,
       minOrderQty: 1,
       maxOrderQty: undefined,
+      sku: '',
+      barcode: '',
+      weight: undefined,
+      dimensions: undefined,
       isCustomizable: false,
       allowNegotiation: true,
-      categoryIds: [],
-      images: [],
+      shippingInfo: undefined,
+      status: ProductStatus.DRAFT,
       tags: [],
+      images: [],
+      featuredImage: '',
+      seoTitle: '',
+      seoDescription: '',
+      attributes: {},
+      specifications: {},
+      customFields: {},
+      categoryIds: [],
+      variants: [],
       ...initialData,
     },
     validate,

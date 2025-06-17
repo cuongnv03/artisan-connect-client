@@ -4,7 +4,6 @@ import { useProduct } from '../../../hooks/products/useProduct';
 import { useCart } from '../../../contexts/CartContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToastContext } from '../../../contexts/ToastContext';
-import { productService, reviewService } from '../../../services';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Modal } from '../../../components/ui/Modal';
@@ -26,16 +25,6 @@ import {
   HeartIcon as HeartIconSolid,
   StarIcon as StarIconSolid,
 } from '@heroicons/react/24/solid';
-import { ReviewStats } from '../../../components/reviews/ReviewStats';
-import { ReviewsList } from '../../../components/reviews/ReviewsList';
-import { ReviewForm } from '../../../components/reviews/ReviewForm';
-import { useProductReviews } from '../../../hooks/reviews/useProductReviews';
-import { useReview } from '../../../hooks/reviews/useReview';
-import { PriceNegotiationForm } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationForm';
-import { PriceNegotiationStatus } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationStatus';
-import { usePriceNegotiations } from '../../../hooks/price-negotiation/usePriceNegotiations';
-import { NegotiationStatus } from '../../../types/price-negotiation';
-import { usePriceNegotiation } from '../../../hooks/price-negotiation/usePriceNegotiation';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -44,91 +33,30 @@ export const ProductDetailPage: React.FC = () => {
   const { addToCart } = useCart();
   const { success, error: showError } = useToastContext();
 
-  const { cancelNegotiation } = usePriceNegotiation();
-
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
-
+  // ✅ ALL HOOKS MUST BE DECLARED AT TOP LEVEL - SAME ORDER EVERY RENDER
   const { product, loading, error, refetch } = useProduct({
     slug,
     enabled: !!slug,
   });
 
-  const {
-    reviews,
-    statistics,
-    loading: reviewsLoading,
-    refetch: refetchReviews,
-  } = useProductReviews(product.id);
-
+  // ✅ ALL STATE HOOKS - ALWAYS CALLED IN SAME ORDER
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const { createReview, loading: reviewLoading } = useReview();
-  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
-  // Load reviews when product loads
+  // ✅ EFFECTS - ALWAYS CALLED IN SAME ORDER
   useEffect(() => {
     if (product?.id) {
-      loadReviews();
       setIsWishlisted(product.isWishlisted || false);
     }
   }, [product?.id]);
 
-  const { negotiations: productNegotiations, refetch: refetchNegotiations } =
-    usePriceNegotiations({
-      productId: product?.id,
-      status: [
-        NegotiationStatus.PENDING,
-        NegotiationStatus.COUNTER_OFFERED,
-        NegotiationStatus.ACCEPTED,
-      ],
-      limit: 1,
-      enabled: !!product?.id && authState.isAuthenticated,
-    });
-
-  const currentNegotiation = productNegotiations[0] || null;
-  const hasActiveNegotiation =
-    currentNegotiation &&
-    [
-      NegotiationStatus.PENDING,
-      NegotiationStatus.COUNTER_OFFERED,
-      NegotiationStatus.ACCEPTED,
-    ].includes(currentNegotiation.status);
-
-  const handleNegotiationSuccess = () => {
-    refetchNegotiations();
-  };
-
-  const handleNegotiationCancel = async () => {
-    setShowCancelModal(true);
-  };
-
-  const confirmCancelNegotiation = async () => {
-    if (!currentNegotiation) return;
-
-    try {
-      // Gọi API để hủy thương lượng với lý do
-      await cancelNegotiation(
-        currentNegotiation.id,
-        cancelReason || 'Hủy bởi khách hàng',
-      );
-
-      // Reset state
-      setShowCancelModal(false);
-      setCancelReason('');
-
-      // Refresh lại danh sách negotiations
-      await refetchNegotiations();
-    } catch (err: any) {
-      console.error('Error canceling negotiation:', err);
-      showError(err.message || 'Không thể hủy thương lượng');
-    }
-  };
-
+  // ✅ HELPER FUNCTIONS
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -141,7 +69,7 @@ export const ProductDetailPage: React.FC = () => {
 
     setIsAddingToCart(true);
     try {
-      await addToCart(product.id, 1);
+      await addToCart(product!.id, quantity);
     } catch (err) {
       // Error handled in cart context
     } finally {
@@ -160,6 +88,7 @@ export const ProductDetailPage: React.FC = () => {
     ));
   };
 
+  // ✅ CONDITIONAL RENDERING - AFTER ALL HOOKS
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -185,6 +114,7 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
+  // ✅ NOW PRODUCT IS GUARANTEED TO EXIST
   const currentPrice = product.discountPrice || product.price;
   const discountPercentage = product.discountPrice
     ? Math.round((1 - product.discountPrice / product.price) * 100)
@@ -320,6 +250,7 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
+            {/* Variant Selector */}
             {product.hasVariants &&
               product.variants &&
               product.variants.length > 0 && (
@@ -398,28 +329,6 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Price Negotiation */}
-            {authState.isAuthenticated &&
-              authState.user?.role === 'CUSTOMER' && (
-                <div className="mb-6">
-                  {hasActiveNegotiation && currentNegotiation ? (
-                    <PriceNegotiationStatus
-                      negotiation={currentNegotiation}
-                      userRole="CUSTOMER"
-                      onCancel={handleNegotiationCancel}
-                      onRefresh={refetchNegotiations}
-                    />
-                  ) : (
-                    product.allowNegotiation && (
-                      <PriceNegotiationForm
-                        product={product}
-                        onSuccess={handleNegotiationSuccess}
-                      />
-                    )
-                  )}
-                </div>
-              )}
-
             {/* Product Features */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               {product.isCustomizable && (
@@ -458,70 +367,6 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Reviews Section */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Đánh giá sản phẩm
-          </h2>
-        </div>
-
-        {statistics && <ReviewStats statistics={statistics} className="mb-6" />}
-
-        <ReviewsList
-          reviews={reviews}
-          loading={reviewsLoading}
-          onLoadMore={hasMore ? loadMore : undefined}
-        />
-      </div>
-
-      {/* Cancel Negotiation Modal */}
-      <Modal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        title="Xác nhận hủy thương lượng"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            Bạn có chắc chắn muốn hủy thương lượng này? Hành động này không thể
-            hoàn tác.
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Lý do hủy (tùy chọn)
-            </label>
-            <textarea
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              rows={3}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              placeholder="Nhập lý do hủy thương lượng..."
-              maxLength={500}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              {cancelReason.length}/500 ký tự
-            </p>
-          </div>
-
-          <div className="flex space-x-3 justify-end pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCancelModal(false);
-                setCancelReason('');
-              }}
-            >
-              Không hủy
-            </Button>
-            <Button variant="danger" onClick={confirmCancelNegotiation}>
-              Xác nhận hủy
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Image Modal */}
       <Modal

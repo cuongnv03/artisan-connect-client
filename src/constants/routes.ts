@@ -141,6 +141,12 @@ export const ROUTE_PATHS = {
 
     // === ARTISAN MANAGEMENT ===
     ARTISAN_REQUESTS: '/admin/artisan-requests', // API: GET /artisans/admin/upgrade-requests
+    UPGRADE_REQUEST_BY_ID: (id: string) =>
+      `/artisans/admin/upgrade-requests/${id}`,
+    APPROVE_UPGRADE: (id: string) =>
+      `/artisans/admin/upgrade-requests/${id}/approve`,
+    REJECT_UPGRADE: (id: string) =>
+      `/artisans/admin/upgrade-requests/${id}/reject`,
     ARTISAN_VERIFICATION: '/admin/artisan-verification', // API: POST /artisans/admin/verify/:profileId
 
     // === CONTENT MANAGEMENT ===

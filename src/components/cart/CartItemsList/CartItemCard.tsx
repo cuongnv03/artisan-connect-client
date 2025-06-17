@@ -46,15 +46,21 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
             </Link>
 
             {/* Variant Info */}
-            {item.variant && (
+            {item.variant && item.variant.attributes && (
               <div className="text-sm text-gray-600 mt-1">
-                {Object.entries(item.variant.attributes || {}).map(
-                  ([key, value]) => (
-                    <span key={key} className="mr-2">
-                      {key}: {value}
-                    </span>
-                  ),
-                )}
+                {Array.isArray(item.variant.attributes)
+                  ? item.variant.attributes.map((attr) => (
+                      <span key={attr.key} className="mr-2">
+                        {attr.name}: {attr.value}
+                      </span>
+                    ))
+                  : Object.entries(item.variant.attributes).map(
+                      ([key, value]) => (
+                        <span key={key} className="mr-2">
+                          {key}: {String(value)}
+                        </span>
+                      ),
+                    )}
               </div>
             )}
 
