@@ -10,6 +10,7 @@ import { Modal } from '../../../components/ui/Modal';
 import { Avatar } from '../../../components/ui/Avatar';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { ProductVariantSelector } from '../../../components/products/customer/ProductVariantSelector/ProductVariantSelector';
+import { PriceNegotiationButton } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationButton';
 import {
   HeartIcon,
   ShareIcon,
@@ -231,19 +232,28 @@ export const ProductDetailPage: React.FC = () => {
                 />
                 <div className="ml-3 flex-1">
                   <div className="flex items-center">
-                    <h3 className="font-medium text-gray-900">
-                      {product.seller.artisanProfile?.shopName ||
-                        `${product.seller.firstName} ${product.seller.lastName}`}
-                    </h3>
-                    {product.seller.artisanProfile?.isVerified && (
-                      <ShieldCheckIcon className="w-4 h-4 text-blue-500 ml-1" />
-                    )}
+                    <Link
+                      to={`/artisan/${product.seller.id}`}
+                      className="text-gray-900 hover:text-primary"
+                    >
+                      <h3 className="font-medium text-gray-900">
+                        {product.seller.artisanProfile?.shopName ||
+                          `${product.seller.firstName} ${product.seller.lastName}`}
+                      </h3>
+                      {product.seller.artisanProfile?.isVerified && (
+                        <ShieldCheckIcon className="w-4 h-4 text-blue-500 ml-1" />
+                      )}
+                    </Link>
                   </div>
                   <p className="text-sm text-gray-600">
                     @{product.seller.username}
                   </p>
                 </div>
-                <Button size="sm" variant="outline">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/messages/${product.seller?.id}`)}
+                >
                   <ChatBubbleLeftIcon className="w-4 h-4 mr-1" />
                   Nhắn tin
                 </Button>
@@ -313,6 +323,8 @@ export const ProductDetailPage: React.FC = () => {
                     ? 'Đăng nhập để mua'
                     : 'Thêm vào giỏ'}
                 </Button>
+                {/* Thêm button thương lượng */}
+                <PriceNegotiationButton product={product} />
                 <Button
                   variant="outline"
                   onClick={() => setIsWishlisted(!isWishlisted)}

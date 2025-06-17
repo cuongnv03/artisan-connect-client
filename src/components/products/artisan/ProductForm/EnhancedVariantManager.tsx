@@ -5,15 +5,23 @@ import { Input } from '../../../ui/Input';
 import { Card } from '../../../ui/Card';
 import { Badge } from '../../../ui/Badge';
 import { Modal } from '../../../ui/Modal';
-import { PlusIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { Toggle } from '../../../ui/Toggle';
+import { KeyValueEditor } from './KeyValueEditor';
+import {
+  PlusIcon,
+  TrashIcon,
+  PencilIcon,
+  Cog6ToothIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 
-interface VariantManagerProps {
+interface EnhancedVariantManagerProps {
   variants: CreateProductVariantRequest[];
   onChange: (variants: CreateProductVariantRequest[]) => void;
   errors?: any;
 }
 
-export const VariantManager: React.FC<VariantManagerProps> = ({
+export const EnhancedVariantManager: React.FC<EnhancedVariantManagerProps> = ({
   variants,
   onChange,
   errors,
@@ -81,9 +89,35 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
     onChange(newVariants);
   };
 
-  const generateVariantsFromAttributes = () => {
-    // Logic to generate variants from attribute combinations
-    // This is complex - you might want to implement based on your needs
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(price);
+  };
+
+  const generateVariants = () => {
+    // Auto-generate variants based on common attributes
+    const colorOptions = ['Đỏ', 'Xanh', 'Vàng', 'Trắng', 'Đen'];
+    const sizeOptions = ['S', 'M', 'L', 'XL'];
+
+    const autoVariants: CreateProductVariantRequest[] = [];
+
+    colorOptions.forEach((color, colorIndex) => {
+      sizeOptions.forEach((size, sizeIndex) => {
+        autoVariants.push({
+          name: `${color} - ${size}`,
+          price: 0,
+          quantity: 0,
+          attributes: { color, size },
+          isActive: true,
+          isDefault: colorIndex === 0 && sizeIndex === 0,
+          sortOrder: autoVariants.length,
+        });
+      });
+    });
+
+    onChange([...variants, ...autoVariants]);
   };
 
   return (
@@ -96,7 +130,8 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
           <Button
             type="button"
             variant="outline"
-            onClick={generateVariantsFromAttributes}
+            onClick={generateVariants}
+            leftIcon={<Cog6ToothIcon className="w-4 h-4" />}
           >
             Tự động tạo
           </Button>
@@ -112,10 +147,13 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
 
       {variants.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          <p>Chưa có biến thể nào</p>
-          <p className="text-sm">
-            Thêm biến thể để khách hàng có thêm lựa chọn
+          <Cog6ToothIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          <p className="text-lg font-medium mb-2">Chưa có biến thể nào</p>
+          <p className="text-sm mb-4">
+            Thêm biến thể để khách hàng có thêm lựa chọn về màu sắc, kích
+            thước...
           </p>
+          <Button onClick={() => openModal()}>Tạo biến thể đầu tiên</Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -137,13 +175,20 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                         Không hoạt động
                       </Badge>
                     )}
+                    {variant.quantity === 0 && (
+                      <Badge variant="warning" size="sm">
+                        Hết hàng
+                      </Badge>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
                     <div>
                       <span className="text-gray-600">Giá:</span>
                       <p className="font-medium">
-                        {variant.price?.toLocaleString()} VNĐ
+                        {variant.price
+                          ? formatPrice(variant.price)
+                          : 'Chưa đặt'}
                       </p>
                     </div>
                     <div>
@@ -151,7 +196,21 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                       <p className="font-medium">{variant.quantity}</p>
                     </div>
                     <div>
-                      <span className="text-gray-600">Thuộc tính:</span>
+                      <span className="text-gray-600">Thứ tự:</span>
+                      <p className="font-medium">{variant.sortOrder}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Trạng thái:</span>
+                      <p className="font-medium">
+                        {variant.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Attributes */}
+                  {Object.keys(variant.attributes || {}).length > 0 && (
+                    <div>
+                      <span className="text-sm text-gray-600">Thuộc tính:</span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {Object.entries(variant.attributes || {}).map(
                           ([key, value]) => (
@@ -162,7 +221,7 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                         )}
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-2">
@@ -171,6 +230,7 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => openModal(index)}
+                    title="Chỉnh sửa"
                   >
                     <PencilIcon className="w-4 h-4" />
                   </Button>
@@ -179,6 +239,7 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => deleteVariant(index)}
+                    title="Xóa"
                   >
                     <TrashIcon className="w-4 h-4 text-red-500" />
                   </Button>
@@ -198,19 +259,18 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
         }
         size="lg"
       >
-        <div className="space-y-4">
-          <Input
-            label="Tên biến thể"
-            value={variantForm.name || ''}
-            onChange={(e) =>
-              setVariantForm({
-                ...variantForm,
-                name: e.target.value,
-              })
-            }
-          />
+        <div className="space-y-6">
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Tên biến thể"
+              value={variantForm.name || ''}
+              onChange={(e) =>
+                setVariantForm({ ...variantForm, name: e.target.value })
+              }
+              placeholder="VD: Màu đỏ - Size M"
+            />
 
-          <div className="grid grid-cols-2 gap-4">
             <Input
               label="Giá (VNĐ)"
               type="number"
@@ -221,6 +281,7 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                   price: Number(e.target.value),
                 })
               }
+              min={0}
             />
 
             <Input
@@ -233,67 +294,73 @@ export const VariantManager: React.FC<VariantManagerProps> = ({
                   quantity: Number(e.target.value),
                 })
               }
+              min={0}
+            />
+
+            <Input
+              label="Thứ tự"
+              type="number"
+              value={variantForm.sortOrder || 0}
+              onChange={(e) =>
+                setVariantForm({
+                  ...variantForm,
+                  sortOrder: Number(e.target.value),
+                })
+              }
+              min={0}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Thuộc tính
-            </label>
-            <textarea
-              rows={3}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              value={JSON.stringify(variantForm.attributes || {}, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  setVariantForm({
-                    ...variantForm,
-                    attributes: parsed,
-                  });
-                } catch {
-                  // Invalid JSON, ignore
-                }
-              }}
-              placeholder='{"color": "red", "size": "M"}'
-            />
-          </div>
+          {/* Attributes */}
+          <KeyValueEditor
+            title="Thuộc tính biến thể"
+            description="Các thuộc tính phân biệt biến thể này với biến thể khác"
+            data={variantForm.attributes || {}}
+            onChange={(attributes) =>
+              setVariantForm({ ...variantForm, attributes })
+            }
+            placeholder={{ key: 'Thuộc tính', value: 'Giá trị' }}
+          />
 
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
+          {/* Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-gray-900">
+                  Biến thể mặc định
+                </label>
+                <p className="text-sm text-gray-500">
+                  Biến thể này sẽ được chọn mặc định
+                </p>
+              </div>
+              <Toggle
                 checked={variantForm.isDefault}
-                onChange={(e) =>
-                  setVariantForm({
-                    ...variantForm,
-                    isDefault: e.target.checked,
-                  })
+                onChange={(checked) =>
+                  setVariantForm({ ...variantForm, isDefault: checked })
                 }
-                className="rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <span className="ml-2 text-sm text-gray-700">
-                Biến thể mặc định
-              </span>
-            </label>
+            </div>
 
-            <label className="flex items-center">
-              <input
-                type="checkbox"
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-gray-900">
+                  Kích hoạt
+                </label>
+                <p className="text-sm text-gray-500">
+                  Khách hàng có thể chọn biến thể này
+                </p>
+              </div>
+              <Toggle
                 checked={variantForm.isActive}
-                onChange={(e) =>
-                  setVariantForm({
-                    ...variantForm,
-                    isActive: e.target.checked,
-                  })
+                onChange={(checked) =>
+                  setVariantForm({ ...variantForm, isActive: checked })
                 }
-                className="rounded border-gray-300 text-primary focus:ring-primary"
               />
-              <span className="ml-2 text-sm text-gray-700">Kích hoạt</span>
-            </label>
+            </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button variant="outline" onClick={closeModal}>
               Hủy
             </Button>

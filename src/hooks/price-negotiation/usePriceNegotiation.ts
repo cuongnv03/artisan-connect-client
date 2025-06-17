@@ -39,20 +39,29 @@ export const usePriceNegotiation = (): UsePriceNegotiationReturn => {
     try {
       setLoading(true);
       setError(null);
+
       const result = await priceNegotiationService.createNegotiation(data);
 
       if (result && result.id) {
         setNegotiation(result);
-        success('Gửi yêu cầu thương lượng giá thành công');
+        success('Yêu cầu thương lượng thành công');
         return result;
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        'Không thể tạo yêu cầu thương lượng';
+      let errorMessage = 'Không thể tạo yêu cầu thương lượng';
+
+      if (err.response?.status === 400) {
+        const serverMessage = err.response?.data?.message || '';
+        if (serverMessage.includes('already have an active')) {
+          errorMessage =
+            'Bạn đã có thương lượng đang chờ xử lý cho sản phẩm này';
+        } else {
+          errorMessage = serverMessage || errorMessage;
+        }
+      }
+
       setError(errorMessage);
       showError(errorMessage);
       throw new Error(errorMessage);

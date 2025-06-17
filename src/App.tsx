@@ -9,6 +9,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { CartProvider } from './contexts/CartContext';
 import { ProfileProvider } from './contexts/ProfileContext';
+import { PriceNegotiationProvider } from './contexts/PriceNegotiationContext';
 import { router } from './router';
 
 function App() {
@@ -20,11 +21,13 @@ function App() {
             <MessageProvider>
               <ProfileProvider>
                 <ToastProvider>
-                  <NotificationProvider>
-                    <CartProvider>
-                      <RouterProvider router={router} />
-                    </CartProvider>
-                  </NotificationProvider>
+                  <PriceNegotiationProvider>
+                    <NotificationProvider>
+                      <CartProvider>
+                        <RouterProvider router={router} />
+                      </CartProvider>
+                    </NotificationProvider>
+                  </PriceNegotiationProvider>
                 </ToastProvider>
               </ProfileProvider>
             </MessageProvider>

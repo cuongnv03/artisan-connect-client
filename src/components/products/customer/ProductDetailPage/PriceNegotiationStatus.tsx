@@ -1,19 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import {
   PriceNegotiationWithDetails,
   NegotiationStatus,
 } from '../../../../types/price-negotiation';
-import { Card } from '../../../ui/Card';
-import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';
+import { Badge } from '../../../ui/Badge';
+import { Card } from '../../../ui/Card';
 import {
-  ChatBubbleLeftRightIcon,
-  ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
+  ClockIcon,
   ArrowPathIcon,
-  EyeIcon,
+  ShoppingCartIcon,
 } from '@heroicons/react/24/outline';
 
 interface PriceNegotiationStatusProps {
@@ -42,47 +40,39 @@ export const PriceNegotiationStatus: React.FC<PriceNegotiationStatusProps> = ({
         variant: 'warning' as const,
         label: 'Chờ phản hồi',
         icon: ClockIcon,
-        description:
-          userRole === 'CUSTOMER'
-            ? 'Nghệ nhân đang xem xét yêu cầu của bạn'
-            : 'Bạn có yêu cầu thương lượng mới cần phản hồi',
+        color: 'yellow',
       },
       [NegotiationStatus.COUNTER_OFFERED]: {
         variant: 'info' as const,
         label: 'Đề nghị mới',
         icon: ArrowPathIcon,
-        description:
-          userRole === 'CUSTOMER'
-            ? 'Nghệ nhân đã gửi đề nghị giá mới'
-            : 'Bạn đã gửi đề nghị giá mới',
+        color: 'blue',
       },
       [NegotiationStatus.ACCEPTED]: {
         variant: 'success' as const,
         label: 'Đã chấp nhận',
         icon: CheckCircleIcon,
-        description:
-          'Thương lượng thành công! Bạn có thể thêm vào giỏ hàng với giá đã thỏa thuận',
+        color: 'green',
       },
       [NegotiationStatus.REJECTED]: {
         variant: 'danger' as const,
         label: 'Đã từ chối',
         icon: XCircleIcon,
-        description: 'Yêu cầu thương lượng đã bị từ chối',
+        color: 'red',
       },
       [NegotiationStatus.EXPIRED]: {
         variant: 'secondary' as const,
         label: 'Đã hết hạn',
         icon: ClockIcon,
-        description: 'Yêu cầu thương lượng đã hết hạn',
+        color: 'gray',
       },
       [NegotiationStatus.COMPLETED]: {
         variant: 'success' as const,
         label: 'Đã hoàn thành',
         icon: CheckCircleIcon,
-        description: 'Thương lượng đã hoàn thành và sản phẩm đã được mua',
+        color: 'green',
       },
     };
-
     return configs[status];
   };
 
@@ -91,87 +81,58 @@ export const PriceNegotiationStatus: React.FC<PriceNegotiationStatusProps> = ({
 
   const isExpired =
     negotiation.expiresAt && new Date(negotiation.expiresAt) < new Date();
-  const canCancel =
-    [NegotiationStatus.PENDING, NegotiationStatus.COUNTER_OFFERED].includes(
-      negotiation.status,
-    ) && !isExpired;
+  const discountPercent = Math.round(
+    ((negotiation.originalPrice - negotiation.proposedPrice) /
+      negotiation.originalPrice) *
+      100,
+  );
 
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <ChatBubbleLeftRightIcon className="w-5 h-5 text-primary mr-2" />
-          <h4 className="font-semibold text-gray-900">Thương lượng giá</h4>
-        </div>
-        <div className="flex items-center space-x-2">
-          {onRefresh && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRefresh}
-              leftIcon={<ArrowPathIcon className="w-4 h-4" />}
-            >
-              Làm mới
-            </Button>
-          )}
-          <Link to={`/negotiations/${negotiation.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<EyeIcon className="w-4 h-4" />}
-            >
-              Chi tiết
-            </Button>
-          </Link>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Trạng thái thương lượng
+        </h3>
+        <Badge variant={statusConfig.variant}>
+          <StatusIcon className="w-3 h-3 mr-1" />
+          {statusConfig.label}
+        </Badge>
       </div>
 
-      {/* Status */}
-      <div className="flex items-center mb-4">
-        <StatusIcon className="w-5 h-5 mr-2" />
-        <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-        <span className="ml-2 text-sm text-gray-600">
-          {statusConfig.description}
-        </span>
-      </div>
-
-      {/* Price Info */}
+      {/* Price Comparison */}
       <div className="bg-gray-50 p-4 rounded-lg mb-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-sm text-gray-600">Giá gốc:</span>
+            <span className="text-gray-600">Giá gốc:</span>
             <p className="font-medium">
               {formatPrice(negotiation.originalPrice)}
             </p>
           </div>
           <div>
-            <span className="text-sm text-gray-600">Giá đề nghị:</span>
+            <span className="text-gray-600">Giá đề nghị:</span>
             <p className="font-medium text-primary">
               {formatPrice(negotiation.proposedPrice)}
             </p>
           </div>
-          {negotiation.finalPrice && (
-            <div className="col-span-2">
-              <span className="text-sm text-gray-600">Giá thỏa thuận:</span>
-              <p className="font-bold text-green-600">
-                {formatPrice(negotiation.finalPrice)}
-              </p>
-            </div>
-          )}
         </div>
 
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Số lượng:</span>
-            <span>{negotiation.quantity}</span>
+        {negotiation.finalPrice && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <span className="text-sm text-gray-600">Giá thỏa thuận:</span>
+            <p className="font-bold text-green-600 text-lg">
+              {formatPrice(negotiation.finalPrice)}
+            </p>
           </div>
-          {negotiation.expiresAt && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Hết hạn:</span>
-              <span className={isExpired ? 'text-red-600' : 'text-gray-900'}>
-                {new Date(negotiation.expiresAt).toLocaleString('vi-VN')}
-              </span>
-            </div>
+        )}
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-sm text-gray-600">
+            Số lượng: {negotiation.quantity}
+          </span>
+          {discountPercent > 0 && (
+            <Badge variant="success" size="sm">
+              -{discountPercent}%
+            </Badge>
           )}
         </div>
       </div>
@@ -179,10 +140,10 @@ export const PriceNegotiationStatus: React.FC<PriceNegotiationStatusProps> = ({
       {/* Customer Reason */}
       {negotiation.customerReason && (
         <div className="mb-4">
-          <span className="text-sm font-medium text-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 mb-1">
             Lý do thương lượng:
-          </span>
-          <p className="text-sm text-gray-600 mt-1">
+          </h4>
+          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
             {negotiation.customerReason}
           </p>
         </div>
@@ -191,23 +152,55 @@ export const PriceNegotiationStatus: React.FC<PriceNegotiationStatusProps> = ({
       {/* Artisan Response */}
       {negotiation.artisanResponse && (
         <div className="mb-4">
-          <span className="text-sm font-medium text-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 mb-1">
             Phản hồi từ nghệ nhân:
-          </span>
-          <p className="text-sm text-gray-600 mt-1">
+          </h4>
+          <p className="text-sm text-gray-600 bg-green-50 p-3 rounded-lg">
             {negotiation.artisanResponse}
           </p>
         </div>
       )}
 
-      {/* Actions */}
-      {canCancel && userRole === 'CUSTOMER' && onCancel && (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={onCancel}>
-            Hủy thương lượng
-          </Button>
+      {/* Expiration Warning */}
+      {negotiation.expiresAt && !isExpired && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center">
+            <ClockIcon className="w-4 h-4 text-yellow-600 mr-2" />
+            <span className="text-sm text-yellow-800">
+              Hết hạn: {new Date(negotiation.expiresAt).toLocaleString('vi-VN')}
+            </span>
+          </div>
         </div>
       )}
+
+      {/* Actions */}
+      <div className="flex space-x-3">
+        {negotiation.status === NegotiationStatus.ACCEPTED &&
+          userRole === 'CUSTOMER' && (
+            <Button
+              leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
+              className="flex-1"
+            >
+              Thêm vào giỏ hàng
+            </Button>
+          )}
+
+        {[
+          NegotiationStatus.PENDING,
+          NegotiationStatus.COUNTER_OFFERED,
+        ].includes(negotiation.status) &&
+          onCancel && (
+            <Button variant="outline" onClick={onCancel}>
+              Hủy thương lượng
+            </Button>
+          )}
+
+        {onRefresh && (
+          <Button variant="outline" onClick={onRefresh}>
+            Làm mới
+          </Button>
+        )}
+      </div>
     </Card>
   );
 };

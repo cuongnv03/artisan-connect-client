@@ -33,6 +33,7 @@ export const priceNegotiationService = {
   async createNegotiation(
     data: CreateNegotiationRequest,
   ): Promise<PriceNegotiationWithDetails> {
+    // Đơn giản hóa - chỉ return negotiation thôi
     return await apiClient.post<PriceNegotiationWithDetails>(
       API_ENDPOINTS.PRICE_NEGOTIATION.BASE,
       data,
@@ -75,6 +76,37 @@ export const priceNegotiationService = {
   },
 
   // Negotiation management
+  async checkExistingNegotiation(productId: string): Promise<{
+    hasActive: boolean;
+    negotiation?: PriceNegotiationWithDetails;
+  }> {
+    try {
+      const response = await apiClient.get<
+        PaginatedResponse<NegotiationSummary>
+      >(API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS, {
+        page: 1,
+        limit: 1,
+        productId,
+        status: [NegotiationStatus.PENDING, NegotiationStatus.COUNTER_OFFERED],
+      });
+
+      if (response.data.length > 0) {
+        // Get full details of the negotiation
+        const fullNegotiation = await this.getNegotiation(response.data[0].id);
+        return {
+          hasActive: true,
+          negotiation: fullNegotiation,
+        };
+      }
+
+      return { hasActive: false };
+    } catch (error) {
+      console.error('Error checking existing negotiation:', error);
+      return { hasActive: false };
+    }
+  },
+
+  // Thêm method cancel negotiation
   async cancelNegotiation(
     id: string,
     reason?: string,

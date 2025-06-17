@@ -46,11 +46,13 @@ export const NegotiationDetailPage: React.FC = () => {
     if (!id) return;
 
     try {
-      const hasAccess = await validateAccess(id);
-      if (!hasAccess) {
-        navigate('/unauthorized');
-        return;
-      }
+      // Tạm thời bỏ access check
+      // const hasAccess = await validateAccess(id);
+      // if (!hasAccess) {
+      //   navigate('/unauthorized');
+      //   return;
+      // }
+
       await getNegotiation(id);
     } catch (err) {
       console.error('Error loading negotiation:', err);
