@@ -27,6 +27,10 @@ import {
   StarIcon as StarIconSolid,
 } from '@heroicons/react/24/solid';
 import { Review, ReviewStatistics } from '../../../types/product';
+import { PriceNegotiationForm } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationForm';
+import { PriceNegotiationStatus } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationStatus';
+import { usePriceNegotiations } from '../../../hooks/price-negotiation/usePriceNegotiations';
+import { NegotiationStatus } from '../../../types/price-negotiation';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -57,6 +61,42 @@ export const ProductDetailPage: React.FC = () => {
       setIsWishlisted(product.isWishlisted || false);
     }
   }, [product?.id]);
+
+  const { negotiations: productNegotiations, refetch: refetchNegotiations } =
+    usePriceNegotiations({
+      productId: product?.id,
+      status: [
+        NegotiationStatus.PENDING,
+        NegotiationStatus.COUNTER_OFFERED,
+        NegotiationStatus.ACCEPTED,
+      ],
+      limit: 1,
+      enabled: !!product?.id && authState.isAuthenticated,
+    });
+
+  const currentNegotiation = productNegotiations[0] || null;
+  const hasActiveNegotiation =
+    currentNegotiation &&
+    [
+      NegotiationStatus.PENDING,
+      NegotiationStatus.COUNTER_OFFERED,
+      NegotiationStatus.ACCEPTED,
+    ].includes(currentNegotiation.status);
+
+  const handleNegotiationSuccess = () => {
+    refetchNegotiations();
+  };
+
+  const handleNegotiationCancel = async () => {
+    if (currentNegotiation) {
+      try {
+        // Logic cancel negotiation ở đây
+        refetchNegotiations();
+      } catch (err) {
+        console.error('Error canceling negotiation:', err);
+      }
+    }
+  };
 
   const loadReviews = async () => {
     if (!product?.id) return;

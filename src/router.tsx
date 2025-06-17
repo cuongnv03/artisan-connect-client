@@ -334,23 +334,23 @@ export const router = createBrowserRouter(
           ],
         },
 
-        // // Cart & Checkout
-        // {
-        //   path: 'cart',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <CartPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-        // {
-        //   path: 'checkout',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <CheckoutPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
+        // === CART & CHECKOUT ROUTES
+        {
+          path: 'cart',
+          element: (
+            <ProtectedRoute>
+              <CartPage />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'checkout',
+          element: (
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          ),
+        },
 
         // // Orders
         // {

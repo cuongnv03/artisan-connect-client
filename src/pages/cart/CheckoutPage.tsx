@@ -14,7 +14,10 @@ import { cartService } from '../../services/cart.service';
 import { orderService } from '../../services/order.service';
 import { userService } from '../../services/user.service';
 import { CartSummary } from '../../types/cart';
-import { PaymentMethod, CreateOrderFromCartRequest } from '../../types/order';
+import {
+  PaymentMethodType,
+  CreateOrderFromCartRequest,
+} from '../../types/order';
 import { Address } from '../../types/user';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -25,7 +28,7 @@ import { useForm } from '../../hooks/useForm';
 
 interface CheckoutFormData {
   addressId: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethodType;
   notes: string;
 }
 
@@ -51,7 +54,7 @@ export const CheckoutPage: React.FC = () => {
     useForm<CheckoutFormData>({
       initialValues: {
         addressId: '',
-        paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
+        paymentMethod: PaymentMethodType.CASH_ON_DELIVERY,
         notes: '',
       },
       validate: (values) => {
@@ -211,7 +214,7 @@ export const CheckoutPage: React.FC = () => {
         });
       } else {
         // Regular cart order
-        if (data.paymentMethod === PaymentMethod.CASH_ON_DELIVERY) {
+        if (data.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY) {
           order = await orderService.createOrderFromCart({
             addressId: data.addressId,
             paymentMethod: data.paymentMethod,
@@ -276,13 +279,13 @@ export const CheckoutPage: React.FC = () => {
     }).format(price);
   };
 
-  const getPaymentMethodText = (method: PaymentMethod) => {
+  const getPaymentMethodText = (method: PaymentMethodType) => {
     const methods = {
-      [PaymentMethod.CREDIT_CARD]: 'Thẻ tín dụng',
-      [PaymentMethod.DEBIT_CARD]: 'Thẻ ghi nợ',
-      [PaymentMethod.BANK_TRANSFER]: 'Chuyển khoản ngân hàng',
-      [PaymentMethod.DIGITAL_WALLET]: 'Ví điện tử',
-      [PaymentMethod.CASH_ON_DELIVERY]: 'Thanh toán khi nhận hàng',
+      [PaymentMethodType.CREDIT_CARD]: 'Thẻ tín dụng',
+      [PaymentMethodType.DEBIT_CARD]: 'Thẻ ghi nợ',
+      [PaymentMethodType.BANK_TRANSFER]: 'Chuyển khoản ngân hàng',
+      [PaymentMethodType.DIGITAL_WALLET]: 'Ví điện tử',
+      [PaymentMethodType.CASH_ON_DELIVERY]: 'Thanh toán khi nhận hàng',
     };
     return methods[method];
   };
@@ -373,7 +376,7 @@ export const CheckoutPage: React.FC = () => {
             disabled={addresses.length === 0}
             leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
           >
-            {values.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
+            {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
               ? 'Đặt hàng Custom'
               : 'Thanh toán Custom Order'}
           </Button>
@@ -484,7 +487,7 @@ export const CheckoutPage: React.FC = () => {
             </h2>
 
             <div className="space-y-3">
-              {Object.values(PaymentMethod).map((method) => (
+              {Object.values(PaymentMethodType).map((method) => (
                 <label
                   key={method}
                   className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
@@ -625,7 +628,7 @@ export const CheckoutPage: React.FC = () => {
                   disabled={addresses.length === 0}
                   leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
                 >
-                  {values.paymentMethod === PaymentMethod.CASH_ON_DELIVERY
+                  {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
                     ? 'Đặt hàng'
                     : 'Thanh toán'}
                 </Button>
