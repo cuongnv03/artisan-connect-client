@@ -122,7 +122,7 @@ export const artisanService = {
       }
       throw error;
     }
-  },
+  }, 
 
   async updateUpgradeRequest(
     data: UpgradeRequestData,

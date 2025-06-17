@@ -16,32 +16,39 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { Modal } from '../../components/ui/Modal';
 import { Avatar } from '../../components/ui/Avatar';
 import { useToastContext } from '../../contexts/ToastContext';
 import { artisanService } from '../../services/artisan.service';
+import { useNavigate } from 'react-router-dom';
 
 interface RequestWithUser extends ArtisanUpgradeRequest {
   user: User;
 }
 
+// Map backend specialties to Vietnamese for display
+const SPECIALTY_DISPLAY: Record<string, string> = {
+  pottery: 'Gốm sứ',
+  embroidery: 'Thêu tay',
+  woodworking: 'Đồ gỗ',
+  painting: 'Tranh vẽ',
+  leatherwork: 'Đồ da',
+  jewelry: 'Trang sức',
+  knitting: 'Đan lát',
+  sculpture: 'Điêu khắc',
+  textiles: 'Dệt thổ cẩm',
+  metalwork: 'Đồ kim loại',
+  glasswork: 'Đồ thủy tinh',
+  calligraphy: 'Chữ thư pháp',
+  photography: 'Chụp ảnh',
+  ceramics: 'Gốm',
+  other: 'Khác',
+};
+
 export const ArtisanRequestsPage: React.FC = () => {
-  const { success, error } = useToastContext();
+  const { error } = useToastContext();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<RequestWithUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] =
-    useState<RequestWithUser | null>(null);
-  const [detailModal, setDetailModal] = useState(false);
-  const [actionModal, setActionModal] = useState<{
-    isOpen: boolean;
-    action: 'approve' | 'reject' | null;
-    adminNotes: string;
-  }>({
-    isOpen: false,
-    action: null,
-    adminNotes: '',
-  });
-  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -53,54 +60,9 @@ export const ArtisanRequestsPage: React.FC = () => {
       setRequests(result.data);
     } catch (err) {
       console.error('Error loading requests:', err);
+      error('Có lỗi xảy ra khi tải danh sách yêu cầu');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApproveRequest = async () => {
-    if (!selectedRequest) return;
-
-    setProcessing(true);
-    try {
-      await artisanService.approveUpgradeRequest(
-        selectedRequest.id,
-        actionModal.adminNotes,
-      );
-
-      success(
-        `Đã duyệt yêu cầu của ${selectedRequest.user.firstName} ${selectedRequest.user.lastName}`,
-      );
-      setActionModal({ isOpen: false, action: null, adminNotes: '' });
-      setSelectedRequest(null);
-      loadRequests();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra khi duyệt yêu cầu');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleRejectRequest = async () => {
-    if (!selectedRequest) return;
-
-    setProcessing(true);
-    try {
-      await artisanService.rejectUpgradeRequest(
-        selectedRequest.id,
-        actionModal.adminNotes,
-      );
-
-      success(
-        `Đã từ chối yêu cầu của ${selectedRequest.user.firstName} ${selectedRequest.user.lastName}`,
-      );
-      setActionModal({ isOpen: false, action: null, adminNotes: '' });
-      setSelectedRequest(null);
-      loadRequests();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra khi từ chối yêu cầu');
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -131,6 +93,14 @@ export const ArtisanRequestsPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const getDisplaySpecialties = (specialties: string[]) => {
+    return specialties.map((s) => SPECIALTY_DISPLAY[s] || s).join(', ');
+  };
+
+  const handleViewDetails = (requestId: string) => {
+    navigate(`/admin/artisan-requests/${requestId}`);
   };
 
   const pendingRequests = requests.filter(
@@ -210,6 +180,19 @@ export const ArtisanRequestsPage: React.FC = () => {
         </Card>
       </div>
 
+      {/* Empty State */}
+      {requests.length === 0 && (
+        <Card className="p-12 text-center">
+          <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Chưa có yêu cầu nào
+          </h3>
+          <p className="text-gray-500">
+            Hiện tại chưa có yêu cầu nâng cấp nghệ nhân nào được gửi.
+          </p>
+        </Card>
+      )}
+
       {/* Pending Requests */}
       {pendingRequests.length > 0 && (
         <Card>
@@ -239,12 +222,16 @@ export const ArtisanRequestsPage: React.FC = () => {
                       </div>
 
                       <p className="text-sm text-gray-600 mb-1">
+                        <strong>Email:</strong> {request.user.email}
+                      </p>
+
+                      <p className="text-sm text-gray-600 mb-1">
                         <strong>Tên cửa hàng:</strong> {request.shopName}
                       </p>
 
                       <p className="text-sm text-gray-600 mb-1">
                         <strong>Chuyên môn:</strong>{' '}
-                        {request.specialties.join(', ')}
+                        {getDisplaySpecialties(request.specialties)}
                       </p>
 
                       <p className="text-sm text-gray-600 mb-1">
@@ -258,7 +245,7 @@ export const ArtisanRequestsPage: React.FC = () => {
                             href={request.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-700"
+                            className="text-sm text-blue-600 hover:text-blue-700 truncate max-w-xs"
                           >
                             {request.website}
                           </a>
@@ -273,44 +260,12 @@ export const ArtisanRequestsPage: React.FC = () => {
 
                   <div className="flex items-center space-x-2">
                     <Button
-                      variant="ghost"
+                      variant="primary"
                       size="sm"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setDetailModal(true);
-                      }}
+                      onClick={() => handleViewDetails(request.id)}
+                      leftIcon={<EyeIcon className="w-4 h-4" />}
                     >
-                      <EyeIcon className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setActionModal({
-                          isOpen: true,
-                          action: 'reject',
-                          adminNotes: '',
-                        });
-                      }}
-                      className="text-red-600 border-red-300 hover:bg-red-50"
-                    >
-                      Từ chối
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setActionModal({
-                          isOpen: true,
-                          action: 'approve',
-                          adminNotes: '',
-                        });
-                      }}
-                    >
-                      Duyệt
+                      Xem chi tiết
                     </Button>
                   </div>
                 </div>
@@ -349,204 +304,56 @@ export const ArtisanRequestsPage: React.FC = () => {
                       </div>
 
                       <p className="text-sm text-gray-600 mb-1">
-                        {request.shopName} • {request.specialties.join(', ')}
+                        <strong>Email:</strong> {request.user.email}
                       </p>
 
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Cửa hàng:</strong> {request.shopName}
+                      </p>
+
+                      <p className="text-sm text-gray-600 mb-1">
+                        <strong>Chuyên môn:</strong>{' '}
+                        {getDisplaySpecialties(request.specialties)}
+                      </p>
+
+                      <p className="text-xs text-gray-500 mt-2">
                         Xử lý lúc:{' '}
                         {request.reviewedAt && formatDate(request.reviewedAt)}
+                        {request.reviewedBy && (
+                          <>
+                            {' '}
+                            bởi {request.reviewedBy.firstName}{' '}
+                            {request.reviewedBy.lastName}
+                          </>
+                        )}
                       </p>
 
                       {request.adminNotes && (
-                        <p className="text-sm text-gray-700 mt-2 p-2 bg-gray-50 rounded">
-                          <strong>Ghi chú:</strong> {request.adminNotes}
-                        </p>
+                        <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-700">
+                            <strong>Ghi chú:</strong> {request.adminNotes}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedRequest(request);
-                      setDetailModal(true);
-                    }}
-                  >
-                    <EyeIcon className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewDetails(request.id)}
+                      leftIcon={<EyeIcon className="w-4 h-4" />}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </Card>
       )}
-
-      {/* Detail Modal */}
-      <Modal
-        isOpen={detailModal}
-        onClose={() => setDetailModal(false)}
-        title="Chi tiết yêu cầu"
-        size="lg"
-      >
-        {selectedRequest && (
-          <div className="space-y-6">
-            {/* User Info */}
-            <div className="flex items-center space-x-4">
-              <Avatar
-                src={selectedRequest.user.avatarUrl}
-                alt={`${selectedRequest.user.firstName} ${selectedRequest.user.lastName}`}
-                size="xl"
-              />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedRequest.user.firstName}{' '}
-                  {selectedRequest.user.lastName}
-                </h3>
-                <p className="text-gray-600">{selectedRequest.user.email}</p>
-                <p className="text-sm text-gray-500">
-                  Tham gia từ {formatDate(selectedRequest.user.createdAt)}
-                </p>
-              </div>
-            </div>
-
-            {/* Request Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">
-                  Thông tin cửa hàng
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <strong>Tên:</strong> {selectedRequest.shopName}
-                  </p>
-                  <p>
-                    <strong>Mô tả:</strong> {selectedRequest.shopDescription}
-                  </p>
-                  <p>
-                    <strong>Chuyên môn:</strong>{' '}
-                    {selectedRequest.specialties.join(', ')}
-                  </p>
-                  <p>
-                    <strong>Kinh nghiệm:</strong> {selectedRequest.experience}{' '}
-                    năm
-                  </p>
-                  {selectedRequest.website && (
-                    <p>
-                      <strong>Website:</strong> {selectedRequest.website}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Mạng xã hội</h4>
-                <div className="space-y-2 text-sm">
-                  {selectedRequest.socialMedia?.facebook && (
-                    <p>
-                      <strong>Facebook:</strong>{' '}
-                      {selectedRequest.socialMedia.facebook}
-                    </p>
-                  )}
-                  {selectedRequest.socialMedia?.instagram && (
-                    <p>
-                      <strong>Instagram:</strong>{' '}
-                      {selectedRequest.socialMedia.instagram}
-                    </p>
-                  )}
-                  {selectedRequest.socialMedia?.youtube && (
-                    <p>
-                      <strong>YouTube:</strong>{' '}
-                      {selectedRequest.socialMedia.youtube}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {selectedRequest.reason && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">
-                  Lý do đăng ký
-                </h4>
-                <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-lg">
-                  {selectedRequest.reason}
-                </p>
-              </div>
-            )}
-
-            {selectedRequest.adminNotes && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">
-                  Ghi chú admin
-                </h4>
-                <p className="text-sm text-gray-700 bg-blue-50 p-4 rounded-lg">
-                  {selectedRequest.adminNotes}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
-
-      {/* Action Modal */}
-      <Modal
-        isOpen={actionModal.isOpen}
-        onClose={() =>
-          setActionModal({ isOpen: false, action: null, adminNotes: '' })
-        }
-        title={
-          actionModal.action === 'approve' ? 'Duyệt yêu cầu' : 'Từ chối yêu cầu'
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            {actionModal.action === 'approve'
-              ? 'Bạn có chắc chắn muốn duyệt yêu cầu này?'
-              : 'Bạn có chắc chắn muốn từ chối yêu cầu này?'}
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ghi chú (tùy chọn)
-            </label>
-            <textarea
-              rows={4}
-              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              placeholder="Nhập ghi chú cho quyết định của bạn..."
-              value={actionModal.adminNotes}
-              onChange={(e) =>
-                setActionModal((prev) => ({
-                  ...prev,
-                  adminNotes: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <Button
-              variant="ghost"
-              onClick={() =>
-                setActionModal({ isOpen: false, action: null, adminNotes: '' })
-              }
-            >
-              Hủy
-            </Button>
-            <Button
-              variant={actionModal.action === 'approve' ? 'primary' : 'danger'}
-              onClick={
-                actionModal.action === 'approve'
-                  ? handleApproveRequest
-                  : handleRejectRequest
-              }
-              loading={processing}
-            >
-              {actionModal.action === 'approve' ? 'Duyệt' : 'Từ chối'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };
