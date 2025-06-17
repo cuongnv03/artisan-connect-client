@@ -335,7 +335,7 @@ export const CheckoutPage: React.FC = () => {
         <p className="text-gray-500 mb-6">
           Bạn cần thêm sản phẩm vào giỏ hàng trước khi thanh toán
         </p>
-        <Button onClick={() => navigate('/shop')}>Tiếp tục mua sắm</Button>
+        <Button onClick={() => navigate('/products')}>Tiếp tục mua sắm</Button>
       </div>
     );
   }

@@ -44,6 +44,7 @@ export const ROUTE_PATHS = {
 
     // === ORDERS MODULE ===
     ORDERS: {
+      BASE: '/orders', // Base path for orders
       MY_PURCHASES: '/orders/purchases', // API: GET /orders/my-orders (customer view)
       MY_SALES: '/orders/sales', // API: GET /orders/my-artisan-orders (artisan view)
       DETAIL: '/orders/:id', // API: GET /orders/:id
@@ -358,14 +359,22 @@ export const NAVIGATION_MENUS = {
     },
     {
       path: '/negotiations/requests',
-      label: 'Thương lượng',
+      label: 'Thương lượng giá',
       subtitle: 'Yêu cầu thương lượng giá',
       icon: 'handshake',
     },
     {
-      path: ROUTE_PATHS.APP.ORDERS.MY_PURCHASES,
-      label: 'Đơn hàng đặt',
+      path: ROUTE_PATHS.APP.ORDERS.BASE,
+      label: 'Đơn hàng',
       icon: 'shopping-cart',
+      submenu: [
+        {
+          path: '/custom-orders/requests',
+          label: 'Đơn hàng tùy chọn',
+          subtitle: 'Yêu cầu đặt làm',
+          icon: 'wrench-screwdriver',
+        },
+      ],
     },
     {
       path: ROUTE_PATHS.APP.ARTISAN.UPGRADE_REQUEST,
@@ -392,9 +401,16 @@ export const NAVIGATION_MENUS = {
       icon: 'shopping-bag',
     },
     {
-      path: ROUTE_PATHS.APP.ORDERS.MY_PURCHASES,
-      label: 'Đơn hàng đặt',
-      icon: 'shopping-cart',
+      path: '/negotiations/requests',
+      label: 'Thương lượng giá',
+      subtitle: 'Yêu cầu thương lượng giá',
+      icon: 'handshake',
+    },
+    {
+      path: '/custom-orders/requests',
+      label: 'Đơn hàng tùy chọn',
+      subtitle: 'Yêu cầu đặt làm',
+      icon: 'wrench-screwdriver',
     },
     // Separator để phân biệt phần business
     { type: 'separator' },
@@ -408,7 +424,7 @@ export const NAVIGATION_MENUS = {
     },
     {
       path: ROUTE_PATHS.APP.ARTISAN.DASHBOARD,
-      label: 'Dashboard',
+      label: 'Tổng quan',
       icon: 'bar-chart',
       business: true,
     },
@@ -427,29 +443,23 @@ export const NAVIGATION_MENUS = {
       business: true,
     },
     {
-      path: '/negotiations/received',
-      label: 'Thương lượng nhận',
-      subtitle: 'Quản lý yêu cầu thương lượng',
-      icon: 'handshake',
-      business: true,
-    },
-    {
-      path: ROUTE_PATHS.APP.ORDERS.MY_SALES,
-      label: 'Đơn hàng bán',
-      subtitle: 'Quản lý đơn hàng, tranh chấp, trả hàng',
+      path: ROUTE_PATHS.APP.ORDERS.BASE,
+      label: 'Đơn hàng',
+      subtitle: 'Quản lý đơn hàng',
       icon: 'trending-up',
       business: true,
       submenu: [
-        { path: ROUTE_PATHS.APP.ORDERS.MY_SALES, label: 'Đơn hàng' },
         { path: ROUTE_PATHS.APP.DISPUTES.MY_DISPUTES, label: 'Tranh chấp' },
         { path: ROUTE_PATHS.APP.RETURNS.MY_RETURNS, label: 'Trả hàng' },
         {
           path: ROUTE_PATHS.APP.CUSTOM_ORDERS.MY_RECEIVED,
-          label: 'Đơn tùy chỉnh',
+          label: 'Đơn hàng tùy chỉnh',
+          subtitle: 'Quản lý yêu cầu đặt làm',
         },
         {
           path: ROUTE_PATHS.APP.NEGOTIATIONS.MY_RECEIVED,
           label: 'Thương lượng giá',
+          subtitle: 'Quản lý yêu cầu thương lượng giá',
         },
       ],
     },

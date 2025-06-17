@@ -7,9 +7,10 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ConversationHeader } from '../../components/messages/ConversationHeader';
 import { MessageList } from '../../components/messages/MessageList';
 import { MessageInput } from '../../components/messages/MessageInput';
-import { CustomOrderProposalForm } from '../../components/messages/CustomOrderProposalForm';
+import { CustomOrderForm } from '../../components/custom-orders/CustomOrderForm/CustomOrderForm';
 import { useConversation } from '../../hooks/messages/useConversation';
 import { useToastContext } from '../../contexts/ToastContext';
+import { uploadService } from '../../services/upload.service';
 import { messageService } from '../../services/message.service';
 
 export const ConversationPage: React.FC = () => {
@@ -19,6 +20,7 @@ export const ConversationPage: React.FC = () => {
   const { success: showSuccess, error: showError } = useToastContext();
   const [showCustomOrderForm, setShowCustomOrderForm] = useState(false);
   const [customOrderLoading, setCustomOrderLoading] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
 
   const {
     messages,
@@ -39,6 +41,75 @@ export const ConversationPage: React.FC = () => {
 
   const handleSendMessage = async (content: string) => {
     await sendMessage(content);
+  };
+
+  const handleSendMedia = async (file: File, type: 'image' | 'file') => {
+    if (!userId) return;
+
+    setUploadingMedia(true);
+    try {
+      // Validate file
+      if (type === 'image') {
+        const validation = uploadService.validateImageFile(file);
+        if (!validation.valid) {
+          showError(validation.error || 'File không hợp lệ');
+          return;
+        }
+      } else {
+        // Basic file validation
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          showError('File không được vượt quá 10MB');
+          return;
+        }
+      }
+
+      // Upload file
+      const uploadResult = await uploadService.uploadImage(file, {
+        folder: 'messages',
+      });
+
+      // Send message with attachment - sử dụng attachments array thay vì productMentions
+      await sendMessage(
+        type === 'image'
+          ? '📷 Đã gửi hình ảnh'
+          : `📄 Đã gửi tài liệu: ${file.name}`,
+        type === 'image' ? MessageType.IMAGE : MessageType.FILE,
+        {
+          originalFileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+        },
+      );
+
+      // Thêm attachment vào message manually
+      const messageData = {
+        receiverId: userId,
+        content:
+          type === 'image'
+            ? '📷 Đã gửi hình ảnh'
+            : `📄 Đã gửi tài liệu: ${file.name}`,
+        type: type === 'image' ? MessageType.IMAGE : MessageType.FILE,
+        attachments: [uploadResult.url],
+        productMentions: {
+          originalFileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+        },
+      };
+
+      // Gọi service trực tiếp để có attachments
+      const newMessage = await messageService.sendMessage(messageData);
+
+      showSuccess(`${type === 'image' ? 'Hình ảnh' : 'Tài liệu'} đã được gửi`);
+    } catch (error: any) {
+      showError(
+        error.message ||
+          `Không thể gửi ${type === 'image' ? 'hình ảnh' : 'tài liệu'}`,
+      );
+    } finally {
+      setUploadingMedia(false);
+    }
   };
 
   const handleSendCustomOrder = async (proposal: CustomOrderProposal) => {
@@ -111,12 +182,14 @@ export const ConversationPage: React.FC = () => {
 
       <MessageInput
         onSendMessage={handleSendMessage}
+        onSendMedia={handleSendMedia}
         onShowCustomOrderForm={() => setShowCustomOrderForm(true)}
         onTyping={handleTyping}
         sending={sending}
+        uploadingMedia={uploadingMedia}
       />
 
-      <CustomOrderProposalForm
+      <CustomOrderForm
         isOpen={showCustomOrderForm}
         onClose={() => setShowCustomOrderForm(false)}
         onSubmit={handleSendCustomOrder}

@@ -5,7 +5,6 @@ export * from './post.service';
 export * from './product.service';
 export * from './cart.service';
 export * from './order.service';
-export * from './quote.service';
 export * from './social.service';
 export * from './price-negotiation.service';
 export * from './custom-order.service';

@@ -83,12 +83,20 @@ export const messageService = {
     mediaUrl: string;
     mediaType: 'image' | 'file';
     content?: string;
+    originalFileName?: string;
+    fileSize?: number;
+    fileType?: string;
   }): Promise<MessageWithUsers> {
     return await apiClient.post<MessageWithUsers>(API_ENDPOINTS.MESSAGES.BASE, {
       receiverId: data.receiverId,
       content: data.content || `Shared ${data.mediaType}`,
       type: data.mediaType === 'image' ? 'IMAGE' : 'FILE',
       attachments: [data.mediaUrl],
+      productMentions: {
+        originalFileName: data.originalFileName,
+        fileSize: data.fileSize,
+        fileType: data.fileType,
+      },
     });
   },
 };

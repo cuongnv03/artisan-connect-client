@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeftIcon,
-  PhoneIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { User } from '../../types/auth';
@@ -65,17 +64,16 @@ export const ConversationHeader: React.FC<ConversationHeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" disabled>
-            <PhoneIcon className="w-4 h-4" />
-          </Button>
-
-          <Link to={`/artisan/${participant.id}`}>
-            <Button variant="ghost" size="sm">
-              <InformationCircleIcon className="w-4 h-4" />
-            </Button>
-          </Link>
-        </div>
+        {/* Chỉ hiện info button khi chat với artisan, không hiện khi chat với customer */}
+        {participant.role !== 'CUSTOMER' && (
+          <div className="flex items-center space-x-2">
+            <Link to={`/artisan/${participant.id}`}>
+              <Button variant="ghost" size="sm">
+                <InformationCircleIcon className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import { BaseEntity } from './common';
 import { User } from './auth';
-import { Product } from './product';
 
 export enum QuoteStatus {
   PENDING = 'PENDING',
@@ -20,21 +19,22 @@ export enum CustomOrderAction {
   MESSAGE = 'MESSAGE',
 }
 
+// Khớp với Prisma schema QuoteRequest
 export interface CustomOrderRequest extends BaseEntity {
   customerId: string;
   artisanId: string;
   title: string;
   description: string;
   referenceProductId?: string;
-  specifications?: any;
+  specifications?: any; // Json
   attachmentUrls: string[];
-  estimatedPrice?: number;
-  customerBudget?: number;
+  estimatedPrice?: number; // Decimal -> number
+  customerBudget?: number; // Decimal -> number
   timeline?: string;
   status: QuoteStatus;
-  artisanResponse?: any;
-  finalPrice?: number;
-  negotiationHistory?: any;
+  artisanResponse?: any; // Json
+  finalPrice?: number; // Decimal -> number
+  negotiationHistory?: any; // Json
   expiresAt?: Date;
 }
 
@@ -85,7 +85,7 @@ export interface CustomOrderMessage extends BaseEntity {
   };
 }
 
-// DTOs
+// DTOs khớp với server validators
 export interface CreateCustomOrderRequest {
   artisanId: string;
   title: string;
@@ -116,12 +116,24 @@ export interface UpdateCustomOrderRequest {
   timeline?: string;
 }
 
+export interface CustomOrderQueryOptions {
+  page?: number;
+  limit?: number;
+  customerId?: string;
+  artisanId?: string;
+  status?: QuoteStatus | QuoteStatus[];
+  dateFrom?: Date;
+  dateTo?: Date;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface CustomOrderStats {
   totalRequests: number;
   pendingRequests: number;
   acceptedRequests: number;
   rejectedRequests: number;
   expiredRequests: number;
-  averageResponseTime: number;
-  conversionRate: number;
+  averageResponseTime: number; // hours
+  conversionRate: number; // percentage
 }

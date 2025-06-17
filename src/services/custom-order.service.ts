@@ -116,4 +116,20 @@ export const customOrderService = {
       return false;
     }
   },
+
+  async validateAccess(id: string): Promise<boolean> {
+    try {
+      await apiClient.get(`${API_ENDPOINTS.CUSTOM_ORDER.BY_ID(id)}/validate`);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async exportCustomOrders(query: GetCustomOrdersQuery = {}): Promise<Blob> {
+    return await apiClient.get(`${API_ENDPOINTS.CUSTOM_ORDER.BASE}/export`, {
+      ...query,
+      responseType: 'blob',
+    });
+  },
 };

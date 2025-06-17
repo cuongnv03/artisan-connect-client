@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { messageService } from '../../services/message.service';
-import { userService } from '../../services/user.service';
 import { MessageWithUsers, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
 import { useAuth } from '../../contexts/AuthContext';
@@ -60,18 +59,90 @@ export const useConversation = (userId: string) => {
     [userId, showError],
   );
 
-  // Load participant info
+  // Load participant info from conversations list instead of direct API call
   const loadParticipant = useCallback(async () => {
     if (!userId) return;
 
     try {
-      const user = await userService.getUserProfile(userId);
-      setParticipant(user);
+      // First try to get from conversations list
+      const conversations = await messageService.getConversations();
+      const conversation = conversations.find(
+        (conv) => conv.participantId === userId,
+      );
+
+      if (conversation) {
+        // Convert conversation participant to User format
+        const participantUser: User = {
+          id: conversation.participant.id,
+          username: conversation.participant.username,
+          firstName: conversation.participant.firstName,
+          lastName: conversation.participant.lastName,
+          avatarUrl: conversation.participant.avatarUrl,
+          role: conversation.participant.role as any,
+          lastSeenAt: conversation.participant.lastSeenAt,
+          // Add required fields with defaults
+          email: '', // Not needed for display
+          status: 'ACTIVE' as any,
+          bio: null,
+          isVerified: false,
+          emailVerified: false,
+          phone: null,
+          followerCount: 0,
+          followingCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setParticipant(participantUser);
+      } else {
+        // If not found in conversations, this might be a new conversation
+        // We'll extract info from first message when it loads
+        console.log(
+          'Participant not found in conversations list, will extract from messages',
+        );
+      }
     } catch (error: any) {
       console.error('Error loading participant:', error);
-      showError('Không thể tải thông tin người dùng');
+      // Don't show error here as this is fallback logic
     }
-  }, [userId, showError]);
+  }, [userId]);
+
+  // Extract participant info from messages if not found in conversations
+  useEffect(() => {
+    if (!participant && messages.length > 0) {
+      const firstMessage = messages[0];
+      let participantInfo;
+
+      if (firstMessage.senderId === userId) {
+        participantInfo = firstMessage.sender;
+      } else if (firstMessage.receiverId === userId) {
+        participantInfo = firstMessage.receiver;
+      }
+
+      if (participantInfo) {
+        const participantUser: User = {
+          id: participantInfo.id,
+          username: participantInfo.username,
+          firstName: participantInfo.firstName,
+          lastName: participantInfo.lastName,
+          avatarUrl: participantInfo.avatarUrl,
+          role: participantInfo.role as any,
+          lastSeenAt: participantInfo.lastSeenAt,
+          // Add required fields with defaults
+          email: '',
+          status: 'ACTIVE' as any,
+          bio: null,
+          isVerified: false,
+          emailVerified: false,
+          phone: null,
+          followerCount: 0,
+          followingCount: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        setParticipant(participantUser);
+      }
+    }
+  }, [participant, messages, userId]);
 
   // Send message
   const sendMessage = useCallback(
@@ -79,6 +150,7 @@ export const useConversation = (userId: string) => {
       content: string,
       type: MessageType = MessageType.TEXT,
       productMentions?: any,
+      attachments?: string[],
     ) => {
       if (!userId || !content.trim()) return;
 
@@ -88,6 +160,7 @@ export const useConversation = (userId: string) => {
           receiverId: userId,
           content: content.trim(),
           type,
+          attachments: attachments || [],
           productMentions,
         });
 

@@ -96,6 +96,12 @@ import { CategoryAttributesPage } from './pages/products/admin/CategoryAttribute
 import { AdminCategoriesPage } from './pages/products/admin/AdminCategoriesPage';
 import { CreateCategoryPage } from './pages/products/admin/CreateCategoryPage';
 import { EditCategoryPage } from './pages/products/admin/EditCategoryPage';
+import { CustomOrderRedirect } from './components/common/CustomOrderRedirect';
+import { CustomerCustomOrdersPage } from './pages/custom-orders/customer/CustomerCustomOrdersPage';
+import { CreateCustomOrderPage } from './pages/custom-orders/customer/CreateCustomOrderPage';
+import { ArtisanCustomOrdersPage } from './pages/custom-orders/artisan/ArtisanCustomOrdersPage';
+import { CustomOrderStatsPage } from './pages/custom-orders/artisan/CustomOrderStatsPage';
+import { CustomOrderDetailPage } from './pages/custom-orders/common/CustomOrderDetailPage';
 
 export const router = createBrowserRouter(
   [
@@ -509,6 +515,64 @@ export const router = createBrowserRouter(
               element: (
                 <ProtectedRoute>
                   <ConversationPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+
+        {
+          path: 'custom-orders',
+          children: [
+            // Redirect root based on role
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <CustomOrderRedirect />
+                </ProtectedRoute>
+              ),
+            },
+            // Customer routes
+            {
+              path: 'requests',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+                  <CustomerCustomOrdersPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'create',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+                  <CreateCustomOrderPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Artisan routes
+            {
+              path: 'received',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanCustomOrdersPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'stats',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <CustomOrderStatsPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Common detail page
+            {
+              path: ':id',
+              element: (
+                <ProtectedRoute>
+                  <CustomOrderDetailPage />
                 </ProtectedRoute>
               ),
             },

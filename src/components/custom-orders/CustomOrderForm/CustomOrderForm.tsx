@@ -1,11 +1,11 @@
 import React from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { CustomOrderProposal } from '../../types/message';
-import { useForm } from '../../hooks/common/useForm';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
+import { Input } from '../../ui/Input';
+import { CustomOrderProposal } from '../../../types/message';
+import { useForm } from '../../../hooks/common/useForm';
 
-interface CustomOrderProposalFormProps {
+interface CustomOrderFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (proposal: CustomOrderProposal) => void;
@@ -21,9 +21,12 @@ interface FormData {
   deadline: string;
 }
 
-export const CustomOrderProposalForm: React.FC<
-  CustomOrderProposalFormProps
-> = ({ isOpen, onClose, onSubmit, loading = false }) => {
+export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  loading = false,
+}) => {
   const { values, errors, handleChange, handleSubmit, resetForm } =
     useForm<FormData>({
       initialValues: {
@@ -74,7 +77,6 @@ export const CustomOrderProposalForm: React.FC<
 
         onSubmit(proposal);
         resetForm();
-        onClose();
       },
     });
 
@@ -83,12 +85,16 @@ export const CustomOrderProposalForm: React.FC<
     onClose();
   };
 
+  // Đảm bảo return đúng Modal
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title="Tạo đề xuất Custom Order"
       size="lg"
+      showCloseButton={true}
+      closeOnOverlayClick={true}
+      closeOnEscape={true}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -165,11 +171,11 @@ export const CustomOrderProposalForm: React.FC<
           helperText="Nghệ nhân sẽ phản hồi trước ngày này"
         />
 
-        <div className="flex justify-end space-x-3 pt-4">
+        <div className="flex justify-end space-x-3 pt-4 border-t">
           <Button type="button" variant="ghost" onClick={handleClose}>
             Hủy
           </Button>
-          <Button type="submit" loading={loading}>
+          <Button type="submit" loading={loading} disabled={loading}>
             Gửi đề xuất
           </Button>
         </div>

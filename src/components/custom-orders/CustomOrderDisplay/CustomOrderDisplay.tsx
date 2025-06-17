@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { formatPrice, formatRelativeTime } from '../../utils/format';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { formatPrice, formatRelativeTime } from '../../../utils/format';
 import {
   CheckIcon,
   XMarkIcon,

@@ -7,11 +7,11 @@ import {
   XMarkIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
-import { CustomOrderProposal } from '../../types/message';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Modal } from '../ui/Modal';
-import { useForm } from '../../hooks/common/useForm';
+import { CustomOrderProposal } from '../../../types/message';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { Modal } from '../../ui/Modal';
+import { useForm } from '../../../hooks/common/useForm';
 
 interface CustomOrderCardProps {
   proposal: CustomOrderProposal;
