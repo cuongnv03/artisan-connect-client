@@ -30,11 +30,14 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
   const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
 
   const handlePostClick = (post: Post) => {
-    if (authState.user?.role === 'ARTISAN') {
-      // Artisan chuyển tới trang detail riêng
+    // CHỈ chuyển đến trang manage khi là bài viết của chính mình
+    if (
+      authState.user?.role === 'ARTISAN' &&
+      post.authorId === authState.user.id
+    ) {
       navigate(`/posts/manage/${post.id}`);
     } else {
-      // Customer mở modal
+      // Tất cả trường hợp khác đều mở modal
       openModal(post);
     }
   };
@@ -66,7 +69,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     <div className="space-y-6">
       {posts.map((post, index) => (
         <CustomerPostCard
-          key={`feed-post-${post.id}-${index}`} // Fix key với prefix
+          key={`feed-post-${post.id}-${index}`}
           post={post}
           onClick={handlePostClick}
           onCommentClick={handleCommentClick}

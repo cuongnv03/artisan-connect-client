@@ -18,6 +18,7 @@ import { Badge } from '../../ui/Badge';
 import { Card } from '../../ui/Card';
 import { socialService } from '../../../services/social.service';
 import { useToastContext } from '../../../contexts/ToastContext';
+import { Link } from 'react-router-dom';
 
 interface PostCardProps {
   post: Post;
@@ -37,6 +38,10 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const getAuthorProfileLink = () => {
+    return `/artisan/${post.user?.id}`;
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -111,23 +116,25 @@ export const PostCard: React.FC<PostCardProps> = ({
             alt={`${post.user?.firstName} ${post.user?.lastName}`}
             size="md"
           />
-          <div className="ml-3">
-            <p className="font-medium text-gray-900">
-              {post.user?.firstName} {post.user?.lastName}
-            </p>
-            <div className="flex items-center text-sm text-gray-500">
-              <span>
-                {formatDistanceToNow(new Date(post.createdAt), {
-                  addSuffix: true,
-                  locale: vi,
-                })}
-              </span>
-              <span className="mx-2">•</span>
-              <Badge variant="secondary" size="sm">
-                {post.type}
-              </Badge>
+          <Link to={getAuthorProfileLink()} className="flex-shrink-0">
+            <div className="ml-3">
+              <p className="font-medium text-gray-900">
+                {post.user?.firstName} {post.user?.lastName}
+              </p>
+              <div className="flex items-center text-sm text-gray-500">
+                <span>
+                  {formatDistanceToNow(new Date(post.createdAt), {
+                    addSuffix: true,
+                    locale: vi,
+                  })}
+                </span>
+                <span className="mx-2">•</span>
+                <Badge variant="secondary" size="sm">
+                  {post.type}
+                </Badge>
+              </div>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Title - Clickable */}

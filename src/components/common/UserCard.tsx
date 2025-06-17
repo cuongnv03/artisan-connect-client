@@ -16,6 +16,7 @@ interface UserCardProps {
   showFollowButton?: boolean;
   isFollowing?: boolean;
   onFollow?: () => void;
+  followLoading?: boolean;
 }
 
 export const UserCard: React.FC<UserCardProps> = ({
@@ -23,6 +24,7 @@ export const UserCard: React.FC<UserCardProps> = ({
   showFollowButton = true,
   isFollowing = false,
   onFollow,
+  followLoading = false,
 }) => {
   const getRoleDisplayName = (role: string) => {
     switch (role) {
@@ -46,6 +48,14 @@ export const UserCard: React.FC<UserCardProps> = ({
     }
   };
 
+  // Chỉ người có role ARTISAN mới có thể xem được profile link
+  const getProfileLink = () => {
+    if (user.role === 'ARTISAN') {
+      return `/artisan/${user.id}`; // SỬA: sử dụng đúng đường dẫn
+    }
+    return `/profile/${user.id}`;
+  };
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <div className="p-6">
@@ -59,7 +69,7 @@ export const UserCard: React.FC<UserCardProps> = ({
             />
             <div className="ml-3">
               <Link
-                to={`/profile/${user.id}`}
+                to={getProfileLink()}
                 className="font-semibold text-gray-900 hover:text-primary"
               >
                 {user.firstName} {user.lastName}
@@ -75,11 +85,12 @@ export const UserCard: React.FC<UserCardProps> = ({
             </div>
           </div>
 
-          {showFollowButton && (
+          {showFollowButton && user.role === 'ARTISAN' && (
             <Button
               variant={isFollowing ? 'secondary' : 'outline'}
               size="sm"
               onClick={onFollow}
+              loading={followLoading}
               leftIcon={<UserPlusIcon className="w-4 h-4" />}
             >
               {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}

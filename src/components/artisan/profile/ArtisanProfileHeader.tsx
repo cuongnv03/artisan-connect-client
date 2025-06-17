@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   UserPlusIcon,
   ChatBubbleLeftIcon,
@@ -11,7 +11,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useArtisanFollow } from '../../../hooks/artisan/useArtisanFollow';
+import { useToastContext } from '../../../contexts/ToastContext';
+import { userService } from '../../../services/user.service';
 import { UserProfileDto } from '../../../types/user';
 import { Avatar } from '../../ui/Avatar';
 import { Button } from '../../ui/Button';
@@ -28,11 +29,79 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
   isOwnProfile,
 }) => {
   const { state: authState } = useAuth();
-  const { followStats, followLoading, handleFollow, handleSendMessage } =
-    useArtisanFollow({
-      artisan,
-      isOwnProfile,
-    });
+  const { success, error } = useToastContext();
+  const navigate = useNavigate();
+
+  // Sử dụng state đơn giản như ArtisanSuggestions
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(artisan.followerCount);
+  const [followingCount, setFollowingCount] = useState(artisan.followingCount);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!isOwnProfile) {
+      loadFollowStats();
+    } else {
+      setStatsLoaded(true);
+    }
+  }, [artisan.id, isOwnProfile]);
+
+  const loadFollowStats = async () => {
+    try {
+      setStatsLoaded(false);
+      const stats = await userService.getFollowStats(artisan.id);
+      setIsFollowing(stats.isFollowing || false);
+      setFollowersCount(stats.followersCount || artisan.followerCount);
+      setFollowingCount(stats.followingCount || artisan.followingCount);
+      setStatsLoaded(true);
+    } catch (err) {
+      console.error('Error loading follow stats:', err);
+      setIsFollowing(false);
+      setStatsLoaded(true);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (isOwnProfile || followLoading) return;
+
+    setFollowLoading(true);
+
+    try {
+      if (isFollowing) {
+        await userService.unfollowUser(artisan.id);
+        setIsFollowing(false);
+        setFollowersCount((prev) => Math.max(0, prev - 1));
+        success('Đã bỏ theo dõi');
+      } else {
+        await userService.followUser(artisan.id);
+        setIsFollowing(true);
+        setFollowersCount((prev) => prev + 1);
+        success('Đã theo dõi');
+      }
+
+      // Reload stats sau 500ms
+      setTimeout(loadFollowStats, 500);
+    } catch (err: any) {
+      console.error('Error following user:', err);
+      if (
+        err.message?.includes('Already following') ||
+        err.response?.status === 409
+      ) {
+        setIsFollowing(true);
+        success('Bạn đã theo dõi người này rồi');
+      } else {
+        error(err.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (isOwnProfile) return;
+    navigate(`/messages/${artisan.id}`);
+  };
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
@@ -162,7 +231,7 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                 <div className="flex items-center gap-4 sm:gap-6 text-sm">
                   <div className="text-center">
                     <div className="text-base sm:text-lg font-semibold text-gray-900">
-                      {followStats.followersCount || 0}
+                      {followersCount}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-500">
                       Người theo dõi
@@ -170,7 +239,7 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                   </div>
                   <div className="text-center">
                     <div className="text-base sm:text-lg font-semibold text-gray-900">
-                      {followStats.followingCount || 0}
+                      {followingCount}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-500">
                       Đang theo dõi
@@ -233,9 +302,7 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                 ) : (
                   <>
                     <Button
-                      variant={
-                        followStats.isFollowing ? 'secondary' : 'primary'
-                      }
+                      variant={isFollowing ? 'secondary' : 'primary'}
                       size="sm"
                       onClick={handleFollow}
                       loading={followLoading}
@@ -243,10 +310,10 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                       leftIcon={<UserPlusIcon className="w-4 h-4" />}
                     >
                       <span className="hidden sm:inline">
-                        {followStats.isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                        {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
                       </span>
                       <span className="sm:hidden">
-                        {followStats.isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
+                        {isFollowing ? 'Bỏ theo dõi' : 'Theo dõi'}
                       </span>
                     </Button>
                     <Button

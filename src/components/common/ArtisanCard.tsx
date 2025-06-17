@@ -17,18 +17,21 @@ import { Card } from '../ui/Card';
 interface ArtisanCardProps {
   artisan: ArtisanProfile & { user: User };
   showFollowButton?: boolean;
+  onFollow?: () => void;
+  isFollowing?: boolean;
+  followLoading?: boolean;
 }
 
 export const ArtisanCard: React.FC<ArtisanCardProps> = ({
   artisan,
   showFollowButton = true,
+  onFollow,
+  isFollowing = false,
+  followLoading = false,
 }) => {
   const handleFollow = async () => {
-    try {
-      // TODO: Implement follow logic
-      console.log('Follow artisan:', artisan.id);
-    } catch (error) {
-      console.error('Follow error:', error);
+    if (onFollow) {
+      onFollow();
     }
   };
 
@@ -67,7 +70,7 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
             <div className="ml-3">
               <div className="flex items-center">
                 <Link
-                  to={`/artisans/${artisan.id}`}
+                  to={`/artisan/${artisan.user.id}`} // SỬA: từ /artisans/${artisan.id} thành /artisan/${artisan.user.id}
                   className="font-semibold text-gray-900 hover:text-primary"
                 >
                   {artisan.user.firstName} {artisan.user.lastName}
@@ -82,12 +85,13 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
 
           {showFollowButton && (
             <Button
-              variant="outline"
+              variant={isFollowing ? 'secondary' : 'outline'}
               size="sm"
               onClick={handleFollow}
+              loading={followLoading}
               leftIcon={<UserPlusIcon className="w-4 h-4" />}
             >
-              Theo dõi
+              {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
             </Button>
           )}
         </div>

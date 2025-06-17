@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { PostCard } from '../posts/customer/PostCard';
 import { ProductCard } from '../products/customer/ProductCard/ProductCard';
+import { useFollowArtisan } from '../../hooks/discover/useFollowArtisan';
 
 interface FeaturedSectionsProps {
   content: {
@@ -18,6 +19,8 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
   content,
   onViewMore,
 }) => {
+  const { handleFollow, getFollowState, followLoading } = useFollowArtisan(); // THÊM hook
+
   return (
     <div className="space-y-8">
       {/* Featured Artisans */}
@@ -36,9 +39,18 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {content.artisans.slice(0, 6).map((artisan: any) => (
-              <ArtisanCard key={artisan.id} artisan={artisan} />
-            ))}
+            {content.artisans.slice(0, 6).map((artisan: any) => {
+              const followState = getFollowState(artisan.user.id);
+              return (
+                <ArtisanCard
+                  key={artisan.id}
+                  artisan={artisan}
+                  isFollowing={followState.isFollowing}
+                  followLoading={followLoading === artisan.user.id}
+                  onFollow={() => handleFollow(artisan.user.id)}
+                />
+              );
+            })}
           </div>
         </section>
       )}
