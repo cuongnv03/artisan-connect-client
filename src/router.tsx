@@ -51,6 +51,8 @@ import { CheckoutPage } from './pages/cart/CheckoutPage';
 import { OrdersPage } from './pages/orders/OrdersPage';
 import { OrderDetailPage } from './pages/orders/OrderDetailPage';
 import { TrackingPage } from './pages/orders/TrackingPage';
+import { DisputePage } from './pages/orders/DisputePage';
+import { ReturnPage } from './pages/orders/ReturnPage';
 
 // Messages
 import { MessagesPage } from './pages/messages/MessagesPage';
@@ -376,6 +378,22 @@ export const router = createBrowserRouter(
               element: (
                 <ProtectedRoute>
                   <TrackingPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'disputes/:disputeId',
+              element: (
+                <ProtectedRoute>
+                  <DisputePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'returns/:returnId',
+              element: (
+                <ProtectedRoute>
+                  <ReturnPage />
                 </ProtectedRoute>
               ),
             },
