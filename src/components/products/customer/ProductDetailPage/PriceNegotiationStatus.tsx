@@ -8,7 +8,7 @@ import { Card } from '../../../ui/Card';
 import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';
 import {
-  HandshakeIcon,
+  ChatBubbleLeftRightIcon,
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -100,7 +100,7 @@ export const PriceNegotiationStatus: React.FC<PriceNegotiationStatusProps> = ({
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
-          <HandshakeIcon className="w-5 h-5 text-primary mr-2" />
+          <ChatBubbleLeftRightIcon className="w-5 h-5 text-primary mr-2" />
           <h4 className="font-semibold text-gray-900">Thương lượng giá</h4>
         </div>
         <div className="flex items-center space-x-2">

@@ -351,6 +351,12 @@ export const NAVIGATION_MENUS = {
       icon: 'shopping-bag',
     },
     {
+      path: '/negotiations/requests',
+      label: 'Thương lượng',
+      subtitle: 'Yêu cầu thương lượng giá',
+      icon: 'handshake',
+    },
+    {
       path: ROUTE_PATHS.APP.ORDERS.MY_PURCHASES,
       label: 'Đơn hàng đặt',
       icon: 'shopping-cart',
@@ -412,6 +418,13 @@ export const NAVIGATION_MENUS = {
       label: 'Sản phẩm',
       subtitle: 'Quản lý sản phẩm',
       icon: 'package',
+      business: true,
+    },
+    {
+      path: '/negotiations/received',
+      label: 'Thương lượng nhận',
+      subtitle: 'Quản lý yêu cầu thương lượng',
+      icon: 'handshake',
       business: true,
     },
     {

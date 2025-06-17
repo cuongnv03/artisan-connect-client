@@ -9,7 +9,6 @@ import { ToastProvider } from './contexts/ToastContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { CartProvider } from './contexts/CartContext';
 import { ProfileProvider } from './contexts/ProfileContext';
-import { DiscoverProvider } from './contexts/DiscoverContext';
 import { router } from './router';
 
 function App() {

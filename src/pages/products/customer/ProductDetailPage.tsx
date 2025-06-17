@@ -31,6 +31,7 @@ import { PriceNegotiationForm } from '../../../components/products/customer/Prod
 import { PriceNegotiationStatus } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationStatus';
 import { usePriceNegotiations } from '../../../hooks/price-negotiation/usePriceNegotiations';
 import { NegotiationStatus } from '../../../types/price-negotiation';
+import { usePriceNegotiation } from '../../../hooks/price-negotiation/usePriceNegotiation';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -38,6 +39,11 @@ export const ProductDetailPage: React.FC = () => {
   const { state: authState } = useAuth();
   const { addToCart } = useCart();
   const { success, error: showError } = useToastContext();
+
+  const { cancelNegotiation } = usePriceNegotiation();
+
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const { product, loading, error, refetch } = useProduct({
     slug,
@@ -88,13 +94,28 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleNegotiationCancel = async () => {
-    if (currentNegotiation) {
-      try {
-        // Logic cancel negotiation ở đây
-        refetchNegotiations();
-      } catch (err) {
-        console.error('Error canceling negotiation:', err);
-      }
+    setShowCancelModal(true);
+  };
+
+  const confirmCancelNegotiation = async () => {
+    if (!currentNegotiation) return;
+
+    try {
+      // Gọi API để hủy thương lượng với lý do
+      await cancelNegotiation(
+        currentNegotiation.id,
+        cancelReason || 'Hủy bởi khách hàng',
+      );
+
+      // Reset state
+      setShowCancelModal(false);
+      setCancelReason('');
+
+      // Refresh lại danh sách negotiations
+      await refetchNegotiations();
+    } catch (err: any) {
+      console.error('Error canceling negotiation:', err);
+      showError(err.message || 'Không thể hủy thương lượng');
     }
   };
 
@@ -386,6 +407,28 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Price Negotiation */}
+            {authState.isAuthenticated &&
+              authState.user?.role === 'CUSTOMER' && (
+                <div className="mb-6">
+                  {hasActiveNegotiation && currentNegotiation ? (
+                    <PriceNegotiationStatus
+                      negotiation={currentNegotiation}
+                      userRole="CUSTOMER"
+                      onCancel={handleNegotiationCancel}
+                      onRefresh={refetchNegotiations}
+                    />
+                  ) : (
+                    product.allowNegotiation && (
+                      <PriceNegotiationForm
+                        product={product}
+                        onSuccess={handleNegotiationSuccess}
+                      />
+                    )
+                  )}
+                </div>
+              )}
+
             {/* Product Features */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               {product.isCustomizable && (
@@ -544,6 +587,53 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cancel Negotiation Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Xác nhận hủy thương lượng"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Bạn có chắc chắn muốn hủy thương lượng này? Hành động này không thể
+            hoàn tác.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lý do hủy (tùy chọn)
+            </label>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={3}
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              placeholder="Nhập lý do hủy thương lượng..."
+              maxLength={500}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {cancelReason.length}/500 ký tự
+            </p>
+          </div>
+
+          <div className="flex space-x-3 justify-end pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelModal(false);
+                setCancelReason('');
+              }}
+            >
+              Không hủy
+            </Button>
+            <Button variant="danger" onClick={confirmCancelNegotiation}>
+              Xác nhận hủy
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Image Modal */}
       <Modal

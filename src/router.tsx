@@ -54,6 +54,11 @@ import { TrackingPage } from './pages/orders/TrackingPage';
 import { DisputePage } from './pages/orders/DisputePage';
 import { ReturnPage } from './pages/orders/ReturnPage';
 
+// Price Negotiations
+import { CustomerNegotiationsPage } from './pages/negotiations/customer/CustomerNegotiationsPage';
+import { ArtisanNegotiationsPage } from './pages/negotiations/artisan/ArtisanNegotiationsPage';
+import { NegotiationDetailPage } from './pages/negotiations/common/NegotiationDetailPage';
+
 // Messages
 import { MessagesPage } from './pages/messages/MessagesPage';
 import { ConversationPage } from './pages/messages/ConversationPage';
@@ -79,6 +84,7 @@ import { ServerErrorPage } from './pages/error/ServerErrorPage';
 // Protected Route component
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { UserRole } from './types/auth';
+import { NegotiationRedirect } from './components/common/NegotiationRedirect';
 
 // Admin Product pages
 import { AdminProductsPage } from './pages/products/admin/AdminProductsPage';
@@ -394,6 +400,49 @@ export const router = createBrowserRouter(
               element: (
                 <ProtectedRoute>
                   <ReturnPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+
+        // === PRICE NEGOTIATIONS ROUTES ===
+        {
+          path: 'negotiations',
+          children: [
+            // Root negotiations route - redirect based on role
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <NegotiationRedirect />
+                </ProtectedRoute>
+              ),
+            },
+            // Customer negotiations (gửi yêu cầu)
+            {
+              path: 'requests',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+                  <CustomerNegotiationsPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Artisan negotiations (nhận yêu cầu)
+            {
+              path: 'received',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanNegotiationsPage />
+                </ProtectedRoute>
+              ),
+            },
+            // Common detail page
+            {
+              path: ':id',
+              element: (
+                <ProtectedRoute>
+                  <NegotiationDetailPage />
                 </ProtectedRoute>
               ),
             },

@@ -40,13 +40,22 @@ export const usePriceNegotiation = (): UsePriceNegotiationReturn => {
       setLoading(true);
       setError(null);
       const result = await priceNegotiationService.createNegotiation(data);
-      setNegotiation(result);
-      success('Gửi yêu cầu thương lượng giá thành công');
-      return result;
+
+      if (result && result.id) {
+        setNegotiation(result);
+        success('Gửi yêu cầu thương lượng giá thành công');
+        return result;
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err: any) {
-      setError(err.message);
-      showError(err.message || 'Không thể tạo yêu cầu thương lượng');
-      throw err;
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Không thể tạo yêu cầu thương lượng';
+      setError(errorMessage);
+      showError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
