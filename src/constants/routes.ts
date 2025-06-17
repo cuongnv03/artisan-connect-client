@@ -455,8 +455,6 @@ export const NAVIGATION_MENUS = {
       icon: 'trending-up',
       business: true,
       submenu: [
-        { path: ROUTE_PATHS.APP.DISPUTES.MY_DISPUTES, label: 'Tranh chấp' },
-        { path: ROUTE_PATHS.APP.RETURNS.MY_RETURNS, label: 'Trả hàng' },
         {
           path: ROUTE_PATHS.APP.CUSTOM_ORDERS.MY_RECEIVED,
           label: 'Đơn hàng tùy chỉnh',

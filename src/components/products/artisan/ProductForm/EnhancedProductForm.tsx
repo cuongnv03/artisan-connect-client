@@ -78,11 +78,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     loadCategories();
   }, []);
 
-  const handleFormSubmit = async (
-    status: ProductStatus,
-    e?: React.FormEvent,
-  ) => {
-    if (e) e.preventDefault();
+  const handleFormSubmit = async (status: ProductStatus) => {
     const formData = { ...values, status };
     try {
       await handleSubmit(formData as any);
@@ -565,7 +561,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={(e) => handleFormSubmit(ProductStatus.DRAFT, e)}
+                  onClick={() => handleFormSubmit(ProductStatus.DRAFT)} // Bỏ (e) =>
                   disabled={submitting}
                 >
                   Lưu bản nháp
@@ -576,7 +572,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 type="button"
                 loading={submitting}
                 disabled={isSubmitting}
-                onClick={(e) => handleFormSubmit(ProductStatus.PUBLISHED, e)}
+                onClick={() => handleFormSubmit(ProductStatus.PUBLISHED)} // Bỏ (e) =>
               >
                 {isEditing ? 'Cập nhật sản phẩm' : 'Tạo & Xuất bản'}
               </Button>

@@ -51,8 +51,8 @@ import { CheckoutPage } from './pages/cart/CheckoutPage';
 import { OrdersPage } from './pages/orders/OrdersPage';
 import { OrderDetailPage } from './pages/orders/OrderDetailPage';
 import { TrackingPage } from './pages/orders/TrackingPage';
-import { DisputePage } from './pages/orders/DisputePage';
-import { ReturnPage } from './pages/orders/ReturnPage';
+// import { DisputePage } from './pages/orders/DisputePage';
+// import { ReturnPage } from './pages/orders/ReturnPage';
 
 // Price Negotiations
 import { CustomerNegotiationsPage } from './pages/negotiations/customer/CustomerNegotiationsPage';
@@ -398,22 +398,22 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            {
-              path: 'disputes/:disputeId',
-              element: (
-                <ProtectedRoute>
-                  <DisputePage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'returns/:returnId',
-              element: (
-                <ProtectedRoute>
-                  <ReturnPage />
-                </ProtectedRoute>
-              ),
-            },
+            // {
+            //   path: 'disputes/:disputeId',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <DisputePage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
+            // {
+            //   path: 'returns/:returnId',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <ReturnPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
           ],
         },
 
