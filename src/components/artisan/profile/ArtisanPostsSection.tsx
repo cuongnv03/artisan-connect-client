@@ -5,15 +5,15 @@ import {
   FunnelIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-import { useArtisanPosts } from '../../hooks/artisan/useArtisanPosts';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Select } from '../ui/Dropdown';
-import { EmptyState } from '../common/EmptyState';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { PostCard } from '../posts/customer/PostCard';
-import { UserProfileDto } from '../../types/user';
-import { PostType } from '../../types/post';
+import { useArtisanPosts } from '../../../hooks/artisan/useArtisanPosts';
+import { Button } from '../../ui/Button';
+import { Card } from '../../ui/Card';
+import { Select } from '../../ui/Dropdown';
+import { EmptyState } from '../../common/EmptyState';
+import { LoadingSpinner } from '../../ui/LoadingSpinner';
+import { PostCard } from '../../posts/customer/PostCard';
+import { UserProfileDto } from '../../../types/user';
+import { PostType } from '../../../types/post';
 
 interface ArtisanPostsSectionProps {
   artisan: UserProfileDto;

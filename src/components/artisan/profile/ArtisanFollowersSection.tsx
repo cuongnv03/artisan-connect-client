@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useArtisanFollowers } from '../../hooks/artisan/useArtisanFollowers';
-import { Card } from '../ui/Card';
-import { Avatar } from '../ui/Avatar';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { EmptyState } from '../common/EmptyState';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { UserProfileDto } from '../../types/user';
+import { useArtisanFollowers } from '../../../hooks/artisan/useArtisanFollowers';
+import { Card } from '../../ui/Card';
+import { Avatar } from '../../ui/Avatar';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { EmptyState } from '../../common/EmptyState';
+import { LoadingSpinner } from '../../ui/LoadingSpinner';
+import { UserProfileDto } from '../../../types/user';
 
 interface ArtisanFollowersSectionProps {
   artisan: UserProfileDto;

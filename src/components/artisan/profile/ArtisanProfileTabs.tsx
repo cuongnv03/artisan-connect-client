@@ -5,11 +5,11 @@ import {
   StarIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
-import { Tabs } from '../ui/Tabs';
+import { Tabs } from '../../ui/Tabs';
 import { ArtisanPostsSection } from './ArtisanPostsSection';
 import { ArtisanProductsSection } from './ArtisanProductsSection';
 import { ArtisanFollowersSection } from './ArtisanFollowersSection';
-import { UserProfileDto } from '../../types/user';
+import { UserProfileDto } from '../../../types/user';
 
 interface ArtisanProfileTabsProps {
   artisan: UserProfileDto;

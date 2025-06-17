@@ -20,7 +20,7 @@ export interface ArtisanProfile extends BaseEntity {
   isVerified: boolean;
   rating?: number;
   reviewCount: number;
-  totalSales: number; // Thay đổi từ Decimal sang number cho client
+  totalSales: number;
   user?: User;
 }
 

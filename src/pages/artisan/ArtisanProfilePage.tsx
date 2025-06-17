@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { ArtisanProfileHeader } from '../../components/artisan/ArtisanProfileHeader';
-import { ArtisanProfileTabs } from '../../components/artisan/ArtisanProfileTabs';
+import { ArtisanProfileHeader } from '../../components/artisan/profile/ArtisanProfileHeader';
+import { ArtisanProfileTabs } from '../../components/artisan/profile/ArtisanProfileTabs';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
 import { UserGroupIcon } from '@heroicons/react/24/outline';

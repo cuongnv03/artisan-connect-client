@@ -61,9 +61,8 @@ import { NotificationsPage } from './pages/notifications/NotificationsPage';
 
 // Artisan pages
 import { UpgradeRequestPage } from './pages/artisan/UpgradeRequestPage';
-import { DashboardPage as ArtisanDashboardPage } from './pages/artisan/DashboardPage';
-import { CustomizePage as ArtisanCustomizePage } from './pages/artisan/CustomizePage';
-import { AnalyticsPage as ArtisanAnalyticsPage } from './pages/artisan/AnalyticsPage';
+import { DashboardPage } from './pages/artisan/DashboardPage';
+import { CustomizePage } from './pages/artisan/CustomizePage';
 
 // Admin pages
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
@@ -291,7 +290,6 @@ export const router = createBrowserRouter(
         {
           path: 'artisan',
           children: [
-            // Trang cá nhân của chính mình
             {
               path: 'me',
               element: (
@@ -300,25 +298,40 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            // Các route artisan khác...
             {
               path: 'dashboard',
               element: (
                 <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanDashboardPage />
+                  <DashboardPage />
                 </ProtectedRoute>
               ),
             },
-            // ... other artisan routes
+            {
+              path: 'customize',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <CustomizePage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':userId', // Public artisan profile
+              element: (
+                <ProtectedRoute>
+                  <ArtisanProfilePage />
+                </ProtectedRoute>
+              ),
+            },
+            // Upgrade request route
+            {
+              path: 'upgrade',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+                  <UpgradeRequestPage />
+                </ProtectedRoute>
+              ),
+            },
           ],
-        },
-        {
-          path: 'artisan/:userId',
-          element: (
-            <ProtectedRoute>
-              <ArtisanProfilePage />
-            </ProtectedRoute>
-          ),
         },
 
         // // Cart & Checkout
@@ -461,14 +474,6 @@ export const router = createBrowserRouter(
         //           ),
         //         },
         //       ],
-        //     },
-        //     {
-        //       path: 'analytics',
-        //       element: (
-        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //           <ArtisanAnalyticsPage />
-        //         </ProtectedRoute>
-        //       ),
         //     },
         //   ],
         // },

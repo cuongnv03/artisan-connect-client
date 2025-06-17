@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useArtisanProducts } from '../../hooks/artisan/useArtisanProducts';
-import { Button } from '../ui/Button';
-import { EmptyState } from '../common/EmptyState';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { ProductCard } from '../products/customer/ProductCard/ProductCard';
-import { UserProfileDto } from '../../types/user';
+import { useArtisanProducts } from '../../../hooks/artisan/useArtisanProducts';
+import { Button } from '../../ui/Button';
+import { EmptyState } from '../../common/EmptyState';
+import { LoadingSpinner } from '../../ui/LoadingSpinner';
+import { ProductCard } from '../../products/customer/ProductCard/ProductCard';
+import { UserProfileDto } from '../../../types/user';
 
 interface ArtisanProductsSectionProps {
   artisan: UserProfileDto;

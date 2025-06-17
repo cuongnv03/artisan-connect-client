@@ -10,13 +10,13 @@ import {
   PencilIcon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon } from '@heroicons/react/24/solid';
-import { useAuth } from '../../contexts/AuthContext';
-import { useArtisanFollow } from '../../hooks/artisan/useArtisanFollow';
-import { UserProfileDto } from '../../types/user';
-import { Avatar } from '../ui/Avatar';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import { Card } from '../ui/Card';
+import { useAuth } from '../../../contexts/AuthContext';
+import { useArtisanFollow } from '../../../hooks/artisan/useArtisanFollow';
+import { UserProfileDto } from '../../../types/user';
+import { Avatar } from '../../ui/Avatar';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Badge';
+import { Card } from '../../ui/Card';
 
 interface ArtisanProfileHeaderProps {
   artisan: UserProfileDto;

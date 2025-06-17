@@ -133,6 +133,10 @@ export const artisanService = {
     );
   },
 
+  async customizeTemplate(data: { templateId: string; config: any }) {
+    throw new Error('Theme customization is frontend only');
+  },
+
   // async getArtisanStats(): Promise<any> {
   //   return await apiClient.get<any>(API_ENDPOINTS.ARTISANS.STATS);
   // },
