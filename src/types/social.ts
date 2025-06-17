@@ -29,68 +29,6 @@ export interface Like extends BaseEntity {
   post?: Post;
   comment?: Comment;
 }
-export enum WishlistItemType {
-  PRODUCT = 'PRODUCT',
-  POST = 'POST',
-}
-
-// Base Wishlist interface (entity)
-export interface Wishlist extends BaseEntity {
-  userId: string;
-  itemType: WishlistItemType;
-  productId?: string;
-  postId?: string;
-}
-
-export interface WishlistWithDetails {
-  id: string;
-  userId: string;
-  itemType: WishlistItemType;
-  productId?: string;
-  postId?: string;
-  createdAt: Date;
-  product?: {
-    id: string;
-    name: string;
-    slug?: string;
-    images: string[];
-    price: number;
-    discountPrice?: number;
-    status: string;
-    avgRating?: number;
-    reviewCount: number;
-    seller: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      avatarUrl?: string;
-      artisanProfile?: {
-        shopName: string;
-        isVerified: boolean;
-      };
-    };
-  };
-  post?: {
-    id: string;
-    title: string;
-    slug?: string;
-    summary?: string;
-    thumbnailUrl?: string;
-    type: string;
-    createdAt: Date;
-    user: {
-      id: string;
-      username: string;
-      firstName: string;
-      lastName: string;
-      avatarUrl?: string;
-      artisanProfile?: {
-        shopName: string;
-        isVerified: boolean;
-      };
-    };
-  };
-}
 
 // DTOs
 export interface CreateCommentRequest {
@@ -108,27 +46,4 @@ export interface UpdateCommentRequest {
 export interface LikeToggleRequest {
   postId?: string;
   commentId?: string;
-}
-
-export interface AddToWishlistRequest {
-  itemType: WishlistItemType;
-  productId?: string;
-  postId?: string;
-}
-
-export interface WishlistToggleRequest {
-  itemType: WishlistItemType;
-  productId?: string;
-  postId?: string;
-}
-
-// Pagination result cho Wishlist
-export interface WishlistPaginationResult {
-  data: WishlistWithDetails[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
 }

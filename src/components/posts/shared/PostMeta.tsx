@@ -13,10 +13,11 @@ import {
   BookmarkIcon as BookmarkIconSolid,
 } from '@heroicons/react/24/solid';
 import { Post } from '../../../types/post';
-import { WishlistItemType } from '../../../types/social';
+import { WishlistItemType } from '../../../types/wishlist';
 import { Avatar } from '../../ui/Avatar';
 import { Badge } from '../../ui/Badge';
 import { socialService } from '../../../services/social.service';
+import { wishlistService } from '../../../services/wishlist.service';
 import { useToastContext } from '../../../contexts/ToastContext';
 
 interface PostMetaProps {
@@ -66,7 +67,7 @@ export const PostMeta: React.FC<PostMetaProps> = ({
     try {
       const newIsSaved = !isSaved;
       setIsSaved(newIsSaved);
-      await socialService.toggleWishlistItem({
+      await wishlistService.toggleWishlistItem({
         itemType: WishlistItemType.POST,
         postId: post.id,
       });

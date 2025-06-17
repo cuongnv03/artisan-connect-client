@@ -26,7 +26,11 @@ import {
   HeartIcon as HeartIconSolid,
   StarIcon as StarIconSolid,
 } from '@heroicons/react/24/solid';
-import { Review, ReviewStatistics } from '../../../types/product';
+import { ReviewStats } from '../../../components/reviews/ReviewStats';
+import { ReviewsList } from '../../../components/reviews/ReviewsList';
+import { ReviewForm } from '../../../components/reviews/ReviewForm';
+import { useProductReviews } from '../../../hooks/reviews/useProductReviews';
+import { useReview } from '../../../hooks/reviews/useReview';
 import { PriceNegotiationForm } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationForm';
 import { PriceNegotiationStatus } from '../../../components/products/customer/ProductDetailPage/PriceNegotiationStatus';
 import { usePriceNegotiations } from '../../../hooks/price-negotiation/usePriceNegotiations';
@@ -50,14 +54,20 @@ export const ProductDetailPage: React.FC = () => {
     enabled: !!slug,
   });
 
+  const {
+    reviews,
+    statistics,
+    loading: reviewsLoading,
+    refetch: refetchReviews,
+  } = useProductReviews(product.id);
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewStats, setReviewStats] = useState<ReviewStatistics | null>(null);
+  const { createReview, loading: reviewLoading } = useReview();
   const [loadingReviews, setLoadingReviews] = useState(false);
 
   // Load reviews when product loads
@@ -116,25 +126,6 @@ export const ProductDetailPage: React.FC = () => {
     } catch (err: any) {
       console.error('Error canceling negotiation:', err);
       showError(err.message || 'Không thể hủy thương lượng');
-    }
-  };
-
-  const loadReviews = async () => {
-    if (!product?.id) return;
-
-    try {
-      setLoadingReviews(true);
-      const [reviewsData, statsData] = await Promise.all([
-        reviewService.getProductReviews(product.id, { limit: 5 }),
-        reviewService.getProductReviewStatistics(product.id),
-      ]);
-
-      setReviews(reviewsData.reviews.data);
-      setReviewStats(statsData);
-    } catch (err) {
-      console.error('Error loading reviews:', err);
-    } finally {
-      setLoadingReviews(false);
     }
   };
 
@@ -474,118 +465,15 @@ export const ProductDetailPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">
             Đánh giá sản phẩm
           </h2>
-          {authState.isAuthenticated && (
-            <Button variant="outline" size="sm">
-              Viết đánh giá
-            </Button>
-          )}
         </div>
 
-        {reviewStats && (
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <div className="flex items-center space-x-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">
-                  {reviewStats.averageRating.toFixed(1)}
-                </div>
-                <div className="flex items-center justify-center mt-1">
-                  {renderStars(Math.round(reviewStats.averageRating))}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  {reviewStats.totalReviews} đánh giá
-                </div>
-              </div>
+        {statistics && <ReviewStats statistics={statistics} className="mb-6" />}
 
-              <div className="flex-1">
-                {Object.entries(reviewStats.ratingDistribution)
-                  .reverse()
-                  .map(([rating, count]) => (
-                    <div key={rating} className="flex items-center mb-2">
-                      <span className="text-sm w-8">{rating}★</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-2 mx-3">
-                        <div
-                          className="bg-yellow-400 h-2 rounded-full"
-                          style={{
-                            width: `${
-                              (count / reviewStats.totalReviews) * 100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600 w-8">{count}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {loadingReviews ? (
-          <div className="text-center py-8">
-            <LoadingSpinner />
-          </div>
-        ) : reviews.length > 0 ? (
-          <div className="space-y-6">
-            {reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6">
-                <div className="flex items-start space-x-4">
-                  <Avatar
-                    src={review.user?.avatarUrl}
-                    alt={`${review.user?.firstName} ${review.user?.lastName}`}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium text-gray-900">
-                        {review.user?.firstName} {review.user?.lastName}
-                      </h4>
-                      {review.isVerifiedPurchase && (
-                        <Badge variant="success" size="sm">
-                          Đã mua hàng
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center mb-2">
-                      {renderStars(review.rating)}
-                      <span className="ml-2 text-sm text-gray-500">
-                        {new Date(review.createdAt).toLocaleDateString('vi-VN')}
-                      </span>
-                    </div>
-                    {review.title && (
-                      <h5 className="font-medium text-gray-900 mb-2">
-                        {review.title}
-                      </h5>
-                    )}
-                    {review.comment && (
-                      <p className="text-gray-600 mb-3">{review.comment}</p>
-                    )}
-                    {review.images.length > 0 && (
-                      <div className="flex space-x-2">
-                        {review.images.map((image, index) => (
-                          <img
-                            key={index}
-                            src={image}
-                            alt={`Review ${index + 1}`}
-                            className="w-16 h-16 object-cover rounded-lg"
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {reviewStats && reviews.length < reviewStats.totalReviews && (
-              <div className="text-center">
-                <Button variant="outline">Xem thêm đánh giá</Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            Chưa có đánh giá nào cho sản phẩm này
-          </div>
-        )}
+        <ReviewsList
+          reviews={reviews}
+          loading={reviewsLoading}
+          onLoadMore={hasMore ? loadMore : undefined}
+        />
       </div>
 
       {/* Cancel Negotiation Modal */}

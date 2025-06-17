@@ -3,15 +3,9 @@ import { API_ENDPOINTS } from '../constants/api';
 import {
   Comment,
   Like,
-  Wishlist,
-  WishlistWithDetails,
-  WishlistItemType,
-  WishlistPaginationResult,
   CreateCommentRequest,
   UpdateCommentRequest,
   LikeToggleRequest,
-  AddToWishlistRequest,
-  WishlistToggleRequest,
 } from '../types/social';
 import { PaginatedResponse } from '../types/common';
 import { User } from '../types/auth';
@@ -26,12 +20,6 @@ export interface GetCommentsQuery {
 }
 
 export interface GetLikesQuery {
-  page?: number;
-  limit?: number;
-}
-
-export interface GetWishlistQuery {
-  itemType?: WishlistItemType;
   page?: number;
   limit?: number;
 }
@@ -103,48 +91,6 @@ export const socialService = {
     return await apiClient.get<PaginatedResponse<Comment>>(
       API_ENDPOINTS.SOCIAL.COMMENT_REPLIES(commentId),
       query,
-    );
-  },
-
-  // Wishlist methods
-  async addToWishlist(data: AddToWishlistRequest): Promise<Wishlist> {
-    return await apiClient.post<Wishlist>(API_ENDPOINTS.SOCIAL.WISHLIST, data);
-  },
-
-  async removeFromWishlist(
-    itemType: WishlistItemType,
-    itemId: string,
-  ): Promise<void> {
-    await apiClient.delete(
-      API_ENDPOINTS.SOCIAL.WISHLIST_ITEM(itemType, itemId),
-    );
-  },
-
-  async toggleWishlistItem(data: WishlistToggleRequest): Promise<{
-    inWishlist: boolean;
-    message: string;
-  }> {
-    return await apiClient.post<{
-      inWishlist: boolean;
-      message: string;
-    }>(API_ENDPOINTS.SOCIAL.WISHLIST_TOGGLE, data);
-  },
-
-  async getWishlistItems(
-    query: GetWishlistQuery = {},
-  ): Promise<WishlistPaginationResult> {
-    return await apiClient.get<WishlistPaginationResult>(
-      API_ENDPOINTS.SOCIAL.WISHLIST,
-      query,
-    );
-  },
-
-  async checkWishlistStatus(
-    itemType: WishlistItemType,
-    itemId: string,
-  ): Promise<{ inWishlist: boolean }> {
-    return await apiClient.get<{ inWishlist: boolean }>(
-      API_ENDPOINTS.SOCIAL.WISHLIST_CHECK(itemType, itemId),
     );
   },
 };

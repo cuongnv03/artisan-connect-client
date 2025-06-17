@@ -175,8 +175,14 @@ export const ROUTE_PATHS = {
     RETURNS: '/admin/returns', // API: GET /orders/admin/returns
     RETURN_DETAIL: '/admin/returns/:returnId', // API: GET /orders/returns/:id
 
-    // === REVIEWS MANAGEMENT ===
-    REVIEWS: '/admin/reviews', // API: GET /reviews (admin view)
+    // === REVIEWS MODULE ===
+    REVIEWS: {
+      MY_REVIEWS: '/reviews/my-reviews',
+      REVIEWABLE: '/reviews/reviewable-products',
+    },
+
+    // === WISHLIST MODULE ===
+    WISHLIST: '/wishlist',
 
     // === NOTIFICATIONS MANAGEMENT ===
     NOTIFICATIONS: '/admin/notifications', // API: GET /notifications (admin view)

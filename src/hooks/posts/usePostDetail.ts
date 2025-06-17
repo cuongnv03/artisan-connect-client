@@ -4,8 +4,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import { postService } from '../../services/post.service';
 import { socialService } from '../../services/social.service';
+import { wishlistService } from '../../services/wishlist.service';
 import { Post } from '../../types/post';
-import { Comment, WishlistItemType } from '../../types/social';
+import { Comment } from '../../types/social';
+import { WishlistItemType } from '../../types/wishlist';
 
 // Helper function để check UUID
 const isUUID = (str: string): boolean => {
@@ -154,7 +156,7 @@ export const usePostDetail = () => {
     try {
       const newIsSaved = !isSaved;
       setIsSaved(newIsSaved);
-      await socialService.toggleWishlistItem({
+      await wishlistService.toggleWishlistItem({
         itemType: WishlistItemType.POST,
         postId: post.id,
       });

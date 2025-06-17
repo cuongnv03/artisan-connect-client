@@ -58,7 +58,8 @@ export type { Order, OrderStatus } from './order';
 export type { ArtisanProfile, UpgradeRequestStatus } from './artisan';
 export type { Message, MessageType, Conversation } from './message';
 export type { Notification, NotificationType } from './notification';
-export type { Comment, Like, WishlistItemType } from './social';
+export type { Comment, Like } from './social';
+export type { Wishlist } from './wishlist';
 export type { CartItem, CartSummary, CartValidation } from './cart';
 export type {
   OrderWithDetails,

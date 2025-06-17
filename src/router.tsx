@@ -59,6 +59,10 @@ import { CustomerNegotiationsPage } from './pages/negotiations/customer/Customer
 import { ArtisanNegotiationsPage } from './pages/negotiations/artisan/ArtisanNegotiationsPage';
 import { NegotiationDetailPage } from './pages/negotiations/common/NegotiationDetailPage';
 
+import { MyReviewsPage } from './pages/reviews/MyReviewsPage';
+import { ReviewableProductsPage } from './pages/reviews/ReviewableProductsPage';
+import { WishlistPage } from './pages/wishlist/WishlistPage';
+
 // Messages
 import { MessagesPage } from './pages/messages/MessagesPage';
 import { ConversationPage } from './pages/messages/ConversationPage';
@@ -447,6 +451,36 @@ export const router = createBrowserRouter(
               ),
             },
           ],
+        },
+
+        {
+          path: '/reviews',
+          children: [
+            {
+              path: 'my-reviews',
+              element: (
+                <ProtectedRoute>
+                  <MyReviewsPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'reviewable-products',
+              element: (
+                <ProtectedRoute>
+                  <ReviewableProductsPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+        {
+          path: '/wishlist',
+          element: (
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          ),
         },
 
         // // Messages
