@@ -11,6 +11,10 @@ import {
   GetProductsQuery,
   SearchProductsQuery,
   ProductStats,
+  CategoryQueryOptions,
+  CreateCategoryAttributeTemplateRequest,
+  UpdateCategoryRequest,
+  CreateCategoryRequest,
 } from '../types/product';
 import { PaginatedResponse } from '../types/common';
 
@@ -127,6 +131,61 @@ export const productService = {
   ): Promise<CategoryAttributeTemplate[]> {
     return await apiClient.get<CategoryAttributeTemplate[]>(
       API_ENDPOINTS.CATEGORIES.ATTRIBUTE_TEMPLATES(categoryId),
+    );
+  },
+
+  // === CATEGORY MANAGEMENT (ADMIN) ===
+  async createCategory(data: CreateCategoryRequest): Promise<Category> {
+    return await apiClient.post<Category>(API_ENDPOINTS.CATEGORIES.BASE, data);
+  },
+
+  async updateCategory(
+    id: string,
+    data: UpdateCategoryRequest,
+  ): Promise<Category> {
+    return await apiClient.patch<Category>(
+      API_ENDPOINTS.CATEGORIES.BY_ID(id),
+      data,
+    );
+  },
+
+  async deleteCategory(id: string): Promise<void> {
+    await apiClient.delete(API_ENDPOINTS.CATEGORIES.BY_ID(id));
+  },
+
+  // === CATEGORY ATTRIBUTE TEMPLATES ===
+  async createCategoryAttributeTemplate(
+    categoryId: string,
+    data: CreateCategoryAttributeTemplateRequest,
+  ): Promise<CategoryAttributeTemplate> {
+    return await apiClient.post<CategoryAttributeTemplate>(
+      API_ENDPOINTS.CATEGORIES.ATTRIBUTE_TEMPLATES(categoryId),
+      data,
+    );
+  },
+
+  async updateCategoryAttributeTemplate(
+    templateId: string,
+    data: Partial<CreateCategoryAttributeTemplateRequest>,
+  ): Promise<CategoryAttributeTemplate> {
+    return await apiClient.patch<CategoryAttributeTemplate>(
+      `/categories/templates/${templateId}`,
+      data,
+    );
+  },
+
+  async deleteCategoryAttributeTemplate(templateId: string): Promise<void> {
+    await apiClient.delete(`/categories/templates/${templateId}`);
+  },
+
+  // === ENHANCED CATEGORY QUERIES ===
+  async getCategoryWithOptions(
+    slug: string,
+    options: CategoryQueryOptions = {},
+  ): Promise<Category> {
+    return await apiClient.get<Category>(
+      API_ENDPOINTS.CATEGORIES.BY_SLUG(slug),
+      options,
     );
   },
 };

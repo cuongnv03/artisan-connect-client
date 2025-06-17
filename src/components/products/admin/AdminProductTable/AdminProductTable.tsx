@@ -4,31 +4,38 @@ import { Product } from '../../../../types/product';
 import { Button } from '../../../ui/Button';
 import { Badge } from '../../../ui/Badge';
 import { ConfirmModal } from '../../../ui/Modal';
+import { Select } from '../../../ui/Dropdown';
+import { useToastContext } from '../../../../contexts/ToastContext';
 import {
-  PencilIcon,
-  TrashIcon,
   EyeIcon,
-  ClipboardDocumentIcon,
+  TrashIcon,
+  UserIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
   PhotoIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 
-interface ProductTableProps {
+interface AdminProductTableProps {
   products: Product[];
   loading?: boolean;
-  onDelete?: (productId: string) => void;
-  onDuplicate?: (productId: string) => void;
-  onToggleStatus?: (productId: string, status: string) => void;
+  onDelete?: (productId: string) => Promise<void>;
+  onStatusUpdate?: (productId: string, status: string) => Promise<void>;
 }
 
-export const ProductTable: React.FC<ProductTableProps> = ({
+export const AdminProductTable: React.FC<AdminProductTableProps> = ({
   products,
   loading = false,
   onDelete,
-  onDuplicate,
-  onToggleStatus,
+  onStatusUpdate,
 }) => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>(
+    {},
+  );
+  const { success, error } = useToastContext();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -39,18 +46,36 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      PUBLISHED: { variant: 'success' as const, label: 'Đã xuất bản' },
-      DRAFT: { variant: 'secondary' as const, label: 'Bản nháp' },
-      OUT_OF_STOCK: { variant: 'warning' as const, label: 'Hết hàng' },
-      DELETED: { variant: 'danger' as const, label: 'Đã xóa' },
+      PUBLISHED: {
+        variant: 'success' as const,
+        label: 'Đã xuất bản',
+        icon: CheckCircleIcon,
+      },
+      DRAFT: {
+        variant: 'secondary' as const,
+        label: 'Bản nháp',
+        icon: ClockIcon,
+      },
+      OUT_OF_STOCK: {
+        variant: 'warning' as const,
+        label: 'Hết hàng',
+        icon: XCircleIcon,
+      },
+      DELETED: { variant: 'danger' as const, label: 'Đã xóa', icon: TrashIcon },
     };
 
     const config = statusMap[status as keyof typeof statusMap] || {
       variant: 'secondary' as const,
       label: status,
+      icon: ClockIcon,
     };
 
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <config.icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
   };
 
   const handleDeleteClick = (productId: string) => {
@@ -58,20 +83,46 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     setDeleteModalOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (productToDelete && onDelete) {
-      onDelete(productToDelete);
+      try {
+        await onDelete(productToDelete);
+        success('Xóa sản phẩm thành công');
+      } catch (err: any) {
+        error(err.message);
+      }
     }
     setDeleteModalOpen(false);
     setProductToDelete(null);
   };
+
+  const handleStatusChange = async (productId: string, newStatus: string) => {
+    if (!onStatusUpdate) return;
+
+    setUpdatingStatus((prev) => ({ ...prev, [productId]: true }));
+    try {
+      await onStatusUpdate(productId, newStatus);
+      success('Cập nhật trạng thái thành công');
+    } catch (err: any) {
+      error(err.message);
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [productId]: false }));
+    }
+  };
+
+  const statusOptions = [
+    { label: 'Đã xuất bản', value: 'PUBLISHED' },
+    { label: 'Bản nháp', value: 'DRAFT' },
+    { label: 'Hết hàng', value: 'OUT_OF_STOCK' },
+    { label: 'Đã xóa', value: 'DELETED' },
+  ];
 
   if (loading) {
     return (
       <div className="animate-pulse">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            <div key={i} className="h-20 bg-gray-200 rounded"></div>
           ))}
         </div>
       </div>
@@ -86,6 +137,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Sản phẩm
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nghệ nhân
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Giá
@@ -127,7 +181,39 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                         {product.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {product.sku || 'Không có SKU'}
+                        SKU: {product.sku || 'Không có'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        ID: {product.id}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 h-8 w-8">
+                      {product.seller?.avatarUrl ? (
+                        <img
+                          className="h-8 w-8 rounded-full"
+                          src={product.seller.avatarUrl}
+                          alt={`${product.seller.firstName} ${product.seller.lastName}`}
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                          <UserIcon className="h-4 w-4 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-3">
+                      <div className="text-sm font-medium text-gray-900 flex items-center">
+                        {product.seller?.artisanProfile?.shopName ||
+                          `${product.seller?.firstName} ${product.seller?.lastName}`}
+                        {product.seller?.artisanProfile?.isVerified && (
+                          <ShieldCheckIcon className="w-4 h-4 text-blue-500 ml-1" />
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        @{product.seller?.username}
                       </div>
                     </div>
                   </div>
@@ -148,11 +234,22 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {getStatusBadge(product.status)}
+                  <div className="space-y-2">
+                    {getStatusBadge(product.status)}
+                    <Select
+                      value={product.status}
+                      onChange={(value) =>
+                        handleStatusChange(product.id, value)
+                      }
+                      options={statusOptions}
+                      size="sm"
+                      disabled={updatingStatus[product.id]}
+                    />
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div>Xem: {product.viewCount}</div>
-                  <div>Bán: {product.salesCount}</div>
+                  <div>Xem: {product.viewCount.toLocaleString()}</div>
+                  <div>Bán: {product.salesCount.toLocaleString()}</div>
                   {product.avgRating && (
                     <div>★ {product.avgRating.toFixed(1)}</div>
                   )}
@@ -160,32 +257,20 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">
                     <Link to={`/products/${product.slug || product.id}`}>
-                      {' '}
-                      {/* View product */}
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" title="Xem sản phẩm">
                         <EyeIcon className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Link to={`/products/manage/${product.id}/edit`}>
-                      {' '}
-                      {/* Edit product - correct route */}
-                      <Button variant="ghost" size="sm">
-                        <PencilIcon className="h-4 w-4" />
+                    <Link to={`/admin/products/${product.id}`}>
+                      <Button variant="ghost" size="sm" title="Chi tiết admin">
+                        <UserIcon className="h-4 w-4" />
                       </Button>
                     </Link>
-                    {onDuplicate && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDuplicate(product.id)}
-                      >
-                        <ClipboardDocumentIcon className="h-4 w-4" />
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteClick(product.id)}
+                      title="Xóa sản phẩm"
                     >
                       <TrashIcon className="h-4 w-4 text-red-500" />
                     </Button>
@@ -203,12 +288,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           <p className="text-lg font-medium text-gray-900 mb-2">
             Chưa có sản phẩm nào
           </p>
-          <p className="text-gray-500 mb-6">
-            Tạo sản phẩm đầu tiên để bắt đầu bán hàng
+          <p className="text-gray-500">
+            Hiện tại chưa có sản phẩm nào trong hệ thống
           </p>
-          <Link to="/products/manage/create">
-            <Button>Tạo sản phẩm</Button>
-          </Link>
         </div>
       )}
 

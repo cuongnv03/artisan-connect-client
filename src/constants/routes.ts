@@ -37,9 +37,9 @@ export const ROUTE_PATHS = {
       SEARCH: '/products/search', // API: GET /products/search
       CATEGORY: '/products/category/:categorySlug', // API: GET /categories/slug/:slug
       MY_PRODUCTS: '/products/manage', // API: GET /products/my/products (artisan only)
-      CREATE: '/products/create', // API: POST /products (artisan only)
-      EDIT: '/products/:id/edit', // API: PUT /products/:id (artisan only)
-      STATS: '/products/stats', // API: GET /products/my/stats (artisan only)
+      CREATE: '/products/manage/create', // API: POST /products (artisan only)
+      EDIT: '/products/manage/:productId/edit', // API: PUT /products/:id (artisan only)
+      STATS: '/products/manage/stats', // API: GET /products/my/stats (artisan only)
     },
 
     // === ORDERS MODULE ===
@@ -150,8 +150,10 @@ export const ROUTE_PATHS = {
     PRODUCT_DETAIL: '/admin/products/:productId', // API: GET /products/:id
 
     // === CATEGORY MANAGEMENT ===
-    CATEGORIES: '/admin/categories', // API: GET /categories
-    CATEGORY_DETAIL: '/admin/categories/:categoryId', // API: GET /categories/:id
+    CATEGORIES: '/admin/categories',
+    CATEGORY_CREATE: '/admin/categories/create',
+    CATEGORY_EDIT: '/admin/categories/:categoryId/edit',
+    CATEGORY_ATTRIBUTES: '/admin/categories/:categoryId/attributes',
 
     // === ORDER MANAGEMENT ===
     ORDERS: '/admin/orders', // API: GET /orders (admin view)

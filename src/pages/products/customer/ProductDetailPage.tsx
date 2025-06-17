@@ -10,6 +10,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Modal } from '../../../components/ui/Modal';
 import { Avatar } from '../../../components/ui/Avatar';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
+import { ProductVariantSelector } from '../../../components/products/customer/ProductVariantSelector/ProductVariantSelector';
 import {
   HeartIcon,
   ShareIcon,
@@ -28,15 +29,15 @@ import {
 import { Review, ReviewStatistics } from '../../../types/product';
 
 export const ProductDetailPage: React.FC = () => {
-  const { productId } = useParams<{ productId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { state: authState } = useAuth();
   const { addToCart } = useCart();
   const { success, error: showError } = useToastContext();
 
   const { product, loading, error, refetch } = useProduct({
-    productId,
-    enabled: !!productId,
+    slug,
+    enabled: !!slug,
   });
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -267,6 +268,18 @@ export const ProductDetailPage: React.FC = () => {
                 </Button>
               </div>
             )}
+
+            {product.hasVariants &&
+              product.variants &&
+              product.variants.length > 0 && (
+                <div className="mb-6">
+                  <ProductVariantSelector
+                    variants={product.variants}
+                    selectedVariantId={selectedVariant || undefined}
+                    onVariantChange={setSelectedVariant}
+                  />
+                </div>
+              )}
 
             {/* Quantity & Actions */}
             <div className="mb-6">

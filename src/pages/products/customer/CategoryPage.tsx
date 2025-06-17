@@ -5,6 +5,7 @@ import { productService } from '../../../services/product.service';
 import { Category } from '../../../types/product';
 import { ProductGrid } from '../../../components/products/customer/ProductGrid/ProductGrid';
 import { ProductFilters } from '../../../components/products/customer/ProductFilters/ProductFilters';
+import { CategoryBreadcrumb } from '../../../components/products/common/CategoryBreadcrumb/CategoryBreadcrumb';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { ArrowLeftIcon, FunnelIcon } from '@heroicons/react/24/outline';
@@ -28,7 +29,8 @@ export const CategoryPage: React.FC = () => {
     loadMore,
     refetch,
   } = useProducts({
-    categoryIds: category?.id,
+    isMyProducts: false, // Public products
+    categoryIds: category?.id ? [category.id] : undefined, // Pass as array
     ...filters,
     limit: 20,
     enabled: !!category,
@@ -86,18 +88,7 @@ export const CategoryPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/products')}
-          leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
-        >
-          Cửa hàng
-        </Button>
-        <span>/</span>
-        <span className="text-gray-900">{category.name}</span>
-      </nav>
+      <CategoryBreadcrumb category={category} className="mb-6" />
 
       {/* Category Header */}
       <div className="mb-8">

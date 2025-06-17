@@ -271,3 +271,45 @@ export interface ReviewStatistics {
     5: number;
   };
 }
+
+export interface CategoryQueryOptions {
+  includeParent?: boolean;
+  includeChildren?: boolean;
+  includeProductCount?: boolean;
+  includeAttributeTemplates?: boolean;
+}
+
+export interface CreateCategoryRequest {
+  name: string;
+  description?: string;
+  imageUrl?: string;
+  parentId?: string;
+  sortOrder?: number;
+}
+
+export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {
+  isActive?: boolean;
+}
+
+export interface CreateCategoryAttributeTemplateRequest {
+  name: string;
+  key: string;
+  type: AttributeType;
+  isRequired?: boolean;
+  isVariant?: boolean;
+  options?: string[];
+  unit?: string;
+  sortOrder?: number;
+  description?: string;
+}
+
+// Thêm interface cho product pagination result
+export interface ProductPaginationResult {
+  data: Product[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}

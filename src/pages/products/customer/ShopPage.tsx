@@ -27,6 +27,7 @@ export const ShopPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const { products, loading, error, hasMore, loadMore, refetch } = useProducts({
+    isMyProducts: false, // Explicitly set to false for public products
     ...filters,
     limit: 20,
   });

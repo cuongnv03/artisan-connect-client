@@ -77,6 +77,11 @@ import { ServerErrorPage } from './pages/error/ServerErrorPage';
 // Protected Route component
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { UserRole } from './types/auth';
+import { AdminProductsPage } from './pages/products/admin/AdminProductsPage';
+import { CategoryAttributesPage } from './pages/products/admin/CategoryAttributesPage';
+import { AdminCategoriesPage } from './pages/products/admin/AdminCategoriesPage';
+import { CreateCategoryPage } from './pages/products/admin/CreateCategoryPage';
+import { EditCategoryPage } from './pages/products/admin/EditCategoryPage';
 
 export const router = createBrowserRouter(
   [
@@ -209,7 +214,7 @@ export const router = createBrowserRouter(
               ),
             },
             {
-              path: ':productId',
+              path: ':slug',
               element: (
                 <ProtectedRoute>
                   <ProductDetailPage />
@@ -245,6 +250,14 @@ export const router = createBrowserRouter(
                     </ProtectedRoute>
                   ),
                 },
+                // {
+                //   path: 'stats',
+                //   element: (
+                //     <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                //       <ProductStatsPage />
+                //     </ProtectedRoute>
+                //   ),
+                // },
               ],
             },
           ],
@@ -498,6 +511,40 @@ export const router = createBrowserRouter(
         //   path: 'artisan-requests',
         //   element: <ArtisanRequestsPage />,
         // },
+        {
+          path: 'products',
+          children: [
+            {
+              index: true,
+              element: <AdminProductsPage />,
+            },
+            // {
+            //   path: ':productId',
+            //   element: <AdminProductDetailPage />,
+            // },
+          ],
+        },
+        {
+          path: 'categories',
+          children: [
+            {
+              index: true,
+              element: <AdminCategoriesPage />,
+            },
+            {
+              path: 'create',
+              element: <CreateCategoryPage />,
+            },
+            {
+              path: ':categoryId/edit',
+              element: <EditCategoryPage />,
+            },
+            {
+              path: ':categoryId/attributes',
+              element: <CategoryAttributesPage />,
+            },
+          ],
+        },
         {
           path: 'posts',
           element: <PostsManagementPage />,

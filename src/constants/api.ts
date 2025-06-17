@@ -241,4 +241,20 @@ export const API_ENDPOINTS = {
     VIDEO: '/upload/video',
     MULTIPLE: '/upload/multiple',
   },
+
+  // Admin
+  ADMIN: {
+    PRODUCTS: {
+      BASE: '/admin/products',
+      BY_ID: (id: string) => `/admin/products/${id}`,
+      UPDATE_STATUS: (id: string) => `/admin/products/${id}/status`,
+      STATISTICS: '/admin/products/statistics',
+    },
+    CATEGORIES: {
+      BASE: '/admin/categories',
+      BY_ID: (id: string) => `/admin/categories/${id}`,
+      ATTRIBUTE_TEMPLATES: (categoryId: string) =>
+        `/admin/categories/${categoryId}/attributes`,
+    },
+  },
 } as const;

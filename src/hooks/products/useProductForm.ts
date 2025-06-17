@@ -74,7 +74,7 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
       if (onSuccess) {
         onSuccess(product);
       } else {
-        navigate('/products/manage');
+        navigate('/products/manage'); // Correct route
       }
     } catch (err: any) {
       showError(

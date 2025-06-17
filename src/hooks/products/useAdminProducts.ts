@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { productService } from '../../services/product.service';
 import { Product, GetProductsQuery } from '../../types/product';
 import { PaginatedResponse } from '../../types/common';
 
-export interface UseProductsOptions extends GetProductsQuery {
+export interface UseAdminProductsOptions extends GetProductsQuery {
   enabled?: boolean;
-  isMyProducts?: boolean; // New option to distinguish
 }
 
-export interface UseProductsReturn {
+export interface UseAdminProductsReturn {
   products: Product[];
   loading: boolean;
   error: string | null;
@@ -22,13 +20,14 @@ export interface UseProductsReturn {
   refetch: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;
+  deleteProduct: (productId: string) => Promise<void>;
+  updateProductStatus: (productId: string, status: string) => Promise<void>;
 }
 
-export const useProducts = (
-  options: UseProductsOptions = {},
-): UseProductsReturn => {
-  const { enabled = true, isMyProducts = false, ...query } = options;
-  const { state: authState } = useAuth();
+export const useAdminProducts = (
+  options: UseAdminProductsOptions = {},
+): UseAdminProductsReturn => {
+  const { enabled = true, ...query } = options;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
@@ -46,22 +45,13 @@ export const useProducts = (
       setLoading(true);
       setError(null);
 
-      let response: PaginatedResponse<Product>;
-
-      if (isMyProducts) {
-        // Call artisan's own products endpoint
-        response = await productService.getMyProducts({
+      // Admin sees all products regardless of seller
+      const response: PaginatedResponse<Product> =
+        await productService.getProducts({
           ...query,
           page: reset ? 1 : pagination.currentPage + 1,
+          // Don't filter by sellerId for admin
         });
-      } else {
-        // Call public products endpoint
-        response = await productService.getProducts({
-          ...query,
-          page: reset ? 1 : pagination.currentPage + 1,
-          userId: authState.user?.id,
-        });
-      }
 
       if (reset) {
         setProducts(response.data);
@@ -85,6 +75,30 @@ export const useProducts = (
     }
   };
 
+  const deleteProduct = async (productId: string) => {
+    try {
+      await productService.deleteProduct(productId);
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+    } catch (err: any) {
+      throw new Error(err.message || 'Không thể xóa sản phẩm');
+    }
+  };
+
+  const updateProductStatus = async (productId: string, status: string) => {
+    try {
+      const updatedProduct = await productService.updateProduct(productId, {
+        status,
+      } as any);
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === productId ? { ...p, status: updatedProduct.status } : p,
+        ),
+      );
+    } catch (err: any) {
+      throw new Error(err.message || 'Không thể cập nhật trạng thái sản phẩm');
+    }
+  };
+
   const refetch = () => fetchProducts(true);
   const loadMore = () => fetchProducts(false);
 
@@ -92,7 +106,7 @@ export const useProducts = (
     if (enabled) {
       fetchProducts(true);
     }
-  }, [enabled, isMyProducts, JSON.stringify(query)]);
+  }, [enabled, JSON.stringify(query)]);
 
   return {
     products,
@@ -102,5 +116,7 @@ export const useProducts = (
     refetch,
     loadMore,
     hasMore: pagination.currentPage < pagination.totalPages,
+    deleteProduct,
+    updateProductStatus,
   };
 };

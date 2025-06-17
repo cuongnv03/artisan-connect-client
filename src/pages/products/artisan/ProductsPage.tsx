@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '../../../hooks/products/useProducts';
+import { useProductStats } from '../../../hooks/products/useProductStats';
 import { productService } from '../../../services/product.service';
 import { useToastContext } from '../../../contexts/ToastContext';
 import { ProductTable } from '../../../components/products/artisan/ProductTable/ProductTable';
@@ -8,7 +9,6 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Dropdown';
 import { Card } from '../../../components/ui/Card';
-import { Badge } from '../../../components/ui/Badge';
 import { Tabs } from '../../../components/ui/Tabs';
 import {
   PlusIcon,
@@ -16,7 +16,7 @@ import {
   ChartBarIcon,
   EyeIcon,
   ShoppingCartIcon,
-  CurrencyDollarIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 
 export const ProductsPage: React.FC = () => {
@@ -26,6 +26,9 @@ export const ProductsPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const { stats, loading: statsLoading, error: statsError } = useProductStats();
+
+  // Use isMyProducts=true for artisan management
   const {
     products,
     loading,
@@ -33,34 +36,13 @@ export const ProductsPage: React.FC = () => {
     pagination,
     refetch,
   } = useProducts({
+    isMyProducts: true, // This will call /api/products/my/products
     search: searchQuery || undefined,
     status: statusFilter !== 'ALL' ? statusFilter : undefined,
     sortBy,
     sortOrder,
     limit: 20,
   });
-
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    publishedProducts: 0,
-    draftProducts: 0,
-    outOfStockProducts: 0,
-    totalViews: 0,
-    totalSales: 0,
-  });
-
-  // Load stats
-  React.useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const statsData = await productService.getMyProductStats();
-        setStats(statsData);
-      } catch (err) {
-        console.error('Error loading stats:', err);
-      }
-    };
-    loadStats();
-  }, []);
 
   const handleDelete = async (productId: string) => {
     try {
@@ -74,8 +56,8 @@ export const ProductsPage: React.FC = () => {
 
   const handleDuplicate = async (productId: string) => {
     try {
-      const product = await productService.getProduct(productId);
-      window.location.href = `/products/create?duplicate=${productId}`; // Đổi route
+      // Navigate to create page with duplicate parameter
+      window.location.href = `/products/manage/create?duplicate=${productId}`;
     } catch (err: any) {
       error(err.message || 'Không thể sao chép sản phẩm');
     }
@@ -132,7 +114,7 @@ export const ProductsPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Quản lý sản phẩm</h1>
           <p className="text-gray-600">Quản lý tất cả sản phẩm của bạn</p>
         </div>
-        <Link to="/products/create">
+        <Link to="/products/manage/create">
           <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
             Tạo sản phẩm mới
           </Button>
@@ -149,7 +131,7 @@ export const ProductsPage: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Tổng sản phẩm</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.totalProducts}
+                {statsLoading ? '...' : stats.totalProducts}
               </p>
             </div>
           </div>
@@ -163,7 +145,7 @@ export const ProductsPage: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Lượt xem</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.totalViews}
+                {statsLoading ? '...' : stats.totalViews.toLocaleString()}
               </p>
             </div>
           </div>
@@ -177,7 +159,7 @@ export const ProductsPage: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Đã bán</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.totalSales}
+                {statsLoading ? '...' : stats.totalSales.toLocaleString()}
               </p>
             </div>
           </div>
@@ -186,15 +168,28 @@ export const ProductsPage: React.FC = () => {
         <Card className="p-6">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
-              <CurrencyDollarIcon className="w-6 h-6 text-yellow-600" />
+              <StarIcon className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Doanh thu</p>
-              <p className="text-2xl font-bold text-gray-900">-</p>
+              <p className="text-sm font-medium text-gray-600">Đánh giá TB</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {statsLoading
+                  ? '...'
+                  : stats.avgRating
+                  ? stats.avgRating.toFixed(1)
+                  : 'Chưa có'}
+              </p>
             </div>
           </div>
         </Card>
       </div>
+
+      {/* Error States */}
+      {statsError && (
+        <Card className="p-4 mb-6 bg-red-50 border-red-200">
+          <p className="text-red-600">Lỗi tải thống kê: {statsError}</p>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card className="p-6 mb-6">
@@ -253,6 +248,16 @@ export const ProductsPage: React.FC = () => {
             Thử lại
           </Button>
         </div>
+      )}
+
+      {/* Debug info - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <Card className="p-4 mt-6 bg-gray-50">
+          <p className="text-sm text-gray-600">
+            <strong>Debug:</strong> API Mode: My Products | Products Count:{' '}
+            {products.length} | Total: {pagination.total}
+          </p>
+        </Card>
       )}
     </div>
   );
