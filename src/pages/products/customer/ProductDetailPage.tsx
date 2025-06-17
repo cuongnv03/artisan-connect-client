@@ -117,25 +117,24 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!product || !authState.isAuthenticated) return;
-
-    setIsAddingToCart(true);
-    try {
-      await addToCart(product.id, quantity, selectedVariant || undefined);
-      success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
-    } catch (err: any) {
-      showError(err.message || 'Không thể thêm sản phẩm vào giỏ hàng');
-    } finally {
-      setIsAddingToCart(false);
-    }
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
     }).format(price);
+  };
+
+  const handleAddToCart = async () => {
+    if (!authState.isAuthenticated) return;
+
+    setIsAddingToCart(true);
+    try {
+      await addToCart(product.id, 1);
+    } catch (err) {
+      // Error handled in cart context
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const renderStars = (rating: number) => {

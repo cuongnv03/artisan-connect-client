@@ -7,6 +7,7 @@ import {
   ShoppingBagIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { useToastContext } from '../../contexts/ToastContext';
 import { useCart } from '../../contexts/CartContext';
@@ -18,12 +19,13 @@ import {
   PaymentMethodType,
   CreateOrderFromCartRequest,
 } from '../../types/order';
-import { Address } from '../../types/user';
+import { Address, CreateAddressRequest } from '../../types/user';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Modal } from '../../components/ui/Modal';
+import { AddressForm } from '../../components/profile/AddressForm';
 import { useForm } from '../../hooks/useForm';
 
 interface CheckoutFormData {
@@ -47,6 +49,7 @@ export const CheckoutPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const [orderData, setOrderData] = useState<CheckoutFormData | null>(null);
   const [customOrderData, setCustomOrderData] = useState<any>(null);
 
@@ -109,10 +112,6 @@ export const CheckoutPage: React.FC = () => {
     },
     onSubmit: handlePayment,
   });
-
-  useEffect(() => {
-    loadCheckoutData();
-  }, []);
 
   useEffect(() => {
     // Check for custom order data
@@ -194,6 +193,27 @@ export const CheckoutPage: React.FC = () => {
       navigate('/cart');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateAddress = async (data: CreateAddressRequest) => {
+    try {
+      const newAddress = await userService.createAddress(data);
+
+      // Update addresses list
+      const updatedAddresses = [...addresses, newAddress];
+      setAddresses(updatedAddresses);
+
+      // Set the new address as selected
+      setFieldValue('addressId', newAddress.id);
+
+      // Close the form
+      setShowAddressForm(false);
+
+      success('Địa chỉ đã được thêm thành công');
+    } catch (err: any) {
+      error(err.message || 'Không thể thêm địa chỉ');
+      throw err; // Re-throw to prevent form from closing
     }
   };
 
@@ -282,9 +302,9 @@ export const CheckoutPage: React.FC = () => {
   const getPaymentMethodText = (method: PaymentMethodType) => {
     const methods = {
       [PaymentMethodType.CREDIT_CARD]: 'Thẻ tín dụng',
-      [PaymentMethodType.DEBIT_CARD]: 'Thẻ ghi nợ',
-      [PaymentMethodType.BANK_TRANSFER]: 'Chuyển khoản ngân hàng',
-      [PaymentMethodType.DIGITAL_WALLET]: 'Ví điện tử',
+      // [PaymentMethodType.DEBIT_CARD]: 'Thẻ ghi nợ',
+      // [PaymentMethodType.BANK_TRANSFER]: 'Chuyển khoản ngân hàng',
+      // [PaymentMethodType.DIGITAL_WALLET]: 'Ví điện tử',
       [PaymentMethodType.CASH_ON_DELIVERY]: 'Thanh toán khi nhận hàng',
     };
     return methods[method];
@@ -373,7 +393,7 @@ export const CheckoutPage: React.FC = () => {
             type="submit"
             fullWidth
             loading={processing}
-            disabled={addresses.length === 0}
+            disabled={addresses.length === 0 && !showAddressForm}
             leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
           >
             {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
@@ -410,71 +430,97 @@ export const CheckoutPage: React.FC = () => {
               Địa chỉ giao hàng
             </h2>
 
-            {addresses.length === 0 ? (
+            {showAddressForm ? (
+              <div>
+                <h3 className="text-md font-medium text-gray-900 mb-4">
+                  Thêm địa chỉ mới
+                </h3>
+                <AddressForm
+                  onSubmit={handleCreateAddress}
+                  onCancel={() => setShowAddressForm(false)}
+                />
+              </div>
+            ) : addresses.length === 0 ? (
               <div className="text-center py-8">
                 <ExclamationTriangleIcon className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
                 <p className="text-gray-600 mb-4">
                   Bạn chưa có địa chỉ giao hàng
                 </p>
-                <Button onClick={() => navigate('/profile/addresses')}>
-                  Thêm địa chỉ
+                <Button
+                  onClick={() => setShowAddressForm(true)}
+                  leftIcon={<PlusIcon className="w-4 h-4" />}
+                >
+                  Thêm địa chỉ giao hàng
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {addresses.map((address) => (
-                  <label
-                    key={address.id}
-                    className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
-                      values.addressId === address.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="addressId"
-                      value={address.id}
-                      checked={values.addressId === address.id}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
+              <div>
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <label
+                      key={address.id}
+                      className={`block p-4 border rounded-lg cursor-pointer transition-colors ${
+                        values.addressId === address.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="addressId"
+                        value={address.id}
+                        checked={values.addressId === address.id}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
 
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span className="font-medium">
-                            {address.fullName}
-                          </span>
-                          {address.isDefault && (
-                            <Badge variant="primary" size="sm">
-                              Mặc định
-                            </Badge>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="font-medium">
+                              {address.fullName}
+                            </span>
+                            {address.isDefault && (
+                              <Badge variant="primary" size="sm">
+                                Mặc định
+                              </Badge>
+                            )}
+                          </div>
+
+                          {address.phone && (
+                            <p className="text-sm text-gray-600 mb-1">
+                              📞 {address.phone}
+                            </p>
                           )}
+
+                          <p className="text-gray-700 text-sm">
+                            {address.street}, {address.city}, {address.state}{' '}
+                            {address.zipCode}, {address.country}
+                          </p>
                         </div>
 
-                        {address.phone && (
-                          <p className="text-sm text-gray-600 mb-1">
-                            📞 {address.phone}
-                          </p>
+                        {values.addressId === address.id && (
+                          <CheckCircleIcon className="w-5 h-5 text-primary" />
                         )}
-
-                        <p className="text-gray-700 text-sm">
-                          {address.street}, {address.city}, {address.state}{' '}
-                          {address.zipCode}, {address.country}
-                        </p>
                       </div>
+                    </label>
+                  ))}
 
-                      {values.addressId === address.id && (
-                        <CheckCircleIcon className="w-5 h-5 text-primary" />
-                      )}
-                    </div>
-                  </label>
-                ))}
+                  {errors.addressId && (
+                    <p className="text-sm text-red-600">{errors.addressId}</p>
+                  )}
+                </div>
 
-                {errors.addressId && (
-                  <p className="text-sm text-red-600">{errors.addressId}</p>
-                )}
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddressForm(true)}
+                    leftIcon={<PlusIcon className="w-4 h-4" />}
+                  >
+                    Thêm địa chỉ mới
+                  </Button>
+                </div>
               </div>
             )}
           </Card>
@@ -625,7 +671,7 @@ export const CheckoutPage: React.FC = () => {
                   type="submit"
                   fullWidth
                   loading={processing}
-                  disabled={addresses.length === 0}
+                  disabled={addresses.length === 0 && !showAddressForm}
                   leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
                 >
                   {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
