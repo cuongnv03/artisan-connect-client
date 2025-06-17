@@ -359,7 +359,7 @@ export const NAVIGATION_MENUS = {
       path: ROUTE_PATHS.APP.ARTISAN.UPGRADE_REQUEST,
       label: 'Trở thành nghệ nhân',
       icon: 'user-plus',
-      highlight: true, // Để highlight menu này
+      highlight: true,
     },
   ],
 
@@ -386,6 +386,14 @@ export const NAVIGATION_MENUS = {
     },
     // Separator để phân biệt phần business
     { type: 'separator' },
+    // THÊM TRANG CÁ NHÂN TRƯỚC DASHBOARD
+    {
+      path: '/artisan/me', // Đường dẫn tới trang cá nhân của chính mình
+      label: 'Trang cá nhân',
+      subtitle: 'Xem trang công khai',
+      icon: 'user',
+      business: true,
+    },
     {
       path: ROUTE_PATHS.APP.ARTISAN.DASHBOARD,
       label: 'Dashboard',
@@ -510,6 +518,12 @@ export const isActiveMenu = (
   if (
     menuPath === ROUTE_PATHS.APP.ORDERS.MY_SALES &&
     currentPath.startsWith('/orders/sales')
+  )
+    return true;
+
+  if (
+    menuPath === '/artisan/me' &&
+    currentPath.match(/^\/artisan\/[^\/]+$/) // Match /artisan/{userId}
   )
     return true;
 

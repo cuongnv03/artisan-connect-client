@@ -8,6 +8,8 @@ import { MessageProvider } from './contexts/MessageContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { CartProvider } from './contexts/CartContext';
+import { ProfileProvider } from './contexts/ProfileContext';
+import { DiscoverProvider } from './contexts/DiscoverContext';
 import { router } from './router';
 
 function App() {
@@ -17,13 +19,15 @@ function App() {
         <ThemeProvider>
           <SocketProvider>
             <MessageProvider>
-              <ToastProvider>
-                <NotificationProvider>
-                  <CartProvider>
-                    <RouterProvider router={router} />
-                  </CartProvider>
-                </NotificationProvider>
-              </ToastProvider>
+              <ProfileProvider>
+                <ToastProvider>
+                  <NotificationProvider>
+                    <CartProvider>
+                      <RouterProvider router={router} />
+                    </CartProvider>
+                  </NotificationProvider>
+                </ToastProvider>
+              </ProfileProvider>
             </MessageProvider>
           </SocketProvider>
         </ThemeProvider>

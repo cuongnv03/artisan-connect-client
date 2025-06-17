@@ -1,4 +1,3 @@
-// src/pages/artisan/AnalyticsPage.tsx
 import React, { useState, useEffect } from 'react';
 import {
   ChartBarIcon,

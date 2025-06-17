@@ -14,7 +14,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { ProductCard } from '../../components/common/ProductCard';
+import { ProductCard } from '../../components/products/customer/ProductCard/ProductCard';
 import { productService } from '../../services/product.service';
 import { orderService } from '../../services/order.service';
 import { Product, ProductStats } from '../../types/product';

@@ -40,9 +40,10 @@ import { CreateProductPage } from './pages/products/artisan/CreateProductPage';
 import { EditProductPage } from './pages/products/artisan/EditProductPage';
 
 // Profile pages
-import { ProfilePage } from './pages/profile/ProfilePage';
-import { EditProfilePage } from './pages/profile/EditProfilePage';
+import { ProfileManagementPage } from './pages/profile/ProfileManagementPage';
+import { ArtisanProfilePage } from './pages/artisan/ArtisanProfilePage';
 import { SettingsPage } from './pages/profile/SettingsPage';
+import { MyArtisanProfilePage } from './pages/artisan/MyArtisanProfilePage';
 
 // Cart & Orders
 import { CartPage } from './pages/cart/CartPage';
@@ -77,6 +78,8 @@ import { ServerErrorPage } from './pages/error/ServerErrorPage';
 // Protected Route component
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { UserRole } from './types/auth';
+
+// Admin Product pages
 import { AdminProductsPage } from './pages/products/admin/AdminProductsPage';
 import { CategoryAttributesPage } from './pages/products/admin/CategoryAttributesPage';
 import { AdminCategoriesPage } from './pages/products/admin/AdminCategoriesPage';
@@ -263,46 +266,60 @@ export const router = createBrowserRouter(
           ],
         },
 
-        // // Profile routes
-        // {
-        //   path: 'profile',
-        //   children: [
-        //     {
-        //       index: true,
-        //       element: (
-        //         <ProtectedRoute>
-        //           <ProfilePage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: ':userId',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <ProfilePage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'edit',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <EditProfilePage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        {
+          path: 'profile',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <ProfileManagementPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
+        {
+          path: 'settings',
+          element: (
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          ),
+        },
 
-        // // Settings
-        // {
-        //   path: 'settings',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <SettingsPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
+        {
+          path: 'artisan',
+          children: [
+            // Trang cá nhân của chính mình
+            {
+              path: 'me',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <MyArtisanProfilePage />
+                </ProtectedRoute>
+              ),
+            },
+            // Các route artisan khác...
+            {
+              path: 'dashboard',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanDashboardPage />
+                </ProtectedRoute>
+              ),
+            },
+            // ... other artisan routes
+          ],
+        },
+        {
+          path: 'artisan/:userId',
+          element: (
+            <ProtectedRoute>
+              <ArtisanProfilePage />
+            </ProtectedRoute>
+          ),
+        },
 
         // // Cart & Checkout
         // {

@@ -22,18 +22,22 @@ export interface FollowStatsResponse {
 }
 
 export const userService = {
+  // Khớp với server: GET /users/:id - chỉ cho ARTISAN
   async getUserProfile(id: string): Promise<User> {
     return await apiClient.get<User>(API_ENDPOINTS.USERS.BY_ID(id));
   },
 
+  // Khớp với server: PATCH /users/profile - basic info
   async updateProfile(data: UpdateProfileRequest): Promise<User> {
     return await apiClient.patch<User>(API_ENDPOINTS.USERS.PROFILE, data);
   },
 
+  // Khớp với server: GET /users/profile/me - own profile
   async getProfile(): Promise<Profile> {
     return await apiClient.get<Profile>(`${API_ENDPOINTS.USERS.PROFILE}/me`);
   },
 
+  // Khớp với server: PATCH /users/profile/extended - extended info
   async updateUserProfile(data: UpdateUserProfileRequest): Promise<Profile> {
     return await apiClient.patch<Profile>(
       `${API_ENDPOINTS.USERS.PROFILE}/extended`,
@@ -41,13 +45,15 @@ export const userService = {
     );
   },
 
+  // Search chỉ ARTISAN
   async searchUsers(query: SearchUsersQuery): Promise<PaginatedResponse<User>> {
     return await apiClient.get<PaginatedResponse<User>>(
       API_ENDPOINTS.USERS.SEARCH,
-      query,
+      { ...query, role: 'ARTISAN' }, // Force ARTISAN only
     );
   },
 
+  // Follow methods - chỉ follow ARTISAN
   async followUser(userId: string): Promise<void> {
     await apiClient.post(API_ENDPOINTS.USERS.FOLLOW(userId));
   },

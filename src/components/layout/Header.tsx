@@ -253,12 +253,24 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                       </div>
 
                       <div className="py-1">
+                        {user?.role === 'ARTISAN' && (
+                          <>
+                            <Link
+                              to={'/artisan/me'}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => setIsProfileMenuOpen(false)}
+                            >
+                              Trang cá nhân
+                            </Link>
+                          </>
+                        )}
+
                         <Link
                           to={ROUTE_PATHS.APP.PROFILE.MY_PROFILE}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           onClick={() => setIsProfileMenuOpen(false)}
                         >
-                          Trang cá nhân
+                          Thông tin cá nhân
                         </Link>
 
                         {user?.role === 'ARTISAN' && (
