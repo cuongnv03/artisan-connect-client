@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
-import { Select } from '../ui/Dropdown';
-import { Input } from '../ui/Input';
-import { OrderStatus, UpdateOrderStatusRequest } from '../../types/order';
-import { useAuth } from '../../contexts/AuthContext';
+import { Modal } from '../../ui/Modal';
+import { Button } from '../../ui/Button';
+import { Select } from '../../ui/Dropdown';
+import { Input } from '../../ui/Input';
+import { OrderStatus, UpdateOrderStatusRequest } from '../../../types/order';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface UpdateOrderStatusModalProps {
   isOpen: boolean;

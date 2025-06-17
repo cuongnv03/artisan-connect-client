@@ -352,36 +352,35 @@ export const router = createBrowserRouter(
           ),
         },
 
-        // // Orders
-        // {
-        //   path: 'orders',
-        //   children: [
-        //     {
-        //       index: true,
-        //       element: (
-        //         <ProtectedRoute>
-        //           <OrdersPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: ':orderId',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <OrderDetailPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'tracking/:orderNumber',
-        //       element: (
-        //         <ProtectedRoute>
-        //           <TrackingPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //   ],
-        // },
+        {
+          path: 'orders',
+          children: [
+            {
+              index: true,
+              element: (
+                <ProtectedRoute>
+                  <OrdersPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':orderId',
+              element: (
+                <ProtectedRoute>
+                  <OrderDetailPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'tracking/:orderNumber',
+              element: (
+                <ProtectedRoute>
+                  <TrackingPage />
+                </ProtectedRoute>
+              ),
+            },
+          ],
+        },
 
         // // Messages
         // {

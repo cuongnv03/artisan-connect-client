@@ -1,5 +1,4 @@
-// src/pages/orders/TrackingPage.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -9,153 +8,16 @@ import {
   MapPinIcon,
   CalendarIcon,
 } from '@heroicons/react/24/outline';
-import { orderService } from '../../services/order.service';
-import { OrderWithDetails } from '../../types/order';
+import { useOrderTracking } from '../../hooks/orders/useOrderTracking';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
-interface TrackingEvent {
-  date: string;
-  status: string;
-  description: string;
-  location?: string;
-  completed: boolean;
-}
-
 export const TrackingPage: React.FC = () => {
   const { orderNumber } = useParams<{ orderNumber: string }>();
-  const [order, setOrder] = useState<OrderWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (orderNumber) {
-      loadOrderInfo();
-    }
-  }, [orderNumber]);
-
-  const loadOrderInfo = async () => {
-    if (!orderNumber) return;
-
-    try {
-      const orderData = await orderService.getOrderByNumber(orderNumber);
-      setOrder(orderData);
-    } catch (error) {
-      console.error('Error loading order info:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateTrackingEvents = (order: OrderWithDetails): TrackingEvent[] => {
-    const events: TrackingEvent[] = [];
-
-    if (order.statusHistory && order.statusHistory.length > 0) {
-      // Sort by creation time
-      const sortedHistory = order.statusHistory.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
-
-      sortedHistory.forEach((history) => {
-        const statusLabels = {
-          PENDING: 'Đơn hàng được tạo',
-          CONFIRMED: 'Đã xác nhận',
-          PAID: 'Đã thanh toán',
-          PROCESSING: 'Đang chuẩn bị hàng',
-          SHIPPED: 'Đã giao cho vận chuyển',
-          DELIVERED: 'Đã giao hàng thành công',
-          CANCELLED: 'Đã hủy đơn hàng',
-          REFUNDED: 'Đã hoàn tiền',
-        };
-
-        const statusDescriptions = {
-          PENDING: 'Đơn hàng đã được tạo và đang chờ xác nhận từ người bán',
-          CONFIRMED: 'Người bán đã xác nhận đơn hàng và bắt đầu chuẩn bị',
-          PAID: 'Thanh toán đã được xác nhận thành công',
-          PROCESSING: 'Người bán đang chuẩn bị và đóng gói sản phẩm',
-          SHIPPED: 'Đơn hàng đã được giao cho đơn vị vận chuyển',
-          DELIVERED: 'Đơn hàng đã được giao thành công đến địa chỉ nhận hàng',
-          CANCELLED: 'Đơn hàng đã bị hủy',
-          REFUNDED: 'Đã hoàn tiền cho khách hàng',
-        };
-
-        events.push({
-          date: history.createdAt,
-          status: statusLabels[history.status] || history.status,
-          description:
-            history.note ||
-            statusDescriptions[history.status] ||
-            'Cập nhật trạng thái đơn hàng',
-          completed: true,
-        });
-      });
-    } else {
-      // Fallback nếu không có status history
-      events.push({
-        date: order.createdAt,
-        status: 'Đơn hàng được tạo',
-        description: 'Đơn hàng đã được tạo và đang chờ xác nhận từ người bán',
-        completed: true,
-      });
-    }
-
-    // Thêm bước tiếp theo nếu chưa hoàn thành
-    const currentStatus = order.status;
-    if (
-      currentStatus !== 'DELIVERED' &&
-      currentStatus !== 'CANCELLED' &&
-      currentStatus !== 'REFUNDED'
-    ) {
-      const nextSteps = {
-        PENDING: {
-          status: 'Chờ xác nhận',
-          description:
-            'Người bán sẽ xác nhận đơn hàng trong thời gian sớm nhất',
-        },
-        CONFIRMED: {
-          status: 'Chuẩn bị hàng',
-          description: 'Người bán sẽ bắt đầu chuẩn bị sản phẩm',
-        },
-        PAID: {
-          status: 'Chuẩn bị hàng',
-          description: 'Người bán đang chuẩn bị sản phẩm của bạn',
-        },
-        PROCESSING: {
-          status: 'Chuẩn bị giao hàng',
-          description: 'Sản phẩm sẽ được giao cho đơn vị vận chuyển',
-        },
-        SHIPPED: {
-          status: 'Đang giao đến bạn',
-          description: 'Đơn hàng đang trên đường giao đến địa chỉ của bạn',
-        },
-      };
-
-      const nextStep = nextSteps[currentStatus];
-      if (nextStep) {
-        events.push({
-          date: order.estimatedDelivery || '',
-          status: nextStep.status,
-          description: nextStep.description,
-          location: order.shippingAddress?.city,
-          completed: false,
-        });
-      }
-    }
-
-    return events;
-  };
-
-  const formatDate = (date: string) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('vi-VN', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const { order, loading, trackingEvents, formatDate } = useOrderTracking(
+    orderNumber!,
+  );
 
   if (loading) {
     return (
@@ -184,8 +46,6 @@ export const TrackingPage: React.FC = () => {
       </div>
     );
   }
-
-  const trackingEvents = generateTrackingEvents(order);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -227,14 +87,14 @@ export const TrackingPage: React.FC = () => {
             </p>
           </div>
 
-          {order.estimatedDelivery && (
+          {order.expectedDelivery && (
             <div className="text-right">
               <div className="flex items-center text-sm text-gray-500 mb-1">
                 <CalendarIcon className="w-4 h-4 mr-1" />
                 Dự kiến giao hàng
               </div>
               <p className="font-medium">
-                {formatDate(order.estimatedDelivery)}
+                {formatDate(order.expectedDelivery)}
               </p>
             </div>
           )}
@@ -265,13 +125,11 @@ export const TrackingPage: React.FC = () => {
         </h2>
 
         <div className="relative">
-          {/* Timeline line */}
           <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
           <div className="space-y-6">
             {trackingEvents.map((event, index) => (
               <div key={index} className="relative flex items-start">
-                {/* Timeline dot */}
                 <div
                   className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-4 ${
                     event.completed
@@ -286,7 +144,6 @@ export const TrackingPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Event content */}
                 <div className="ml-6 flex-1">
                   <div className="flex items-center justify-between">
                     <h3

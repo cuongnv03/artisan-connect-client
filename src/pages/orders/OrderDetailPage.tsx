@@ -1,206 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeftIcon,
   TruckIcon,
-  MapPinIcon,
-  ClockIcon,
+  PrinterIcon,
   CheckCircleIcon,
   XCircleIcon,
-  CreditCardIcon,
-  PhoneIcon,
-  PrinterIcon,
 } from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
-import { useToastContext } from '../../contexts/ToastContext';
-import { orderService } from '../../services/order.service';
-import {
-  OrderWithDetails,
-  OrderStatus,
-  UpdateOrderStatusRequest,
-} from '../../types/order';
-import { UpdateOrderStatusModal } from '../../components/common/UpdateOrderStatusModal';
+import { useOrderDetail } from '../../hooks/orders/useOrderDetail';
+import { UpdateOrderStatusRequest } from '../../types/order';
+import { UpdateOrderStatusModal } from '../../components/orders/UpdateOrderStatusModal/UpdateOrderStatusModal';
+import { OrderDetailContent } from '../../components/orders/OrderDetailContent/OrderDetailContent';
+import { OrderSidebar } from '../../components/orders/OrderSidebar/OrderSidebar';
+import { OrderStatusBadge } from '../../components/orders/OrderStatusBadge/OrderStatusBadge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ConfirmModal } from '../../components/ui/Modal';
 
 export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const { success, error } = useToastContext();
-  const { state } = useAuth();
-  const [order, setOrder] = useState<OrderWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
 
-  useEffect(() => {
-    if (orderId) {
-      loadOrder();
-    }
-  }, [orderId]);
-
-  const loadOrder = async () => {
-    if (!orderId) return;
-
-    try {
-      const orderData = await orderService.getOrder(orderId);
-      setOrder(orderData);
-    } catch (err) {
-      console.error('Error loading order:', err);
-      error('Không thể tải thông tin đơn hàng');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    order,
+    loading,
+    updating,
+    updateOrderStatus,
+    cancelOrder,
+    canUpdateStatus,
+    canCancelOrder,
+    getNextPossibleStatuses,
+    formatPrice,
+    formatDate,
+  } = useOrderDetail(orderId!);
 
   const handleUpdateStatus = async (data: UpdateOrderStatusRequest) => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      await orderService.updateOrderStatus(order.id, data);
-      success('Đã cập nhật trạng thái đơn hàng');
-      setShowUpdateStatusModal(false);
-      loadOrder();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
-    } finally {
-      setUpdating(false);
-    }
+    await updateOrderStatus(data);
+    setShowUpdateStatusModal(false);
   };
 
   const handleCancelOrder = async () => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      await orderService.cancelOrder(order.id, 'Khách hàng yêu cầu hủy đơn');
-      success('Đã hủy đơn hàng thành công');
-      setShowCancelModal(false);
-      loadOrder();
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra khi hủy đơn hàng');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const canUpdateStatus = () => {
-    if (!order || !state.user) return false;
-
-    const { user } = state;
-
-    // Admin có thể update mọi đơn
-    if (user.role === 'ADMIN') return true;
-
-    // Nghệ nhân chỉ có thể update đơn của mình
-    if (user.role === 'ARTISAN') {
-      return order.items.some((item) => item.seller.id === user.id);
-    }
-
-    return false;
-  };
-
-  const getNextPossibleStatuses = () => {
-    if (!order || !state.user) return [];
-
-    const { user } = state;
-
-    if (user.role === 'ARTISAN') {
-      const transitions: Record<OrderStatus, OrderStatus[]> = {
-        [OrderStatus.PENDING]: [OrderStatus.CONFIRMED],
-        [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING],
-        [OrderStatus.PAID]: [OrderStatus.PROCESSING],
-        [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED],
-        [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
-        [OrderStatus.DELIVERED]: [],
-        [OrderStatus.CANCELLED]: [],
-        [OrderStatus.REFUNDED]: [],
-      };
-      return transitions[order.status] || [];
-    }
-
-    return [];
-  };
-
-  const canCancelOrder =
-    order &&
-    [OrderStatus.PENDING, OrderStatus.CONFIRMED].includes(order.status);
-
-  const getStatusBadge = (status: OrderStatus) => {
-    const statusConfig = {
-      [OrderStatus.PENDING]: {
-        variant: 'warning' as const,
-        text: 'Chờ xác nhận',
-        icon: ClockIcon,
-      },
-      [OrderStatus.CONFIRMED]: {
-        variant: 'info' as const,
-        text: 'Đã xác nhận',
-        icon: CheckCircleIcon,
-      },
-      [OrderStatus.PAID]: {
-        variant: 'success' as const,
-        text: 'Đã thanh toán',
-        icon: CheckCircleIcon,
-      },
-      [OrderStatus.PROCESSING]: {
-        variant: 'info' as const,
-        text: 'Đang xử lý',
-        icon: ClockIcon,
-      },
-      [OrderStatus.SHIPPED]: {
-        variant: 'info' as const,
-        text: 'Đã gửi hàng',
-        icon: TruckIcon,
-      },
-      [OrderStatus.DELIVERED]: {
-        variant: 'success' as const,
-        text: 'Đã giao hàng',
-        icon: CheckCircleIcon,
-      },
-      [OrderStatus.CANCELLED]: {
-        variant: 'danger' as const,
-        text: 'Đã hủy',
-        icon: XCircleIcon,
-      },
-      [OrderStatus.REFUNDED]: {
-        variant: 'secondary' as const,
-        text: 'Đã hoàn tiền',
-        icon: CheckCircleIcon,
-      },
-    };
-
-    const config = statusConfig[status];
-    const IconComponent = config.icon;
-
-    return (
-      <Badge variant={config.variant} className="inline-flex items-center">
-        <IconComponent className="w-4 h-4 mr-1" />
-        {config.text}
-      </Badge>
-    );
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('vi-VN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    await cancelOrder('Khách hàng yêu cầu hủy đơn');
+    setShowCancelModal(false);
   };
 
   if (loading) {
@@ -256,7 +99,7 @@ export const OrderDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {getStatusBadge(order.status)}
+          <OrderStatusBadge status={order.status} />
 
           <Button
             variant="ghost"
@@ -271,94 +114,7 @@ export const OrderDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Order Items */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Sản phẩm đã đặt
-            </h2>
-
-            <div className="space-y-4">
-              {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center space-x-4 pb-4 border-b border-gray-100 last:border-b-0"
-                >
-                  <img
-                    src={
-                      item.product.images[0] || 'https://via.placeholder.com/80'
-                    }
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded-lg"
-                  />
-
-                  <div className="flex-1">
-                    <Link
-                      to={`/products/${item.product.slug || item.product.id}`}
-                      className="font-medium text-gray-900 hover:text-primary"
-                    >
-                      {item.product.name}
-                    </Link>
-
-                    <div className="flex items-center space-x-4 mt-1 text-sm text-gray-500">
-                      <span>SL: {item.quantity}</span>
-                      <span>Đơn giá: {formatPrice(item.price)}</span>
-                      <span>
-                        Người bán: {item.seller.firstName}{' '}
-                        {item.seller.lastName}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {formatPrice(item.price * item.quantity)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Shipping Address */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <MapPinIcon className="w-5 h-5 mr-2" />
-              Địa chỉ giao hàng
-            </h2>
-
-            {order.shippingAddress ? (
-              <div>
-                <p className="font-medium text-gray-900 mb-1">
-                  {order.shippingAddress.fullName}
-                </p>
-
-                {order.shippingAddress.phone && (
-                  <p className="text-gray-600 mb-1 flex items-center">
-                    <PhoneIcon className="w-4 h-4 mr-2" />
-                    {order.shippingAddress.phone}
-                  </p>
-                )}
-
-                <p className="text-gray-600">
-                  {order.shippingAddress.street}, {order.shippingAddress.city},{' '}
-                  {order.shippingAddress.state} {order.shippingAddress.zipCode},{' '}
-                  {order.shippingAddress.country}
-                </p>
-              </div>
-            ) : (
-              <p className="text-gray-500">Chưa có thông tin địa chỉ</p>
-            )}
-          </Card>
-
-          {/* Order Notes */}
-          {order.notes && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Ghi chú đơn hàng
-              </h2>
-              <p className="text-gray-700">{order.notes}</p>
-            </Card>
-          )}
+          <OrderDetailContent order={order} formatPrice={formatPrice} />
 
           {/* Tracking */}
           {order.orderNumber && (
@@ -389,80 +145,11 @@ export const OrderDetailPage: React.FC = () => {
 
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Order Summary */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Tóm tắt đơn hàng
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tạm tính</span>
-                <span className="font-medium">
-                  {formatPrice(order.subtotal)}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-600">Phí vận chuyển</span>
-                <span className="font-medium">
-                  {order.shippingCost > 0
-                    ? formatPrice(order.shippingCost)
-                    : 'Miễn phí'}
-                </span>
-              </div>
-
-              <hr />
-
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Tổng cộng</span>
-                <span className="text-primary">
-                  {formatPrice(order.totalAmount)}
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Payment Info */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <CreditCardIcon className="w-5 h-5 mr-2" />
-              Thanh toán
-            </h2>
-
-            <div className="space-y-3">
-              <div>
-                <span className="text-sm text-gray-600">Phương thức:</span>
-                <p className="font-medium">
-                  {order.paymentMethod === 'CASH_ON_DELIVERY'
-                    ? 'Thanh toán khi nhận hàng'
-                    : 'Thanh toán online'}
-                </p>
-              </div>
-
-              <div>
-                <span className="text-sm text-gray-600">
-                  Trạng thái thanh toán:
-                </span>
-                <p className="font-medium">
-                  {order.paymentStatus === 'COMPLETED'
-                    ? 'Đã thanh toán'
-                    : order.paymentStatus === 'PENDING'
-                    ? 'Chờ thanh toán'
-                    : 'Chưa thanh toán'}
-                </p>
-              </div>
-
-              {order.paymentReference && (
-                <div>
-                  <span className="text-sm text-gray-600">Mã giao dịch:</span>
-                  <p className="font-medium font-mono text-sm">
-                    {order.paymentReference}
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
+          <OrderSidebar
+            order={order}
+            formatPrice={formatPrice}
+            formatDate={formatDate}
+          />
 
           {/* Actions */}
           {(canCancelOrder || canUpdateStatus()) && (
@@ -496,41 +183,10 @@ export const OrderDetailPage: React.FC = () => {
               </div>
             </Card>
           )}
-
-          {/* Delivery Info */}
-          {order.estimatedDelivery && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Thông tin giao hàng
-              </h2>
-
-              <div className="space-y-2">
-                <div className="flex items-center text-sm">
-                  <ClockIcon className="w-4 h-4 mr-2 text-gray-400" />
-                  <span className="text-gray-600">Dự kiến giao:</span>
-                </div>
-                <p className="font-medium">
-                  {formatDate(order.estimatedDelivery)}
-                </p>
-
-                {order.deliveredAt && (
-                  <>
-                    <div className="flex items-center text-sm mt-3">
-                      <CheckCircleIcon className="w-4 h-4 mr-2 text-green-500" />
-                      <span className="text-gray-600">Đã giao:</span>
-                    </div>
-                    <p className="font-medium">
-                      {formatDate(order.deliveredAt)}
-                    </p>
-                  </>
-                )}
-              </div>
-            </Card>
-          )}
         </div>
       </div>
 
-      {/* Cancel Order Modal */}
+      {/* Modals */}
       <ConfirmModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
@@ -543,12 +199,11 @@ export const OrderDetailPage: React.FC = () => {
         loading={updating}
       />
 
-      {/* Update Status Modal */}
       <UpdateOrderStatusModal
         isOpen={showUpdateStatusModal}
         onClose={() => setShowUpdateStatusModal(false)}
         onUpdate={handleUpdateStatus}
-        currentStatus={order?.status || OrderStatus.PENDING}
+        currentStatus={order.status}
         loading={updating}
       />
     </div>
