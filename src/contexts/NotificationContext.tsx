@@ -3,6 +3,7 @@ import { Notification } from '../types/notification';
 import { notificationService } from '../services/notification.service';
 import { useSocket } from '../hooks/useSocket';
 import { useAuth } from './AuthContext';
+import { formatNotificationDisplay } from '../utils/notificationFormatter';
 
 interface NotificationState {
   notifications: Notification[];
@@ -118,7 +119,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!socket || !authState.isAuthenticated) return;
 
     const handleNewNotification = (notification: Notification) => {
-      dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
+      // Format notification before adding to state
+      const formattedNotification = {
+        ...notification,
+        // Keep original data but ensure we have formatted display
+        _displayData: formatNotificationDisplay(notification),
+      };
+
+      dispatch({ type: 'ADD_NOTIFICATION', payload: formattedNotification });
     };
 
     socket.on('notification', handleNewNotification);

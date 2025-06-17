@@ -483,6 +483,15 @@ export const router = createBrowserRouter(
           ),
         },
 
+        {
+          path: 'notifications',
+          element: (
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          ),
+        },
+
         // // Messages
         // {
         //   path: 'messages',
@@ -502,78 +511,6 @@ export const router = createBrowserRouter(
         //           <ConversationPage />
         //         </ProtectedRoute>
         //       ),
-        //     },
-        //   ],
-        // },
-
-        // // Notifications
-        // {
-        //   path: 'notifications',
-        //   element: (
-        //     <ProtectedRoute>
-        //       <NotificationsPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-
-        // // Artisan upgrade request
-        // {
-        //   path: 'upgrade-to-artisan',
-        //   element: (
-        //     <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
-        //       <UpgradeRequestPage />
-        //     </ProtectedRoute>
-        //   ),
-        // },
-
-        // // Artisan routes
-        // {
-        //   path: 'artisan',
-        //   children: [
-        //     {
-        //       path: 'dashboard',
-        //       element: (
-        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //           <ArtisanDashboardPage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'customize',
-        //       element: (
-        //         <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //           <ArtisanCustomizePage />
-        //         </ProtectedRoute>
-        //       ),
-        //     },
-        //     {
-        //       path: 'products',
-        //       children: [
-        //         {
-        //           index: true,
-        //           element: (
-        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //               <ArtisanProductsPage />
-        //             </ProtectedRoute>
-        //           ),
-        //         },
-        //         {
-        //           path: 'create',
-        //           element: (
-        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //               <CreateProductPage />
-        //             </ProtectedRoute>
-        //           ),
-        //         },
-        //         {
-        //           path: ':productId/edit',
-        //           element: (
-        //             <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-        //               <EditProductPage />
-        //             </ProtectedRoute>
-        //           ),
-        //         },
-        //       ],
         //     },
         //   ],
         // },
@@ -674,29 +611,19 @@ export const router = createBrowserRouter(
       ],
     },
 
-    // // Redirects for legacy routes
-    // {
-    //   path: '/login',
-    //   element: <Navigate to="/auth/login" replace />,
-    // },
-    // {
-    //   path: '/register',
-    //   element: <Navigate to="/auth/register" replace />,
-    // },
-
-    // // Error routes
-    // {
-    //   path: '/unauthorized',
-    //   element: <UnauthorizedPage />,
-    // },
-    // {
-    //   path: '/server-error',
-    //   element: <ServerErrorPage />,
-    // },
-    // {
-    //   path: '*',
-    //   element: <NotFoundPage />,
-    // },
+    // Error routes
+    {
+      path: '/unauthorized',
+      element: <UnauthorizedPage />,
+    },
+    {
+      path: '/server-error',
+      element: <ServerErrorPage />,
+    },
+    {
+      path: '*',
+      element: <NotFoundPage />,
+    },
   ],
   {
     future: {

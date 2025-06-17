@@ -2,6 +2,10 @@ import { apiClient } from '../utils/api';
 import { API_ENDPOINTS } from '../constants/api';
 import { Notification, NotificationType } from '../types/notification';
 import { PaginatedResponse } from '../types/common';
+import {
+  formatNotificationDisplay,
+  getNotificationTypeDisplayName,
+} from '../utils/notificationFormatter';
 
 export interface GetNotificationsQuery {
   type?: NotificationType;
@@ -170,36 +174,17 @@ export const notificationService = {
     icon?: string;
     color?: string;
   } {
-    const typeConfig: Record<
-      NotificationType,
-      { icon: string; color: string }
-    > = {
-      [NotificationType.LIKE]: { icon: '👍', color: 'blue' },
-      [NotificationType.COMMENT]: { icon: '💬', color: 'green' },
-      [NotificationType.FOLLOW]: { icon: '👥', color: 'purple' },
-      [NotificationType.MENTION]: { icon: '📢', color: 'orange' },
-      [NotificationType.ORDER_UPDATE]: { icon: '📦', color: 'orange' },
-      [NotificationType.PAYMENT_SUCCESS]: { icon: '💳', color: 'green' },
-      [NotificationType.PAYMENT_FAILED]: { icon: '❌', color: 'red' },
-      [NotificationType.QUOTE_REQUEST]: { icon: '📝', color: 'blue' },
-      [NotificationType.QUOTE_RESPONSE]: { icon: '📋', color: 'indigo' },
-      [NotificationType.CUSTOM_ORDER]: { icon: '🎨', color: 'indigo' },
-      [NotificationType.CUSTOM_ORDER_UPDATE]: { icon: '🔄', color: 'purple' },
-      [NotificationType.MESSAGE]: { icon: '✉️', color: 'blue' },
-      [NotificationType.DISPUTE]: { icon: '⚖️', color: 'red' },
-      [NotificationType.RETURN]: { icon: '↩️', color: 'orange' },
-      [NotificationType.PRICE_NEGOTIATION]: { icon: '💰', color: 'yellow' },
-      [NotificationType.SYSTEM]: { icon: '⚙️', color: 'gray' },
-    };
+    return formatNotificationDisplay(notification);
+  },
 
-    const config = typeConfig[notification.type];
+  // Helper để format notification cho UI components
+  formatNotificationForDisplay(notification: Notification) {
+    return formatNotificationDisplay(notification);
+  },
 
-    return {
-      title: notification.title,
-      message: notification.message,
-      icon: config.icon,
-      color: config.color,
-    };
+  // Helper để get type display name
+  getTypeDisplayName(type: NotificationType): string {
+    return getNotificationTypeDisplayName(type);
   },
 
   // Group notifications by date (for UI)
