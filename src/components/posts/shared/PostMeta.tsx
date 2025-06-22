@@ -23,11 +23,13 @@ import { useToastContext } from '../../../contexts/ToastContext';
 interface PostMetaProps {
   post: Post;
   showActions?: boolean;
+  onCommentClick?: () => void; // Thêm callback cho comment click
 }
 
 export const PostMeta: React.FC<PostMetaProps> = ({
   post,
   showActions = false,
+  onCommentClick, // Nhận callback
 }) => {
   const { success, error } = useToastContext();
   // Logic like đơn giản như cũ - không có callback
@@ -101,6 +103,19 @@ export const PostMeta: React.FC<PostMetaProps> = ({
     }
   };
 
+  // Thêm handler cho comment click
+  const handleCommentClick = () => {
+    if (onCommentClick) {
+      onCommentClick();
+    } else {
+      // Scroll to comment section nếu không có callback
+      const commentSection = document.querySelector('[data-comment-section]');
+      if (commentSection) {
+        commentSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <div className="">
       {/* Author Info */}
@@ -162,10 +177,14 @@ export const PostMeta: React.FC<PostMetaProps> = ({
               <span>{likeCount}</span>
             </button>
 
-            <div className="flex items-center space-x-2 text-gray-500">
+            {/* Làm cho nút comment hoạt động */}
+            <button
+              onClick={handleCommentClick}
+              className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
+            >
               <ChatBubbleOvalLeftIcon className="w-6 h-6" />
               <span>{post.commentCount}</span>
-            </div>
+            </button>
 
             <button
               onClick={handleShare}

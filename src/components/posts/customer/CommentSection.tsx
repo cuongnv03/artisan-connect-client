@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToastContext } from '../../../contexts/ToastContext';
 import { socialService } from '../../../services/social.service';
@@ -23,13 +23,26 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadComments();
-  }, [postId]);
+  // Refs để track loading state và prevent duplicate calls
+  const isLoadingRef = useRef(false);
+  const currentPostIdRef = useRef<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
+    if (!postId || isLoadingRef.current) return;
+
+    // Prevent duplicate loading cho cùng một post
+    if (currentPostIdRef.current === postId && hasLoadedRef.current) {
+      return;
+    }
+
+    isLoadingRef.current = true;
     setLoading(true);
+    currentPostIdRef.current = postId;
+
     try {
+      console.log('Loading comments for post:', postId);
+
       const result = await socialService.getPostComments(postId, {
         parentId: null,
         page: 1,
@@ -39,7 +52,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         sortOrder: 'desc',
       });
 
-      // Load replies for each comment
+      // Load replies for comments that have replies
       const commentsWithReplies = await Promise.all(
         result.data.map(async (comment) => {
           if (comment.replyCount > 0) {
@@ -50,6 +63,11 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
               );
               return { ...comment, replies: repliesResult.data || [] };
             } catch (err) {
+              console.error(
+                'Error loading replies for comment:',
+                comment.id,
+                err,
+              );
               return { ...comment, replies: [] };
             }
           }
@@ -58,12 +76,40 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       );
 
       setComments(commentsWithReplies);
+      hasLoadedRef.current = true;
+      console.log('Comments loaded successfully:', commentsWithReplies.length);
     } catch (err: any) {
+      console.error('Error loading comments:', err);
       error('Không thể tải bình luận');
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
-  };
+  }, [postId, error]);
+
+  // Effect để load comments - chỉ chạy khi postId thay đổi
+  useEffect(() => {
+    console.log('CommentSection effect triggered:', {
+      postId,
+      hasLoaded: hasLoadedRef.current,
+    });
+
+    if (postId) {
+      // Reset khi postId thay đổi
+      if (currentPostIdRef.current !== postId) {
+        hasLoadedRef.current = false;
+        currentPostIdRef.current = postId;
+        setComments([]); // Clear old comments
+      }
+
+      loadComments();
+    }
+
+    // Cleanup
+    return () => {
+      console.log('CommentSection cleanup for post:', postId);
+    };
+  }, [postId]); // Chỉ depend on postId
 
   const handleCommentSubmit = async (values: CommentFormData) => {
     try {
@@ -72,6 +118,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         content: values.content,
       });
       resetForm();
+
+      // Force reload comments after successful comment
+      hasLoadedRef.current = false;
       await loadComments();
       success('Đã thêm bình luận');
     } catch (err: any) {
@@ -86,6 +135,9 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         parentId,
         content,
       });
+
+      // Force reload comments after successful reply
+      hasLoadedRef.current = false;
       await loadComments();
       success('Đã thêm phản hồi');
     } catch (err) {
@@ -139,7 +191,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const topLevelComments = comments.filter((comment) => !comment.parentId);
 
   return (
-    <div>
+    <div data-comment-section>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Bình luận ({topLevelComments.length})
       </h3>
@@ -178,7 +230,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       )}
 
       {/* Comments List */}
-      {loading ? (
+      {loading && comments.length === 0 ? (
         <div className="text-center py-4">
           <LoadingSpinner />
         </div>

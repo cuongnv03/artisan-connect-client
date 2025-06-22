@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
@@ -17,65 +17,54 @@ const isUUID = (str: string): boolean => {
 };
 
 export const usePostDetail = () => {
-  // Lấy tất cả possible params
   const params = useParams<{
     postId?: string;
     id?: string;
     slug?: string;
   }>();
 
-  // Xác định postId từ các params khác nhau
   const postId = params.postId || params.id || params.slug;
-
   const navigate = useNavigate();
   const { state: authState } = useAuth();
   const { success, error } = useToastContext();
 
   const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [commentsLoading, setCommentsLoading] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  useEffect(() => {
-    console.log('usePostDetail params:', params);
-    console.log('Resolved postId:', postId);
+  // Refs để track đã load và đã increment view chưa
+  const hasLoadedRef = useRef(false);
+  const hasIncrementedViewRef = useRef(false);
+  const currentPostIdRef = useRef<string | null>(null);
 
-    if (postId && postId.trim() && postId !== 'undefined') {
-      console.log('Loading post with ID:', postId);
-      setLoading(true);
-      loadPost();
-    } else {
-      console.log('No valid postId provided:', postId);
-      setLoading(false);
-    }
-  }, [postId, params.postId, params.id, params.slug]);
-
-  useEffect(() => {
-    if (post?.id) {
-      loadComments();
-    }
-  }, [post?.id]);
-
-  const loadPost = async () => {
+  // Memoize loadPost function
+  const loadPost = useCallback(async () => {
     if (!postId || !postId.trim() || postId === 'undefined') {
       console.log('Invalid postId for loading:', postId);
       setLoading(false);
       return;
     }
 
+    // Prevent duplicate loading của cùng một post
+    if (currentPostIdRef.current === postId && hasLoadedRef.current) {
+      return;
+    }
+
+    setLoading(true);
+    hasLoadedRef.current = false;
+    hasIncrementedViewRef.current = false;
+    currentPostIdRef.current = postId;
+
     try {
-      console.log('Calling API for post:', postId, 'Is UUID:', isUUID(postId));
+      console.log('Loading post:', postId, 'Is UUID:', isUUID(postId));
 
       let postData: Post;
 
       if (isUUID(postId)) {
-        console.log('Fetching by ID');
         postData = await postService.getPost(postId);
       } else {
-        console.log('Fetching by slug');
         postData = await postService.getPostBySlug(postId);
       }
 
@@ -85,6 +74,35 @@ export const usePostDetail = () => {
       setIsLiked(Boolean(postData.isLiked));
       setIsSaved(Boolean(postData.isSaved));
       setLikeCount(postData.likeCount);
+      hasLoadedRef.current = true;
+
+      // Chỉ tăng view count một lần và chỉ khi không phải author
+      const isAuthor = postData.user?.id === authState.user?.id;
+      console.log('Is author check:', {
+        postUserId: postData.user?.id,
+        currentUserId: authState.user?.id,
+        isAuthor,
+      });
+
+      if (!isAuthor && !hasIncrementedViewRef.current && authState.user) {
+        hasIncrementedViewRef.current = true;
+        console.log('Incrementing view count for non-author user');
+
+        // Delay để tránh race condition
+        setTimeout(async () => {
+          try {
+            await postService.viewPost(postData.id, authState.user!.id);
+            console.log('View count incremented successfully');
+          } catch (err) {
+            console.error('Failed to increment view count:', err);
+          }
+        }, 500);
+      } else {
+        console.log('Skipping view increment:', {
+          isAuthor,
+          hasIncremented: hasIncrementedViewRef.current,
+        });
+      }
     } catch (err: any) {
       console.error('Error loading post:', err);
       error(err.message || 'Không thể tải bài viết');
@@ -92,51 +110,33 @@ export const usePostDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId, authState.user?.id, authState.user, error, navigate]);
 
-  const loadComments = async () => {
-    if (!post?.id) return;
+  // Effect để load post - chỉ chạy khi postId thay đổi
+  useEffect(() => {
+    console.log('usePostDetail effect triggered:', {
+      postId,
+      hasLoaded: hasLoadedRef.current,
+    });
 
-    setCommentsLoading(true);
-    try {
-      const commentsResult = await socialService.getPostComments(post.id, {
-        parentId: null,
-        page: 1,
-        limit: 50,
-        includeReplies: false,
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
-      });
+    if (postId && postId.trim() && postId !== 'undefined') {
+      // Reset refs khi postId thay đổi
+      if (currentPostIdRef.current !== postId) {
+        hasLoadedRef.current = false;
+        hasIncrementedViewRef.current = false;
+        currentPostIdRef.current = postId;
+      }
 
-      const commentsWithReplies = await Promise.all(
-        commentsResult.data.map(async (comment) => {
-          if (comment.replyCount > 0) {
-            try {
-              const repliesResult = await socialService.getCommentReplies(
-                comment.id,
-                {
-                  page: 1,
-                  limit: 10,
-                  sortBy: 'createdAt',
-                  sortOrder: 'asc',
-                },
-              );
-              return { ...comment, replies: repliesResult.data || [] };
-            } catch (err) {
-              return { ...comment, replies: [] };
-            }
-          }
-          return { ...comment, replies: [] };
-        }),
-      );
-
-      setComments(commentsWithReplies);
-    } catch (err: any) {
-      error('Không thể tải bình luận');
-    } finally {
-      setCommentsLoading(false);
+      loadPost();
+    } else {
+      setLoading(false);
     }
-  };
+
+    // Cleanup function
+    return () => {
+      console.log('usePostDetail cleanup');
+    };
+  }, [postId]); // Chỉ depend on postId
 
   const handleLike = async () => {
     if (!post?.id) return;
@@ -192,82 +192,11 @@ export const usePostDetail = () => {
     }
   };
 
-  const handleCommentSubmit = async (content: string) => {
-    if (!post?.id) return;
-
-    try {
-      await socialService.createComment({
-        postId: post.id,
-        content,
-      });
-      await loadComments();
-      success('Đã thêm bình luận');
-    } catch (err: any) {
-      error('Không thể thêm bình luận');
-    }
-  };
-
-  const handleReplyComment = async (parentId: string, content: string) => {
-    if (!post?.id) return;
-
-    try {
-      await socialService.createComment({
-        postId: post.id,
-        parentId,
-        content,
-      });
-      await loadComments();
-      success('Đã thêm phản hồi');
-    } catch (err) {
-      error('Không thể thêm phản hồi');
-    }
-  };
-
-  const handleLikeComment = async (commentId: string) => {
-    try {
-      const result = await socialService.toggleLike({ commentId });
-
-      setComments((prevComments) =>
-        updateCommentInTree(prevComments, commentId, (comment) => ({
-          ...comment,
-          isLiked: result.liked,
-          likeCount: result.liked
-            ? comment.likeCount + 1
-            : comment.likeCount - 1,
-        })),
-      );
-    } catch (err) {
-      error('Không thể thích bình luận');
-    }
-  };
-
-  // Helper function để update comment trong tree structure
-  const updateCommentInTree = (
-    comments: Comment[],
-    commentId: string,
-    updateFn: (comment: Comment) => Comment,
-  ): Comment[] => {
-    return comments.map((comment) => {
-      if (comment.id === commentId) {
-        return updateFn(comment);
-      }
-      if (comment.replies && comment.replies.length > 0) {
-        return {
-          ...comment,
-          replies: updateCommentInTree(comment.replies, commentId, updateFn),
-        };
-      }
-      return comment;
-    });
-  };
-
   const isAuthor = post?.user?.id === authState.user?.id;
 
   return {
     post,
-    comments,
     loading,
-    commentsLoading,
     isLiked,
     isSaved,
     likeCount,
@@ -275,9 +204,6 @@ export const usePostDetail = () => {
     handleLike,
     handleSave,
     handleShare,
-    handleCommentSubmit,
-    handleReplyComment,
-    handleLikeComment,
     refresh: loadPost,
   };
 };
