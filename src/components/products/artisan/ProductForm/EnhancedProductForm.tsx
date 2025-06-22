@@ -33,6 +33,8 @@ import {
   Cog6ToothIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 interface EnhancedProductFormProps {
@@ -63,7 +65,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     handleBlur,
     handleSubmit,
     setFieldValue,
-    submitWithStatus, // ✅ SỬA: Sử dụng submitWithStatus thay vì handleSubmit trực tiếp
+    submitWithStatus,
   } = useProductForm({
     initialData,
     productId,
@@ -83,12 +85,11 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     loadCategories();
   }, []);
 
-  // ✅ SỬA: Sửa form submit handlers
+  // ✅ SỬA: Form submit handlers
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
-    // Submit với status mặc định (DRAFT cho create, giữ nguyên cho edit)
     await handleSubmit(e);
   };
 
@@ -118,6 +119,28 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     setCollapsedSections(newCollapsed);
   };
 
+  // ✅ THÊM: Validation status helper
+  const getSectionValidation = (sectionId: string) => {
+    const sectionErrors = {
+      basic: ['name', 'description', 'categoryIds'],
+      pricing: ['price', 'discountPrice', 'quantity'],
+      media: ['images', 'featuredImage'],
+      variants: ['variants'],
+      shipping: ['weight', 'dimensions', 'shippingInfo'],
+      advanced: ['seoTitle', 'seoDescription'],
+    };
+
+    const relevantErrors =
+      sectionErrors[sectionId as keyof typeof sectionErrors] || [];
+    const hasErrors = relevantErrors.some(
+      (field) =>
+        touched[field as keyof typeof touched] &&
+        errors[field as keyof typeof errors],
+    );
+
+    return hasErrors ? 'error' : 'valid';
+  };
+
   const SectionHeader = ({
     id,
     title,
@@ -132,19 +155,31 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     isRequired?: boolean;
   }) => {
     const isCollapsed = collapsedSections.has(id);
+    const validationStatus = getSectionValidation(id);
 
     return (
       <button
         type="button"
         onClick={() => toggleSection(id)}
-        className="w-full flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-t-lg hover:bg-gray-100 transition-colors"
+        className={`w-full flex items-center justify-between p-3 border rounded-t-lg hover:bg-gray-100 transition-colors ${
+          validationStatus === 'error'
+            ? 'bg-red-50 border-red-200'
+            : 'bg-gray-50 border-gray-200'
+        }`}
       >
         <div className="flex items-center">
-          <Icon className="w-4 h-4 text-gray-600 mr-2" />
+          <Icon
+            className={`w-4 h-4 mr-2 ${
+              validationStatus === 'error' ? 'text-red-600' : 'text-gray-600'
+            }`}
+          />
           <div className="text-left">
             <h3 className="text-sm font-semibold text-gray-900 flex items-center">
               {title}
               {isRequired && <span className="text-red-500 ml-1">*</span>}
+              {validationStatus === 'error' && (
+                <ExclamationTriangleIcon className="w-4 h-4 text-red-500 ml-2" />
+              )}
             </h3>
             {description && (
               <p className="text-xs text-gray-500">{description}</p>
@@ -162,12 +197,41 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
   return (
     <div className="h-full overflow-hidden">
-      {/* ✅ SỬA: Sử dụng handleFormSubmit */}
       <form onSubmit={handleFormSubmit} className="h-full">
         <div className="flex h-full">
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-4">
+              {/* ✅ THÊM: Form Guidelines */}
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-start">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-600 mr-3 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-900 mb-1">
+                      Hướng dẫn tạo sản phẩm
+                    </h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>
+                        • <strong>Bắt buộc:</strong> Tên, giá, số lượng, ít nhất
+                        1 danh mục và 1 hình ảnh
+                      </li>
+                      <li>
+                        • <strong>SKU:</strong> Để trống để hệ thống tự động tạo
+                        từ tên sản phẩm
+                      </li>
+                      <li>
+                        • <strong>Tags:</strong> Thêm từ khóa để khách hàng dễ
+                        tìm kiếm
+                      </li>
+                      <li>
+                        • <strong>Biến thể:</strong> Tạo nếu sản phẩm có nhiều
+                        màu sắc/kích thước
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+
               {/* 1. Basic Information */}
               <Card className="overflow-hidden">
                 <SectionHeader
@@ -188,6 +252,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       error={touched.name ? errors.name : undefined}
                       required
                       placeholder="VD: Bình gốm men lam cổ điển"
+                      maxLength={200}
                     />
 
                     <div>
@@ -196,18 +261,22 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       </label>
                       <textarea
                         name="description"
-                        rows={3}
+                        rows={4}
                         className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm"
                         value={values.description}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Mô tả chi tiết về sản phẩm, kỹ thuật chế tác, nguồn gốc..."
+                        placeholder="Mô tả chi tiết về sản phẩm, kỹ thuật chế tác, nguồn gốc, chất liệu..."
+                        maxLength={2000}
                       />
                       {touched.description && errors.description && (
                         <p className="mt-1 text-xs text-red-600">
                           {errors.description}
                         </p>
                       )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(values.description || '').length}/2000 ký tự
+                      </p>
                     </div>
 
                     {/* Categories and Tags in same row */}
@@ -225,7 +294,6 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         />
                       </div>
                       <div>
-                        {/* ✅ SỬA: TagsEditor với proper handlers */}
                         <TagsEditor
                           tags={values.tags}
                           onChange={(tags) => setFieldValue('tags', tags)}
@@ -236,7 +304,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* Pricing & Inventory - Keep existing code */}
+              {/* 2. Pricing & Inventory */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="pricing"
@@ -257,6 +325,9 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         onBlur={handleBlur}
                         error={touched.price ? errors.price : undefined}
                         required
+                        min={1000}
+                        step={1000}
+                        placeholder="50000"
                       />
 
                       <Input
@@ -271,6 +342,9 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             ? errors.discountPrice
                             : undefined
                         }
+                        min={1000}
+                        step={1000}
+                        placeholder="40000"
                       />
 
                       <Input
@@ -282,6 +356,8 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         onBlur={handleBlur}
                         error={touched.quantity ? errors.quantity : undefined}
                         required
+                        min={0}
+                        placeholder="10"
                       />
 
                       <Input
@@ -292,6 +368,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         onChange={handleChange}
                         onBlur={handleBlur}
                         min={1}
+                        placeholder="1"
                       />
 
                       <Input
@@ -301,6 +378,8 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         value={values.maxOrderQty || ''}
                         onChange={handleChange}
                         onBlur={handleBlur}
+                        min={1}
+                        placeholder="100"
                       />
 
                       <Input
@@ -309,7 +388,8 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         value={values.sku || ''}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="Tự động tạo nếu để trống"
+                        placeholder="Để trống để tự động tạo"
+                        maxLength={100}
                       />
                     </div>
 
@@ -325,7 +405,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               Cho phép tùy chỉnh
                             </label>
                             <p className="text-xs text-gray-500">
-                              Khách hàng có thể yêu cầu tùy chỉnh
+                              Khách hàng có thể yêu cầu tùy chỉnh theo ý muốn
                             </p>
                           </div>
                           <Toggle
@@ -342,7 +422,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                               Cho phép thương lượng giá
                             </label>
                             <p className="text-xs text-gray-500">
-                              Khách hàng có thể thương lượng giá
+                              Khách hàng có thể đề nghị giá khác
                             </p>
                           </div>
                           <Toggle
@@ -358,7 +438,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* Images */}
+              {/* 3. Images */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="media"
@@ -382,7 +462,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* Variants */}
+              {/* 4. Variants */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="variants"
@@ -403,7 +483,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* Shipping & Physical Info */}
+              {/* 5. Shipping & Physical Info */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="shipping"
@@ -422,6 +502,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         onChange={handleChange}
                         onBlur={handleBlur}
                         min={0}
+                        placeholder="500"
                       />
                       <Input
                         name="barcode"
@@ -429,6 +510,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         value={values.barcode || ''}
                         onChange={handleChange}
                         onBlur={handleBlur}
+                        placeholder="Mã vạch sản phẩm (nếu có)"
                       />
                     </div>
 
@@ -449,7 +531,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* Advanced Settings */}
+              {/* 6. Advanced Settings */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="advanced"
@@ -471,7 +553,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                           value={values.seoTitle || ''}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          placeholder="Tiêu đề cho SEO (60 ký tự)"
+                          placeholder="Tiêu đề tối ưu SEO (60 ký tự)"
                           maxLength={60}
                         />
                         <div>
@@ -485,7 +567,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                             value={values.seoDescription || ''}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            placeholder="Mô tả cho SEO (160 ký tự)"
+                            placeholder="Mô tả tối ưu SEO (160 ký tự)"
                             maxLength={160}
                           />
                           <p className="mt-1 text-xs text-gray-500">
@@ -634,7 +716,6 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
               {/* Save Actions */}
               <Card className="p-4">
                 <div className="space-y-2">
-                  {/* ✅ SỬA: Buttons với proper handlers */}
                   {!isEditing && (
                     <Button
                       type="button"

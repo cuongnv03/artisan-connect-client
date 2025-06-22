@@ -47,17 +47,21 @@ export const productService = {
   },
 
   async createProduct(data: CreateProductRequest): Promise<Product> {
-    return await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS.BASE, data);
+    return await apiClient.post<Product>(API_ENDPOINTS.PRODUCTS.BASE, {
+      ...data,
+      tags: data.tags || [],
+      featuredImage: data.featuredImage || data.images[0],
+    });
   },
 
   async updateProduct(
     id: string,
     data: UpdateProductRequest,
   ): Promise<Product> {
-    return await apiClient.patch<Product>(
-      API_ENDPOINTS.PRODUCTS.BY_ID(id),
-      data,
-    );
+    return await apiClient.patch<Product>(API_ENDPOINTS.PRODUCTS.BY_ID(id), {
+      ...data,
+      tags: data.tags || [],
+    });
   },
 
   async deleteProduct(id: string): Promise<void> {

@@ -42,8 +42,8 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
   };
 
   // ✅ SỬA: Improved removeTag function
-  const removeTag = (indexToRemove: number) => {
-    const updatedTags = tags.filter((_, index) => index !== indexToRemove);
+  const removeTag = (tagToRemove: string) => {
+    const updatedTags = tags.filter((tag) => tag !== tagToRemove);
     onChange(updatedTags);
   };
 
@@ -77,20 +77,23 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
     <div className="space-y-4">
       <label className="block text-sm font-medium text-gray-700">
         Tags sản phẩm
+        <span className="text-gray-500 ml-1">
+          ({tags.length}/{maxTags})
+        </span>
       </label>
 
       {/* Current Tags */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg border min-h-[48px]">
           {tags.map((tag, index) => (
             <Badge
-              key={`${tag}-${index}`} // ✅ SỬA: Better key
+              key={`${tag}-${index}`}
               variant="primary"
-              className="group cursor-pointer hover:bg-primary-600 transition-colors"
+              className="group cursor-pointer hover:bg-red-500 transition-colors flex items-center"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                removeTag(index);
+                removeTag(tag);
               }}
             >
               <TagIcon className="w-3 h-3 mr-1" />
@@ -110,6 +113,7 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
           className="flex-1"
           onKeyPress={handleKeyPress}
           maxLength={30}
+          disabled={tags.length >= maxTags}
         />
         <Button
           type="button"
@@ -125,13 +129,13 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
       {/* Tag Suggestions */}
       {availableSuggestions.length > 0 && tags.length < maxTags && (
         <div>
-          <p className="text-sm text-gray-600 mb-2">Gợi ý:</p>
+          <p className="text-sm text-gray-600 mb-2">Gợi ý tags phổ biến:</p>
           <div className="flex flex-wrap gap-2">
             {availableSuggestions.slice(0, 8).map((suggestion, index) => (
               <Badge
-                key={`suggestion-${suggestion}-${index}`} // ✅ SỬA: Better key
+                key={`suggestion-${suggestion}-${index}`}
                 variant="secondary"
-                className="cursor-pointer hover:bg-gray-300 transition-colors"
+                className="cursor-pointer hover:bg-blue-500 hover:text-white transition-colors flex items-center"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -146,8 +150,9 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
         </div>
       )}
 
-      <p className="text-sm text-gray-500">
-        {tags.length}/{maxTags} tags. Mỗi tag tối đa 30 ký tự.
+      <p className="text-xs text-gray-500">
+        💡 Mỗi tag tối đa 30 ký tự. Click vào tag để xóa, click gợi ý để thêm
+        nhanh.
       </p>
     </div>
   );

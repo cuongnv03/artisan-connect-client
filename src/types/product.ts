@@ -169,6 +169,7 @@ export interface CreateProductRequest {
   isCustomizable?: boolean;
   allowNegotiation?: boolean;
   shippingInfo?: Record<string, any>;
+  status?: ProductStatus;
   tags?: string[];
   images: string[];
   featuredImage?: string;
@@ -177,7 +178,7 @@ export interface CreateProductRequest {
   attributes?: Record<string, any>;
   specifications?: Record<string, any>;
   customFields?: Record<string, any>;
-  categoryIds: string[]; // Thay đổi từ categories sang categoryIds
+  categoryIds: string[];
   variants?: CreateProductVariantRequest[];
 }
 
