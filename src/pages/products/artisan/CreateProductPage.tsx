@@ -56,6 +56,18 @@ export const CreateProductPage: React.FC = () => {
     );
   }
 
-  // Loại bỏ tiêu đề trùng lặp - chỉ render form
-  return <ProductForm initialData={initialData} />;
+  return (
+    <div className="mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900">
+        {duplicateId ? 'Sao chép sản phẩm' : 'Tạo sản phẩm mới'}
+      </h1>
+      <p className="text-gray-600">
+        {duplicateId
+          ? 'Tạo sản phẩm mới dựa trên sản phẩm đã có'
+          : 'Điền thông tin để tạo sản phẩm mới'}
+      </p>
+
+      <ProductForm initialData={initialData} />
+    </div>
+  );
 };

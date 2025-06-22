@@ -80,15 +80,25 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
     return errors;
   };
 
+  // ✅ SỬA: Tách riêng handleSubmit và submitWithStatus
   const handleSubmit = async (values: CreateProductRequest) => {
+    // Default status nếu không có
+    const status = values.status || ProductStatus.DRAFT;
+    return await submitWithStatus(values, status);
+  };
+
+  // ✅ THÊM: Function riêng để submit với status cụ thể
+  const submitWithStatus = async (
+    values: CreateProductRequest,
+    status: ProductStatus,
+  ) => {
     setSubmitting(true);
     try {
       let product: Product;
 
       const submitData = {
         ...values,
-        // Ensure status is set
-        status: values.status || ProductStatus.DRAFT,
+        status, // Set status được truyền vào
       };
 
       if (isEditing) {
@@ -101,9 +111,7 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
         product = await productService.createProduct(submitData);
         success(
           `${
-            submitData.status === ProductStatus.PUBLISHED
-              ? 'Tạo và xuất bản'
-              : 'Tạo'
+            status === ProductStatus.PUBLISHED ? 'Tạo và xuất bản' : 'Tạo'
           } sản phẩm thành công!`,
         );
       }
@@ -113,6 +121,8 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
       } else {
         navigate('/products/manage');
       }
+
+      return product;
     } catch (err: any) {
       showError(
         err.message || `Không thể ${isEditing ? 'cập nhật' : 'tạo'} sản phẩm`,
@@ -160,5 +170,6 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
     ...form,
     submitting,
     isEditing,
+    submitWithStatus, // ✅ THÊM: Export function mới
   };
 };

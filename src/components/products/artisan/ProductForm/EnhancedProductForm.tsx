@@ -63,6 +63,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     handleBlur,
     handleSubmit,
     setFieldValue,
+    submitWithStatus, // ✅ SỬA: Sử dụng submitWithStatus thay vì handleSubmit trực tiếp
   } = useProductForm({
     initialData,
     productId,
@@ -82,12 +83,28 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     loadCategories();
   }, []);
 
-  const handleFormSubmit = async (status: ProductStatus) => {
-    const formData = { ...values, status };
+  // ✅ SỬA: Sửa form submit handlers
+  const handleFormSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    // Submit với status mặc định (DRAFT cho create, giữ nguyên cho edit)
+    await handleSubmit(e);
+  };
+
+  const handleSaveAsDraft = async () => {
     try {
-      await handleSubmit(formData as any);
+      await submitWithStatus(values, ProductStatus.DRAFT);
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Save as draft error:', error);
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      await submitWithStatus(values, ProductStatus.PUBLISHED);
+    } catch (error) {
+      console.error('Publish error:', error);
     }
   };
 
@@ -145,7 +162,8 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
   return (
     <div className="h-full overflow-hidden">
-      <form onSubmit={(e) => e.preventDefault()} className="h-full">
+      {/* ✅ SỬA: Sử dụng handleFormSubmit */}
+      <form onSubmit={handleFormSubmit} className="h-full">
         <div className="flex h-full">
           {/* Main Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
@@ -207,6 +225,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                         />
                       </div>
                       <div>
+                        {/* ✅ SỬA: TagsEditor với proper handlers */}
                         <TagsEditor
                           tags={values.tags}
                           onChange={(tags) => setFieldValue('tags', tags)}
@@ -217,7 +236,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* 2. Pricing & Inventory */}
+              {/* Pricing & Inventory - Keep existing code */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="pricing"
@@ -339,7 +358,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* 3. Images */}
+              {/* Images */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="media"
@@ -363,7 +382,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* 4. Variants */}
+              {/* Variants */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="variants"
@@ -384,7 +403,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* 5. Shipping & Physical Info */}
+              {/* Shipping & Physical Info */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="shipping"
@@ -430,7 +449,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 )}
               </Card>
 
-              {/* 6. Advanced Settings */}
+              {/* Advanced Settings */}
               <Card className="overflow-hidden">
                 <SectionHeader
                   id="advanced"
@@ -615,11 +634,12 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
               {/* Save Actions */}
               <Card className="p-4">
                 <div className="space-y-2">
+                  {/* ✅ SỬA: Buttons với proper handlers */}
                   {!isEditing && (
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => handleFormSubmit(ProductStatus.DRAFT)}
+                      onClick={handleSaveAsDraft}
                       disabled={submitting}
                       fullWidth
                       size="sm"
@@ -631,7 +651,7 @@ export const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
                   <Button
                     type="button"
-                    onClick={() => handleFormSubmit(ProductStatus.PUBLISHED)}
+                    onClick={handlePublish}
                     disabled={submitting}
                     loading={submitting}
                     fullWidth

@@ -30,21 +30,42 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
 }) => {
   const [newTag, setNewTag] = useState('');
 
+  // ✅ SỬA: Improved addTag function
   const addTag = (tag: string) => {
     const trimmedTag = tag.trim().toLowerCase();
     if (trimmedTag && !tags.includes(trimmedTag) && tags.length < maxTags) {
-      onChange([...tags, trimmedTag]);
+      const updatedTags = [...tags, trimmedTag];
+      onChange(updatedTags);
+      return true;
+    }
+    return false;
+  };
+
+  // ✅ SỬA: Improved removeTag function
+  const removeTag = (indexToRemove: number) => {
+    const updatedTags = tags.filter((_, index) => index !== indexToRemove);
+    onChange(updatedTags);
+  };
+
+  // ✅ SỬA: Handle manual tag input
+  const handleAddTag = () => {
+    if (newTag.trim() && addTag(newTag)) {
+      setNewTag('');
     }
   };
 
-  const removeTag = (index: number) => {
-    onChange(tags.filter((_, i) => i !== index));
+  // ✅ SỬA: Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    if (addTag(suggestion)) {
+      // Tag added successfully
+    }
   };
 
-  const handleAddTag = () => {
-    if (newTag.trim()) {
-      addTag(newTag);
-      setNewTag('');
+  // ✅ SỬA: Handle key press
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
     }
   };
 
@@ -63,14 +84,18 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
         <div className="flex flex-wrap gap-2">
           {tags.map((tag, index) => (
             <Badge
-              key={index}
+              key={`${tag}-${index}`} // ✅ SỬA: Better key
               variant="primary"
-              className="cursor-pointer hover:bg-primary-600"
-              onClick={() => removeTag(index)}
+              className="group cursor-pointer hover:bg-primary-600 transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeTag(index);
+              }}
             >
               <TagIcon className="w-3 h-3 mr-1" />
               {tag}
-              <XMarkIcon className="ml-1 w-3 h-3" />
+              <XMarkIcon className="ml-1 w-3 h-3 group-hover:text-white" />
             </Badge>
           ))}
         </div>
@@ -83,12 +108,7 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
           onChange={(e) => setNewTag(e.target.value)}
           placeholder="Nhập tag mới..."
           className="flex-1"
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              handleAddTag();
-            }
-          }}
+          onKeyPress={handleKeyPress}
           maxLength={30}
         />
         <Button
@@ -107,12 +127,16 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
         <div>
           <p className="text-sm text-gray-600 mb-2">Gợi ý:</p>
           <div className="flex flex-wrap gap-2">
-            {availableSuggestions.slice(0, 8).map((suggestion) => (
+            {availableSuggestions.slice(0, 8).map((suggestion, index) => (
               <Badge
-                key={suggestion}
+                key={`suggestion-${suggestion}-${index}`} // ✅ SỬA: Better key
                 variant="secondary"
-                className="cursor-pointer hover:bg-gray-300"
-                onClick={() => addTag(suggestion)}
+                className="cursor-pointer hover:bg-gray-300 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSuggestionClick(suggestion);
+                }}
               >
                 {suggestion}
                 <PlusIcon className="ml-1 w-3 h-3" />

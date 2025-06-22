@@ -5,6 +5,7 @@ import { ProductForm } from '../../../components/products/artisan/ProductForm/Pr
 import { CreateProductRequest } from '../../../types/product';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { Button } from '../../../components/ui/Button';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export const EditProductPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -69,8 +70,29 @@ export const EditProductPage: React.FC = () => {
     );
   }
 
-  // Chỉ render form, không có tiêu đề trùng lặp
-  return initialData ? (
-    <ProductForm initialData={initialData} productId={productId} />
-  ) : null;
+  return (
+    <div className="mx-auto">
+      {/* Header */}
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/products/manage')}
+          leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
+        >
+          Quay lại
+        </Button>
+      </div>
+
+      <div className="">
+        <h1 className="text-3xl font-bold text-gray-900">Chỉnh sửa sản phẩm</h1>
+        <p className="text-gray-600">
+          Cập nhật thông tin sản phẩm "{product.name}"
+        </p>
+      </div>
+
+      {initialData && (
+        <ProductForm initialData={initialData} productId={productId} />
+      )}
+    </div>
+  );
 };
