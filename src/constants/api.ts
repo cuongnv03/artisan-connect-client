@@ -64,6 +64,7 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/posts/${id}`,
     PUBLISH: (id: string) => `/posts/${id}/publish`,
     ARCHIVE: (id: string) => `/posts/${id}/archive`,
+    REPUBLISH: (id: string) => `/posts/${id}/republish`, // THÊM
     MY_POSTS: '/posts/user/me',
     FEED: '/posts/feed/followed',
   },

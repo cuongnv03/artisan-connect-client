@@ -8,6 +8,7 @@ import {
   ShareIcon,
   ArchiveBoxIcon,
   DocumentIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 
 interface PostActionsProps {
@@ -16,8 +17,14 @@ interface PostActionsProps {
 }
 
 export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
-  const { publishPost, archivePost, editPost, viewPost, isLoading } =
-    usePostActions();
+  const {
+    publishPost,
+    archivePost,
+    editPost,
+    viewPost,
+    republishPost,
+    isLoading,
+  } = usePostActions();
 
   const handlePublish = async () => {
     const success = await publishPost(post.id);
@@ -38,16 +45,23 @@ export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
     navigator.clipboard.writeText(shareUrl);
   };
 
+  const handleRepublish = async () => {
+    const success = await republishPost(post.id);
+    if (success && onUpdate) {
+      onUpdate();
+    }
+  };
+
   return (
     <div className="flex items-center space-x-2">
-      <Button
+      {/* <Button
         variant="ghost"
         size="sm"
         onClick={() => viewPost(post.id)}
         leftIcon={<EyeIcon className="w-4 h-4" />}
       >
         Xem
-      </Button>
+      </Button> */}
 
       <Button
         variant="ghost"
@@ -79,6 +93,18 @@ export const PostActions: React.FC<PostActionsProps> = ({ post, onUpdate }) => {
           leftIcon={<ArchiveBoxIcon className="w-4 h-4" />}
         >
           Lưu trữ
+        </Button>
+      )}
+
+      {post.status === 'ARCHIVED' && (
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handleRepublish}
+          loading={isLoading(post.id, 'republish')}
+          leftIcon={<ArrowUpTrayIcon className="w-4 h-4" />}
+        >
+          Đăng lại
         </Button>
       )}
 

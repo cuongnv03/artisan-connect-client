@@ -13,6 +13,7 @@ export const EditPostPage: React.FC = () => {
   const { error } = useToastContext();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (postId) {
@@ -25,7 +26,7 @@ export const EditPostPage: React.FC = () => {
 
     try {
       const postData = await postService.getPost(postId);
-      console.log('Loaded post data for editing:', postData); // Debug log
+      console.log('Loaded post data for editing:', postData);
       setPost(postData);
     } catch (err) {
       error('Không thể tải bài viết');
@@ -33,6 +34,10 @@ export const EditPostPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    navigate(`/posts/manage/${postId}`);
   };
 
   if (loading) {
@@ -64,18 +69,46 @@ export const EditPostPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Chỉnh sửa bài viết
-        </h1>
-        <p className="text-gray-600">
-          Cập nhật nội dung và thông tin bài viết của bạn
-        </p>
+      {/* Header với Title và Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Chỉnh sửa bài viết
+          </h1>
+          <p className="text-gray-600">
+            Cập nhật nội dung và thông tin bài viết của bạn
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-4 flex-shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSubmitting}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="submit"
+            form="post-edit-form" // Sẽ link với form ID
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            Cập nhật
+          </Button>
+        </div>
       </div>
 
+      {/* Post Form */}
       <PostForm
         initialPost={post}
-        onCancel={() => navigate(`/posts/manage/${postId}`)}
+        onCancel={handleCancel}
+        onSubmitStart={() => setIsSubmitting(true)}
+        onSubmitEnd={() => setIsSubmitting(false)}
+        hideActions={true} // Ẩn actions ở cuối form
+        formId="post-edit-form" // ID để link với submit button
       />
     </div>
   );

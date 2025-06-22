@@ -101,16 +101,6 @@ export const PostModal: React.FC<PostModalProps> = ({
           </div>
         )}
 
-        {/* Post Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            {displayPost.title}
-          </h1>
-
-          {/* Post Meta - không có callback */}
-          <PostMeta post={displayPost} showActions={true} />
-        </div>
-
         {/* Cover Image */}
         {displayPost.coverImage && (
           <div className="mb-6">
@@ -132,6 +122,16 @@ export const PostModal: React.FC<PostModalProps> = ({
             />
           </div>
         )}
+
+        {/* Post Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            {displayPost.title}
+          </h1>
+
+          {/* Post Meta - không có callback */}
+          <PostMeta post={displayPost} showActions={true} />
+        </div>
 
         {/* Post Content - format mới */}
         <div className="mb-6">

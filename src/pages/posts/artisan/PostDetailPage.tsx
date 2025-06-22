@@ -45,12 +45,6 @@ export const PostDetailPage: React.FC = () => {
   const menuItems = isAuthor
     ? [
         {
-          label: 'Chỉnh sửa',
-          value: 'edit',
-          icon: <PencilIcon className="w-4 h-4" />,
-          onClick: () => navigate(`/posts/${post?.id}/edit`),
-        },
-        {
           label: 'Xóa',
           value: 'delete',
           icon: <TrashIcon className="w-4 h-4" />,
@@ -88,79 +82,94 @@ export const PostDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <Card className="p-8 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <Link to="/posts/me" className="text-gray-500 hover:text-gray-700">
-              ← Quay lại danh sách
-            </Link>
-          </div>
-
-          {isAuthor && (
-            <div className="flex items-center space-x-2">
-              <PostActions post={post} />
-
-              {menuItems.length > 0 && (
-                <Dropdown
-                  trigger={
-                    <Button variant="ghost" size="sm">
-                      <EllipsisHorizontalIcon className="w-5 h-5" />
-                    </Button>
-                  }
-                  items={menuItems}
-                />
-              )}
-            </div>
-          )}
+      {/* Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <Link to="/posts/me" className="text-gray-500 hover:text-gray-700">
+            ← Quay lại danh sách
+          </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{post.title}</h1>
+        {isAuthor && (
+          <div className="flex items-center space-x-2">
+            <PostActions post={post} />
 
-        {post.summary && (
-          <p className="text-lg text-gray-600 mb-6">{post.summary}</p>
-        )}
-
-        {/* Cover Image */}
-        {post.coverImage && (
-          <div className="mb-6">
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="w-full h-96 object-cover rounded-lg"
-            />
+            {menuItems.length > 0 && (
+              <Dropdown
+                trigger={
+                  <Button variant="ghost" size="sm">
+                    <EllipsisHorizontalIcon className="w-5 h-5" />
+                  </Button>
+                }
+                items={menuItems}
+              />
+            )}
           </div>
         )}
+      </div>
 
-        <PostMeta post={post} showActions={true} />
-      </Card>
+      {/* LAYOUT 2 CỘT */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* CỘT TRÁI - 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Cover Image - ĐẶT NGAY TRÊN TITLE */}
+          {post.coverImage && (
+            <div className="mb-6">
+              <img
+                src={post.coverImage}
+                alt={post.title}
+                className="w-full h-96 object-cover rounded-lg shadow-lg"
+              />
+            </div>
+          )}
 
-      {/* Content */}
-      <Card className="p-8 mb-6">
-        <PostContent content={post.content} />
+          {/* Header với Title và Meta */}
+          <Card className="p-8 mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {post.title}
+            </h1>
 
-        {/* Media Gallery */}
-        {post.mediaUrls && post.mediaUrls.length > 0 && (
-          <div className="mt-8">
-            <ImageGallery images={post.mediaUrls} />
-          </div>
-        )}
-      </Card>
+            {post.summary && (
+              <p className="text-lg text-gray-600 mb-6">{post.summary}</p>
+            )}
 
-      {/* Product Mentions */}
-      {post.productMentions && post.productMentions.length > 0 && (
-        <Card className="p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">🏷️</span>
-            Sản phẩm được đề cập trong bài viết
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {post.productMentions.map((mention) => (
-              <ProductMentionCard key={mention.id} mention={mention} />
-            ))}
-          </div>
-        </Card>
-      )}
+            <PostMeta post={post} showActions={true} />
+          </Card>
+          {/* Content */}
+          <Card className="p-8">
+            <PostContent content={post.content} />
+          </Card>
+        </div>
+
+        {/* CỘT PHẢI - 1/3 */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Media Gallery */}
+          {post.mediaUrls && post.mediaUrls.length > 0 && (
+            <Card className="p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <span className="mr-2">📸</span>
+                Thư viện ảnh
+              </h3>
+              <ImageGallery images={post.mediaUrls} />
+            </Card>
+          )}
+
+          {/* Product Mentions */}
+          {post.productMentions && post.productMentions.length > 0 && (
+            <Card className="p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <span className="mr-2">🏷️</span>
+                Sản phẩm đề cập
+              </h3>
+              <div className="space-y-4">
+                {post.productMentions.map((mention) => (
+                  <ProductMentionCard key={mention.id} mention={mention} />
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

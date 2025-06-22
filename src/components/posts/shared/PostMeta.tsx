@@ -102,7 +102,7 @@ export const PostMeta: React.FC<PostMetaProps> = ({
   };
 
   return (
-    <div className="border-b border-gray-200 pb-6 mb-6">
+    <div className="">
       {/* Author Info */}
       <div className="flex items-center mb-4">
         <Avatar

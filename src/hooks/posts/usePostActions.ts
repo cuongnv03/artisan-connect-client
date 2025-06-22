@@ -50,6 +50,21 @@ export const usePostActions = () => {
     }
   };
 
+  // THÊM: Republish action
+  const republishPost = async (postId: string) => {
+    setLoading(postId, 'republish', true);
+    try {
+      await postService.republishPost(postId);
+      success('Đã đăng lại bài viết');
+      return true;
+    } catch (err: any) {
+      error(err.message || 'Không thể đăng lại bài viết');
+      return false;
+    } finally {
+      setLoading(postId, 'republish', false);
+    }
+  };
+
   const deletePost = async (postId: string) => {
     setLoading(postId, 'delete', true);
     try {
@@ -106,6 +121,16 @@ export const usePostActions = () => {
       });
     }
 
+    // THÊM: Republish từ archived
+    if (post.status === PostStatus.ARCHIVED) {
+      actions.push({
+        key: 'republish',
+        label: 'Đăng lại',
+        icon: 'upload',
+        onClick: () => republishPost(post.id),
+      });
+    }
+
     actions.push({
       key: 'delete',
       label: 'Xóa',
@@ -120,6 +145,7 @@ export const usePostActions = () => {
   return {
     publishPost,
     archivePost,
+    republishPost, // THÊM: Export republish action
     deletePost,
     editPost,
     viewPost,

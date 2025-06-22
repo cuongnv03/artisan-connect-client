@@ -109,6 +109,17 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
       )}
 
+      {/* Thumbnail nếu không có cover */}
+      {!post.coverImage && post.thumbnailUrl && (
+        <div className="h-48 overflow-hidden" onClick={handleCardClick}>
+          <img
+            src={post.thumbnailUrl}
+            alt={post.title}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      )}
+
       <div className="p-6">
         {/* Author Info */}
         <div className="flex items-center mb-4">
@@ -179,7 +190,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Like Button */}
             <button

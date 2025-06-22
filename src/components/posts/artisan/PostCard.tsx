@@ -9,6 +9,7 @@ import {
   EllipsisHorizontalIcon,
   ArchiveBoxIcon,
   DocumentIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 import { Post, PostStatus } from '../../../types/post';
 import { usePostActions } from '../../../hooks/posts';
@@ -24,7 +25,13 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
-  const { getAvailableActions, deletePost, isLoading } = usePostActions();
+  const {
+    publishPost,
+    archivePost,
+    republishPost, // THÊM: Action để republish từ archived
+    deletePost,
+    isLoading,
+  } = usePostActions();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const getStatusDisplay = (status: PostStatus) => {
@@ -55,44 +62,81 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
     }
   };
 
-  const actions = getAvailableActions(post);
-  const dropdownItems = actions.map((action) => ({
-    label: action.label,
-    value: action.key,
-    onClick: async () => {
-      if (action.key === 'delete') {
-        setShowDeleteModal(true);
-      } else if (action.key === 'archive') {
-        // Handle archive action
-        const { archivePost } = usePostActions();
-        const success = await archivePost(post.id);
-        if (success && onUpdate) {
-          onUpdate();
-        }
-      } else if (action.key === 'publish') {
-        // Handle publish action
-        const { publishPost } = usePostActions();
-        const success = await publishPost(post.id);
-        if (success && onUpdate) {
-          onUpdate();
-        }
-      } else {
-        action.onClick();
-      }
-    },
-    icon:
-      action.icon === 'eye' ? (
-        <EyeIcon className="w-4 h-4" />
-      ) : action.icon === 'pencil' ? (
-        <PencilIcon className="w-4 h-4" />
-      ) : action.icon === 'trash' ? (
-        <TrashIcon className="w-4 h-4" />
-      ) : action.icon === 'archive' ? (
-        <ArchiveBoxIcon className="w-4 h-4" />
-      ) : action.icon === 'upload' ? (
-        <DocumentIcon className="w-4 h-4" />
-      ) : null,
-  }));
+  // SỬA: Tạo actions dựa trên trạng thái bài viết
+  const getAvailableActions = () => {
+    const actions = [
+      // {
+      //   label: 'Xem',
+      //   value: 'view',
+      //   icon: <EyeIcon className="w-4 h-4" />,
+      //   onClick: () => window.open(`/posts/manage/${post.id}`, '_blank'),
+      // },
+      {
+        label: 'Chỉnh sửa',
+        value: 'edit',
+        icon: <PencilIcon className="w-4 h-4" />,
+        onClick: () => window.open(`/posts/${post.id}/edit`, '_blank'),
+      },
+    ];
+
+    // THÊM: Actions theo trạng thái
+    if (post.status === PostStatus.DRAFT) {
+      actions.push({
+        label: 'Đăng bài',
+        value: 'publish',
+        icon: <DocumentIcon className="w-4 h-4" />,
+        onClick: async () => {
+          const success = await publishPost(post.id);
+          if (success && onUpdate) {
+            onUpdate();
+          }
+        },
+      });
+    }
+
+    if (post.status === PostStatus.PUBLISHED) {
+      actions.push({
+        label: 'Lưu trữ',
+        value: 'archive',
+        icon: <ArchiveBoxIcon className="w-4 h-4" />,
+        onClick: async () => {
+          const success = await archivePost(post.id);
+          if (success && onUpdate) {
+            onUpdate();
+          }
+        },
+      });
+    }
+
+    // THÊM: Republish từ archived
+    if (post.status === PostStatus.ARCHIVED) {
+      actions.push({
+        label: 'Đăng lại',
+        value: 'republish',
+        icon: <ArrowUpTrayIcon className="w-4 h-4" />,
+        onClick: async () => {
+          const success = await republishPost(post.id);
+          if (success && onUpdate) {
+            onUpdate();
+          }
+        },
+      });
+    }
+
+    // Delete action (always available except for deleted posts)
+    if (post.status !== PostStatus.DELETED) {
+      actions.push({
+        label: 'Xóa',
+        value: 'delete',
+        icon: <TrashIcon className="w-4 h-4" />,
+        onClick: () => setShowDeleteModal(true),
+      });
+    }
+
+    return actions;
+  };
+
+  const dropdownItems = getAvailableActions();
 
   return (
     <>

@@ -53,6 +53,12 @@ export const postService = {
     return await apiClient.post<Post>(API_ENDPOINTS.POSTS.ARCHIVE(id));
   },
 
+  async republishPost(id: string): Promise<Post> {
+    return await apiClient.post<Post>(
+      `${API_ENDPOINTS.POSTS.BY_ID(id)}/republish`,
+    );
+  },
+
   // === MY POSTS ===
   async getMyPosts(query: GetPostsQuery = {}): Promise<{
     posts: PostPaginationResult;

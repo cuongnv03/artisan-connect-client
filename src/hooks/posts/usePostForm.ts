@@ -35,6 +35,7 @@ export const usePostForm = (initialPost?: Post) => {
     [],
   );
   const [coverImages, setCoverImages] = useState<File[]>([]);
+  const [thumbnailImages, setThumbnailImages] = useState<File[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -188,13 +189,25 @@ export const usePostForm = (initialPost?: Post) => {
         coverImageUrl = uploadResult.url;
       }
 
+      // Upload thumbnail images
+      let thumbnailImageUrl = initialPost?.thumbnailUrl || '';
+      if (thumbnailImages.length > 0) {
+        const uploadResult = await uploadService.uploadImage(
+          thumbnailImages[0],
+          {
+            folder: 'posts/thumbnails',
+          },
+        );
+        thumbnailImageUrl = uploadResult.url;
+      }
+
       // Upload media files
-      const mediaUrls: string[] = [];
+      const uploadedMediaUrls: string[] = [];
       for (const mediaFile of mediaFiles) {
         const uploadResult = await uploadService.uploadImage(mediaFile, {
           folder: 'posts/media',
         });
-        mediaUrls.push(uploadResult.url);
+        uploadedMediaUrls.push(uploadResult.url);
       }
 
       // Process content blocks
@@ -214,7 +227,7 @@ export const usePostForm = (initialPost?: Post) => {
         type: values.type,
         status: 'DRAFT',
         coverImage: coverImageUrl || undefined,
-        mediaUrls: [...(initialPost?.mediaUrls || []), ...mediaUrls],
+        mediaUrls: [...(initialPost?.mediaUrls || []), ...uploadedMediaUrls], // Include uploaded media
         tags: values.tags,
         publishNow: false,
         productMentions: productMentions.map((mention) => ({
@@ -282,6 +295,8 @@ export const usePostForm = (initialPost?: Post) => {
     setProductMentions,
     coverImages,
     setCoverImages,
+    thumbnailImages,
+    setThumbnailImages,
     mediaFiles,
     setMediaFiles,
     isUploading,
