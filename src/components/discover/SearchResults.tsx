@@ -5,17 +5,20 @@ import { UserCard } from '../common/UserCard';
 import { PostCard } from '../posts/customer/PostCard';
 import { ProductCard } from '../products/customer/ProductCard/ProductCard';
 import { SearchType } from '../../contexts/DiscoverContext';
+import { Post } from '../../types/post';
 
 interface SearchResultsProps {
   activeTab: SearchType;
   results: {
     artisans: any[];
     users: any[];
-    posts: any[];
+    posts: Post[]; // SỬA: Specify Post type
     products: any[];
   };
   totals: Record<string, number>;
   onViewMore: (type: SearchType) => void;
+  onPostClick?: (post: Post) => void; // THÊM: Post click handler
+  onCommentClick?: (post: Post) => void; // THÊM: Comment click handler
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -23,6 +26,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   results,
   totals,
   onViewMore,
+  onPostClick, // NHẬN: Post click handler
+  onCommentClick, // NHẬN: Comment click handler
 }) => {
   if (activeTab === 'all') {
     return (
@@ -73,7 +78,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           </section>
         )}
 
-        {/* Posts Section */}
+        {/* Posts Section - SỬA: Thêm post handlers */}
         {results.posts.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -89,8 +94,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
               </Button>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {results.posts.map((post: any) => (
-                <PostCard key={post.id} post={post} compact />
+              {results.posts.map((post: Post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  compact
+                  onClick={onPostClick} // THÊM: Pass post click handler
+                  onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+                />
               ))}
             </div>
           </section>
@@ -143,10 +154,16 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
       )}
 
+      {/* Posts Tab - SỬA: Thêm post handlers */}
       {activeTab === 'posts' && (
         <div className="space-y-6">
-          {currentResults.map((post: any) => (
-            <PostCard key={post.id} post={post} />
+          {currentResults.map((post: Post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onClick={onPostClick} // THÊM: Pass post click handler
+              onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+            />
           ))}
         </div>
       )}

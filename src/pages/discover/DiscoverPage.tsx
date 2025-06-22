@@ -14,9 +14,13 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Pagination } from '../../components/ui/Pagination';
 import { FilterPanel } from '../../components/common/FilterPanel';
+import { PostModal } from '../../components/posts/customer/PostModal';
 import { useFeaturedContent } from '../../hooks/discover/useFeaturedContent';
 import { useDiscoverSearch } from '../../hooks/discover/useDiscoverSearch';
+import { usePostModal } from '../../hooks/posts';
+import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/common/useDebounce';
+import { Post } from '../../types/post';
 
 const DiscoverPageContent: React.FC = () => {
   const { state, setSearchQuery, setActiveTab, setFilters, setCurrentPage } =
@@ -24,6 +28,8 @@ const DiscoverPageContent: React.FC = () => {
   const { content: featuredContent, loading: featuredLoading } =
     useFeaturedContent();
   const { performSearch } = useDiscoverSearch();
+  const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
+  const { state: authState } = useAuth();
   const navigate = useNavigate();
 
   const debouncedQuery = useDebounce(state.searchQuery, 500);
@@ -57,6 +63,35 @@ const DiscoverPageContent: React.FC = () => {
 
   const handleViewMore = (type: string) => {
     setActiveTab(type as any);
+  };
+
+  // LOGIC GIỐNG HOMEFEED - Handle post clicks
+  const handlePostClick = (post: Post) => {
+    console.log(
+      'Post clicked in Discover:',
+      post.id,
+      'User role:',
+      authState.user?.role,
+    );
+
+    // CHỈ chuyển đến trang manage khi là bài viết của chính mình
+    if (
+      authState.user?.role === 'ARTISAN' &&
+      post.user?.id === authState.user.id
+    ) {
+      console.log('Navigating to manage page for own post');
+      navigate(`/posts/manage/${post.id}`);
+    } else {
+      // Tất cả trường hợp khác đều mở modal
+      console.log('Opening modal for post');
+      openModal(post);
+    }
+  };
+
+  const handleCommentClick = (post: Post) => {
+    console.log('Comment clicked, opening modal');
+    // Luôn mở modal khi click comment, bất kể role
+    openModal(post);
   };
 
   const hasResults = Object.values(state.results).some((arr) => arr.length > 0);
@@ -117,6 +152,8 @@ const DiscoverPageContent: React.FC = () => {
                   results={state.results}
                   totals={state.totals}
                   onViewMore={handleViewMore}
+                  onPostClick={handlePostClick} // LOGIC GIỐNG HOMEFEED
+                  onCommentClick={handleCommentClick} // THÊM COMMENT HANDLER
                 />
                 {showPagination && (
                   <div className="mt-8">
@@ -150,10 +187,15 @@ const DiscoverPageContent: React.FC = () => {
             <FeaturedSections
               content={featuredContent}
               onViewMore={handleViewMore}
+              onPostClick={handlePostClick} // LOGIC GIỐNG HOMEFEED
+              onCommentClick={handleCommentClick} // THÊM COMMENT HANDLER
             />
           )}
         </>
       )}
+
+      {/* PostModal - GIỐNG HOMEFEED */}
+      <PostModal post={selectedPost} isOpen={isOpen} onClose={closeModal} />
     </div>
   );
 };

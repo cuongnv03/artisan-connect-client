@@ -5,21 +5,26 @@ import { ArtisanCard } from '../common/ArtisanCard';
 import { PostCard } from '../posts/customer/PostCard';
 import { ProductCard } from '../products/customer/ProductCard/ProductCard';
 import { useFollowArtisan } from '../../hooks/discover/useFollowArtisan';
+import { Post } from '../../types/post';
 
 interface FeaturedSectionsProps {
   content: {
     artisans: any[];
-    posts: any[];
+    posts: Post[]; // SỬA: Specify Post type
     products: any[];
   };
   onViewMore: (type: string) => void;
+  onPostClick?: (post: Post) => void; // THÊM: Post click handler
+  onCommentClick?: (post: Post) => void; // THÊM: Comment click handler
 }
 
 export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
   content,
   onViewMore,
+  onPostClick, // NHẬN: Post click handler
+  onCommentClick, // NHẬN: Comment click handler
 }) => {
-  const { handleFollow, getFollowState, followLoading } = useFollowArtisan(); // THÊM hook
+  const { handleFollow, getFollowState, followLoading } = useFollowArtisan();
 
   return (
     <div className="space-y-8">
@@ -55,7 +60,7 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
         </section>
       )}
 
-      {/* Top Posts */}
+      {/* Top Posts - SỬA: Thêm post handlers */}
       {content.posts.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -71,8 +76,14 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
             </Button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {content.posts.slice(0, 4).map((post: any) => (
-              <PostCard key={post.id} post={post} compact />
+            {content.posts.slice(0, 4).map((post: Post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                compact
+                onClick={onPostClick} // THÊM: Pass post click handler
+                onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+              />
             ))}
           </div>
         </section>

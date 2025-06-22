@@ -16,14 +16,20 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Pagination } from '../../components/ui/Pagination';
 import { FilterPanel } from '../../components/common/FilterPanel';
+import { PostModal } from '../../components/posts/customer/PostModal';
 import { Button } from '../../components/ui/Button';
 import { useDiscoverSearch } from '../../hooks/discover/useDiscoverSearch';
+import { usePostModal } from '../../hooks/posts';
+import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/common/useDebounce';
+import { Post } from '../../types/post';
 
 const SearchResultsPageContent: React.FC = () => {
   const { state, setSearchQuery, setActiveTab, setFilters, setCurrentPage } =
     useDiscoverContext();
   const { performSearch } = useDiscoverSearch();
+  const { selectedPost, isOpen, openModal, closeModal } = usePostModal();
+  const { state: authState } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = React.useState(false);
@@ -52,6 +58,35 @@ const SearchResultsPageContent: React.FC = () => {
 
   const clearSearch = () => {
     navigate('/discover');
+  };
+
+  // LOGIC GIỐNG HOMEFEED - Handle post clicks
+  const handlePostClick = (post: Post) => {
+    console.log(
+      'Post clicked in Search:',
+      post.id,
+      'User role:',
+      authState.user?.role,
+    );
+
+    // CHỈ chuyển đến trang manage khi là bài viết của chính mình
+    if (
+      authState.user?.role === 'ARTISAN' &&
+      post.user?.id === authState.user.id
+    ) {
+      console.log('Navigating to manage page for own post');
+      navigate(`/posts/manage/${post.id}`);
+    } else {
+      // Tất cả trường hợp khác đều mở modal
+      console.log('Opening modal for post');
+      openModal(post);
+    }
+  };
+
+  const handleCommentClick = (post: Post) => {
+    console.log('Comment clicked, opening modal');
+    // Luôn mở modal khi click comment, bất kể role
+    openModal(post);
   };
 
   const hasResults = Object.values(state.totals).some((count) => count > 0);
@@ -120,6 +155,7 @@ const SearchResultsPageContent: React.FC = () => {
           <SearchBox
             value={state.searchQuery}
             onChange={setSearchQuery}
+            onSubmit={() => {}} // Not needed since we use debounced effect
             placeholder="Tìm kiếm nghệ nhân, sản phẩm, bài viết..."
           />
         </div>
@@ -175,6 +211,8 @@ const SearchResultsPageContent: React.FC = () => {
                 results={state.results}
                 totals={state.totals}
                 onViewMore={setActiveTab}
+                onPostClick={handlePostClick} // LOGIC GIỐNG HOMEFEED
+                onCommentClick={handleCommentClick} // THÊM COMMENT HANDLER
               />
 
               {/* Pagination for specific tabs */}
@@ -203,6 +241,9 @@ const SearchResultsPageContent: React.FC = () => {
           )}
         </>
       )}
+
+      {/* PostModal - GIỐNG HOMEFEED */}
+      <PostModal post={selectedPost} isOpen={isOpen} onClose={closeModal} />
     </div>
   );
 };

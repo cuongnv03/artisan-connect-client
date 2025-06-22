@@ -25,19 +25,18 @@ export const CreateProductPage: React.FC = () => {
       setLoading(true);
       const product = await productService.getProduct(duplicateId);
 
-      // Prepare data for duplication (remove ID fields, modify name)
       const duplicateData: Partial<CreateProductRequest> = {
         name: `${product.name} (Bản sao)`,
         description: product.description || undefined,
         price: product.price,
         discountPrice: product.discountPrice || undefined,
-        quantity: 0, // Reset quantity for duplicated product
+        quantity: 0,
         minOrderQty: product.minOrderQty,
         maxOrderQty: product.maxOrderQty || undefined,
         isCustomizable: product.isCustomizable,
         allowNegotiation: product.allowNegotiation,
         categoryIds: product.categories?.map((c) => c.id) || [],
-        images: [], // Reset images for duplicated product
+        images: [],
         tags: product.tags,
       };
 
@@ -51,33 +50,12 @@ export const CreateProductPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
-          <div className="space-y-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {duplicateId ? 'Sao chép sản phẩm' : 'Tạo sản phẩm mới'}
-        </h1>
-        <p className="text-gray-600">
-          {duplicateId
-            ? 'Tạo sản phẩm mới dựa trên sản phẩm đã có'
-            : 'Điền thông tin để tạo sản phẩm mới'}
-        </p>
-      </div>
-
-      <ProductForm initialData={initialData} />
-    </div>
-  );
+  // Loại bỏ tiêu đề trùng lặp - chỉ render form
+  return <ProductForm initialData={initialData} />;
 };

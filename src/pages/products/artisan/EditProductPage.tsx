@@ -5,7 +5,6 @@ import { ProductForm } from '../../../components/products/artisan/ProductForm/Pr
 import { CreateProductRequest } from '../../../types/product';
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
 import { Button } from '../../../components/ui/Button';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export const EditProductPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -21,7 +20,6 @@ export const EditProductPage: React.FC = () => {
 
   useEffect(() => {
     if (product) {
-      // Convert product to form data
       const formData: Partial<CreateProductRequest> = {
         name: product.name,
         description: product.description || undefined,
@@ -47,53 +45,32 @@ export const EditProductPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-96">
-          <LoadingSpinner size="lg" />
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          Không tìm thấy sản phẩm
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Sản phẩm có thể đã bị xóa hoặc bạn không có quyền chỉnh sửa
-        </p>
-        <Button onClick={() => navigate('/products/manage')}>
-          Quay về danh sách sản phẩm
-        </Button>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            Không tìm thấy sản phẩm
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Sản phẩm có thể đã bị xóa hoặc bạn không có quyền chỉnh sửa
+          </p>
+          <Button onClick={() => navigate('/products/manage')}>
+            Quay về danh sách sản phẩm
+          </Button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center mb-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/products/manage')}
-          leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
-        >
-          Quay lại
-        </Button>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Chỉnh sửa sản phẩm</h1>
-        <p className="text-gray-600">
-          Cập nhật thông tin sản phẩm "{product.name}"
-        </p>
-      </div>
-
-      {initialData && (
-        <ProductForm initialData={initialData} productId={productId} />
-      )}
-    </div>
-  );
+  // Chỉ render form, không có tiêu đề trùng lặp
+  return initialData ? (
+    <ProductForm initialData={initialData} productId={productId} />
+  ) : null;
 };

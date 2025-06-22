@@ -152,7 +152,6 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
                 onClick={() => handleCategoryToggle(category.id)}
               >
                 {category.name}
-                <XMarkIcon className="ml-1 w-3 h-3" />
               </Badge>
             ))}
           </div>
