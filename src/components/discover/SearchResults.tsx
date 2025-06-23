@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { UserCard } from '../common/UserCard';
 import { PostCard } from '../posts/customer/PostCard';
-import { ProductCard } from '../products/customer/ProductCard';
+import { ProductCard } from '../products/ProductCard';
 import { SearchType } from '../../contexts/DiscoverContext';
 import { Post } from '../../types/post';
 
@@ -12,13 +12,13 @@ interface SearchResultsProps {
   results: {
     artisans: any[];
     users: any[];
-    posts: Post[]; // SỬA: Specify Post type
+    posts: Post[];
     products: any[];
   };
   totals: Record<string, number>;
   onViewMore: (type: SearchType) => void;
-  onPostClick?: (post: Post) => void; // THÊM: Post click handler
-  onCommentClick?: (post: Post) => void; // THÊM: Comment click handler
+  onPostClick?: (post: Post) => void;
+  onCommentClick?: (post: Post) => void;
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -26,8 +26,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   results,
   totals,
   onViewMore,
-  onPostClick, // NHẬN: Post click handler
-  onCommentClick, // NHẬN: Comment click handler
+  onPostClick,
+  onCommentClick,
 }) => {
   if (activeTab === 'all') {
     return (
@@ -78,7 +78,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
           </section>
         )}
 
-        {/* Posts Section - SỬA: Thêm post handlers */}
+        {/* Posts Section */}
         {results.posts.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-4">
@@ -99,8 +99,8 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
                   key={post.id}
                   post={post}
                   compact
-                  onClick={onPostClick} // THÊM: Pass post click handler
-                  onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+                  onClick={onPostClick}
+                  onCommentClick={onCommentClick}
                 />
               ))}
             </div>
@@ -124,7 +124,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {results.products.map((product: any) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isManagementView={false}
+                />
               ))}
             </div>
           </section>
@@ -154,15 +158,14 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
       )}
 
-      {/* Posts Tab - SỬA: Thêm post handlers */}
       {activeTab === 'posts' && (
         <div className="space-y-6">
           {currentResults.map((post: Post) => (
             <PostCard
               key={post.id}
               post={post}
-              onClick={onPostClick} // THÊM: Pass post click handler
-              onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+              onClick={onPostClick}
+              onCommentClick={onCommentClick}
             />
           ))}
         </div>
@@ -171,7 +174,11 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
       {activeTab === 'products' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {currentResults.map((product: any) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              isManagementView={false}
+            />
           ))}
         </div>
       )}

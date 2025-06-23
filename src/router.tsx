@@ -31,6 +31,7 @@ import { PostsManagementPage } from './pages/admin/PostsManagementPage';
 // Product pages
 import { ShopPage } from './pages/products/ShopPage';
 import { ProductDetailPage } from './pages/products/ProductDetailPage';
+import { CategoryProductsPage } from './pages/products/CategoryProductsPage';
 
 // Artisan Product Pages
 import { CreateProductPage } from './pages/products/CreateProductPage';
@@ -55,7 +56,7 @@ import { TrackingPage } from './pages/orders/TrackingPage';
 // Price Negotiations
 import { CustomerNegotiationsPage } from './pages/negotiations/CustomerNegotiationsPage';
 import { ArtisanNegotiationsPage } from './pages/negotiations/ArtisanNegotiationsPage';
-import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
+// import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
 
 import { MyReviewsPage } from './pages/reviews/MyReviewsPage';
 import { ReviewableProductsPage } from './pages/reviews/ReviewableProductsPage';
@@ -223,14 +224,14 @@ export const router = createBrowserRouter(
             //     </ProtectedRoute>
             //   ),
             // },
-            // {
-            //   path: 'categories/:categorySlug',
-            //   element: (
-            //     <ProtectedRoute>
-            //       <CategoryPage />
-            //     </ProtectedRoute>
-            //   ),
-            // },
+            {
+              path: 'categories/:categorySlug',
+              element: (
+                <ProtectedRoute>
+                  <CategoryProductsPage />
+                </ProtectedRoute>
+              ),
+            },
             {
               path: ':productId',
               element: (
@@ -464,14 +465,14 @@ export const router = createBrowserRouter(
               ),
             },
             // Common detail page
-            {
-              path: ':id',
-              element: (
-                <ProtectedRoute>
-                  <NegotiationDetailPage />
-                </ProtectedRoute>
-              ),
-            },
+            // {
+            //   path: ':id',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <NegotiationDetailPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
           ],
         },
 

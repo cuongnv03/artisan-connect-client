@@ -112,7 +112,7 @@ export const MobileNavigation: React.FC = () => {
           (item) => item.path === ROUTE_PATHS.APP.ARTISAN.UPGRADE_REQUEST,
         ), // Special create button
         allNavigationItems.find(
-          (item) => item.path === ROUTE_PATHS.APP.PRODUCTS.LIST,
+          (item) => item.path === ROUTE_PATHS.APP.SHOP.BASE,
         ),
         allNavigationItems.find(
           (item) => item.path === ROUTE_PATHS.APP.ORDERS.MY_PURCHASES,
@@ -130,7 +130,7 @@ export const MobileNavigation: React.FC = () => {
           (item) => item.path === ROUTE_PATHS.APP.POSTS.MY_POSTS,
         ), // Create posts
         allNavigationItems.find(
-          (item) => item.path === ROUTE_PATHS.APP.PRODUCTS.MY_PRODUCTS,
+          (item) => item.path === ROUTE_PATHS.APP.PRODUCTS.BASE,
         ),
         allNavigationItems.find(
           (item) => item.path === ROUTE_PATHS.APP.ORDERS.MY_SALES,

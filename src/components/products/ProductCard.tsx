@@ -1,302 +1,276 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  StarIcon,
   HeartIcon,
+  StarIcon,
   ShoppingCartIcon,
   EyeIcon,
-  PencilIcon,
+  TagIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { Product } from '../../types/product';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../hooks/wishlist/useWishlist';
+import { useCartOperations } from '../../contexts/CartContext';
 import { WishlistItemType } from '../../types/wishlist';
-import { getRouteHelpers } from '../../constants/routes';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ProductCardProps {
   product: Product;
-  viewMode: 'shop' | 'management';
+  isManagementView?: boolean;
   onEdit?: () => void;
-  onStatusChange?: (newStatus: string) => void;
   onDelete?: () => void;
+  onStatusChange?: (status: string) => void;
   className?: string;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
-  viewMode,
+  isManagementView = false,
   onEdit,
-  onStatusChange,
   onDelete,
+  onStatusChange,
   className = '',
 }) => {
   const { state: authState } = useAuth();
-  const { addToCart } = useCart();
   const { toggleWishlistItem, checkWishlistStatus } = useWishlist();
-  const [isInWishlist, setIsInWishlist] = React.useState(false);
-  const [wishlistLoading, setWishlistLoading] = React.useState(false);
+  const { addToCartWithLoading, loading } = useCartOperations();
+  const [isWishlisted, setIsWishlisted] = useState(
+    product.isWishlisted || false,
+  );
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  const currentPrice = product.discountPrice || product.price;
-  const discountPercentage = product.discountPrice
-    ? Math.round((1 - product.discountPrice / product.price) * 100)
-    : 0;
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(price);
+  };
 
-  const isOwner =
-    authState.user?.role === 'ARTISAN' &&
-    product.seller?.id === authState.user.id;
-  const isOutOfStock = product.quantity <= 0;
-  const canAddToCart =
-    authState.isAuthenticated &&
-    !isOwner &&
-    !isOutOfStock &&
-    product.status === 'PUBLISHED';
-
-  // Check wishlist status
-  React.useEffect(() => {
-    if (authState.isAuthenticated && viewMode === 'shop') {
-      checkWishlistStatus(WishlistItemType.PRODUCT, product.id).then(
-        setIsInWishlist,
-      );
-    }
-  }, [authState.isAuthenticated, product.id, viewMode]);
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!canAddToCart) return;
-
-    try {
-      await addToCart(product.id, 1);
-    } catch (error) {
-      // Error handled in context
-    }
+  const getStatusBadge = (status: string) => {
+    const configs = {
+      PUBLISHED: { variant: 'success' as const, label: 'Đang bán' },
+      DRAFT: { variant: 'secondary' as const, label: 'Nháp' },
+      OUT_OF_STOCK: { variant: 'warning' as const, label: 'Hết hàng' },
+      DELETED: { variant: 'danger' as const, label: 'Đã xóa' },
+    };
+    return configs[status as keyof typeof configs] || configs.DRAFT;
   };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!authState.isAuthenticated || wishlistLoading) return;
+    if (!authState.isAuthenticated) return;
 
     setWishlistLoading(true);
     try {
-      const result = await toggleWishlistItem(
+      const newStatus = await toggleWishlistItem(
         WishlistItemType.PRODUCT,
         product.id,
       );
-      setIsInWishlist(result);
+      setIsWishlisted(newStatus);
     } catch (error) {
-      // Error handled in hook
+      console.error('Error toggling wishlist:', error);
     } finally {
       setWishlistLoading(false);
     }
   };
 
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!authState.isAuthenticated) return;
+
+    await addToCartWithLoading(product.id, 1);
+  };
+
   const getProductLink = () => {
-    if (viewMode === 'management') {
-      return getRouteHelpers.productDetail(product.id);
+    if (isManagementView) {
+      return `/products/${product.id}`;
     }
-    return getRouteHelpers.shopProductDetail(product.id);
+    return `/shop/${product.id}`;
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return 'success';
-      case 'DRAFT':
-        return 'warning';
-      case 'OUT_OF_STOCK':
-        return 'danger';
-      default:
-        return 'secondary';
-    }
-  };
+  const isOwner = authState.user?.id === product.seller?.id;
+  const canAddToCart =
+    authState.isAuthenticated &&
+    !isOwner &&
+    product.status === 'PUBLISHED' &&
+    product.quantity > 0;
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED':
-        return 'Đã xuất bản';
-      case 'DRAFT':
-        return 'Bản nháp';
-      case 'OUT_OF_STOCK':
-        return 'Hết hàng';
-      default:
-        return status;
-    }
-  };
+  const statusConfig = getStatusBadge(product.status);
+  const discountPercent = product.discountPrice
+    ? Math.round(
+        ((product.price - product.discountPrice) / product.price) * 100,
+      )
+    : 0;
 
   return (
-    <Card
-      className={`group hover:shadow-lg transition-all ${className}`}
-      padding={false}
+    <div
+      className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow ${className}`}
     >
       <Link to={getProductLink()} className="block">
         {/* Image */}
-        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+        <div className="relative aspect-square">
           <img
             src={product.featuredImage || product.images[0]}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+            className="w-full h-full object-cover"
           />
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {discountPercentage > 0 && (
+            <Badge variant={statusConfig.variant} size="sm">
+              {statusConfig.label}
+            </Badge>
+            {discountPercent > 0 && (
               <Badge variant="danger" size="sm">
-                -{discountPercentage}%
-              </Badge>
-            )}
-            {viewMode === 'management' && (
-              <Badge variant={getStatusBadgeVariant(product.status)} size="sm">
-                {getStatusLabel(product.status)}
+                -{discountPercent}%
               </Badge>
             )}
           </div>
 
-          {/* Wishlist button for shop view */}
-          {viewMode === 'shop' && authState.isAuthenticated && (
-            <button
-              onClick={handleWishlistToggle}
-              disabled={wishlistLoading}
-              className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
-            >
-              {isInWishlist ? (
-                <HeartIconSolid className="w-5 h-5 text-red-500" />
-              ) : (
-                <HeartIcon className="w-5 h-5 text-gray-600" />
-              )}
-            </button>
-          )}
+          {/* Actions */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {!isManagementView && authState.isAuthenticated && !isOwner && (
+              <button
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"
+              >
+                {isWishlisted ? (
+                  <HeartIconSolid className="w-4 h-4 text-red-500" />
+                ) : (
+                  <HeartIcon className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            )}
+          </div>
 
-          {/* Quick actions for management view */}
-          {viewMode === 'management' && (
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onEdit?.();
-                  }}
-                  leftIcon={<PencilIcon className="w-4 h-4" />}
-                >
-                  Sửa
-                </Button>
-              </div>
+          {/* Stats overlay */}
+          <div className="absolute bottom-2 left-2 flex gap-2">
+            <div className="flex items-center bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+              <EyeIcon className="w-3 h-3 mr-1" />
+              {product.viewCount}
             </div>
-          )}
+            {product.avgRating && (
+              <div className="flex items-center bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                <StarIcon className="w-3 h-3 mr-1" />
+                {product.avgRating.toFixed(1)}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content */}
         <div className="p-4">
-          {/* Title */}
-          <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="font-medium text-gray-900 line-clamp-2 mb-2">
             {product.name}
           </h3>
 
-          {/* Seller info for shop view */}
-          {viewMode === 'shop' && product.seller && (
-            <div className="flex items-center mb-2 text-sm text-gray-600">
-              <span>bởi</span>
-              <span className="ml-1 font-medium">
-                {product.seller.artisanProfile?.shopName ||
-                  `${product.seller.firstName} ${product.seller.lastName}`}
-              </span>
-              {product.seller.artisanProfile?.isVerified && (
-                <span className="ml-1 text-blue-500">✓</span>
-              )}
-            </div>
+          {/* Seller */}
+          {!isManagementView && product.seller && (
+            <p className="text-sm text-gray-600 mb-2">
+              {product.seller.artisanProfile?.shopName ||
+                `${product.seller.firstName} ${product.seller.lastName}`}
+            </p>
           )}
 
           {/* Price */}
-          <div className="flex items-center space-x-2 mb-3">
-            <span className="text-lg font-bold text-primary">
-              {new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND',
-              }).format(currentPrice)}
-            </span>
-            {discountPercentage > 0 && (
-              <span className="text-sm text-gray-500 line-through">
-                {new Intl.NumberFormat('vi-VN', {
-                  style: 'currency',
-                  currency: 'VND',
-                }).format(product.price)}
+          <div className="mb-3">
+            {product.discountPrice ? (
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-red-600">
+                  {formatPrice(product.discountPrice)}
+                </span>
+                <span className="text-sm text-gray-500 line-through">
+                  {formatPrice(product.price)}
+                </span>
+              </div>
+            ) : (
+              <span className="text-lg font-bold text-gray-900">
+                {formatPrice(product.price)}
               </span>
             )}
           </div>
 
-          {/* Stats */}
-          <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-            <div className="flex items-center space-x-4">
-              {product.avgRating && (
-                <div className="flex items-center">
-                  <StarIcon className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span>{product.avgRating.toFixed(1)}</span>
-                  <span className="ml-1">({product.reviewCount})</span>
-                </div>
+          {/* Categories */}
+          {product.categories && product.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {product.categories.slice(0, 2).map((category) => (
+                <Badge key={category.id} variant="secondary" size="sm">
+                  {category.name}
+                </Badge>
+              ))}
+              {product.categories.length > 2 && (
+                <Badge variant="secondary" size="sm">
+                  +{product.categories.length - 2}
+                </Badge>
               )}
-              <div className="flex items-center">
-                <EyeIcon className="w-4 h-4 mr-1" />
-                <span>{product.viewCount}</span>
-              </div>
             </div>
-            <span className="text-xs">
-              {isOutOfStock ? 'Hết hàng' : `Còn ${product.quantity}`}
-            </span>
+          )}
+
+          {/* Stock info */}
+          <div className="text-sm text-gray-600 mb-3">
+            {product.quantity > 0 ? (
+              <span>Còn {product.quantity} sản phẩm</span>
+            ) : (
+              <span className="text-red-600">Hết hàng</span>
+            )}
           </div>
-
-          {/* Actions */}
-          {viewMode === 'shop' && (
-            <Button
-              onClick={handleAddToCart}
-              disabled={!canAddToCart}
-              fullWidth
-              size="sm"
-              leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
-            >
-              {isOwner
-                ? 'Sản phẩm của bạn'
-                : isOutOfStock
-                ? 'Hết hàng'
-                : 'Thêm vào giỏ'}
-            </Button>
-          )}
-
-          {viewMode === 'management' && (
-            <div className="flex space-x-2">
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onEdit?.();
-                }}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                Chỉnh sửa
-              </Button>
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Handle status change
-                }}
-                size="sm"
-                className="flex-1"
-              >
-                {product.status === 'PUBLISHED' ? 'Ẩn' : 'Xuất bản'}
-              </Button>
-            </div>
-          )}
         </div>
       </Link>
-    </Card>
+
+      {/* Actions */}
+      <div className="p-4 pt-0">
+        {isManagementView ? (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEdit}
+              className="flex-1"
+            >
+              Chỉnh sửa
+            </Button>
+            {product.status === 'DRAFT' && onStatusChange && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onStatusChange('PUBLISHED')}
+                className="flex-1"
+              >
+                Đăng bán
+              </Button>
+            )}
+            {product.status === 'PUBLISHED' && onStatusChange && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onStatusChange('DRAFT')}
+                className="flex-1"
+              >
+                Ẩn
+              </Button>
+            )}
+          </div>
+        ) : (
+          canAddToCart && (
+            <Button
+              onClick={handleAddToCart}
+              loading={loading[`add-${product.id}`]}
+              disabled={product.quantity === 0}
+              className="w-full"
+              leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
+            >
+              Thêm vào giỏ
+            </Button>
+          )
+        )}
+      </div>
+    </div>
   );
 };

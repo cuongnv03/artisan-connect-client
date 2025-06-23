@@ -5,7 +5,7 @@ import { useArtisanProducts } from '../../../hooks/artisan/useArtisanProducts';
 import { Button } from '../../ui/Button';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../ui/LoadingSpinner';
-import { ProductCard } from '../../products/customer/ProductCard';
+import { ProductCard } from '../../products/ProductCard';
 import { UserProfileDto } from '../../../types/user';
 
 interface ArtisanProductsSectionProps {
@@ -48,7 +48,7 @@ export const ArtisanProductsSection: React.FC<ArtisanProductsSectionProps> = ({
               <ProductCard
                 key={product.id}
                 product={product}
-                showSellerInfo={false}
+                isManagementView={false}
               />
             ))}
           </div>
@@ -92,8 +92,7 @@ export const ArtisanProductsSection: React.FC<ArtisanProductsSectionProps> = ({
             isOwnProfile
               ? {
                   label: 'Thêm sản phẩm',
-                  onClick: () =>
-                    (window.location.href = '/products/manage/create'),
+                  onClick: () => (window.location.href = '/products'),
                 }
               : undefined
           }

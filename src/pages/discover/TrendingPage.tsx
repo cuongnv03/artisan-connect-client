@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { FireIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { TrendingSidebar } from '../../components/discover/TrendingSidebar';
-import { PostCard } from '../../components/common/PostCard';
-import { ProductCard } from '../../components/common/ProductCard';
+import { PostCard } from '../../components/posts/customer/PostCard';
+import { ProductCard } from '../../components/products/ProductCard';
 import { ArtisanCard } from '../../components/common/ArtisanCard';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
@@ -53,7 +53,7 @@ export const TrendingPage: React.FC = () => {
               <div className="absolute top-2 left-2 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold z-10">
                 {index + 1}
               </div>
-              <ProductCard product={product} />
+              <ProductCard product={product} isManagementView={false} />
             </div>
           ))}
         </div>

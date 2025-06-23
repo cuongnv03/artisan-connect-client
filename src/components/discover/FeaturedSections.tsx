@@ -10,19 +10,19 @@ import { Post } from '../../types/post';
 interface FeaturedSectionsProps {
   content: {
     artisans: any[];
-    posts: Post[]; // SỬA: Specify Post type
+    posts: Post[];
     products: any[];
   };
   onViewMore: (type: string) => void;
-  onPostClick?: (post: Post) => void; // THÊM: Post click handler
-  onCommentClick?: (post: Post) => void; // THÊM: Comment click handler
+  onPostClick?: (post: Post) => void;
+  onCommentClick?: (post: Post) => void;
 }
 
 export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
   content,
   onViewMore,
-  onPostClick, // NHẬN: Post click handler
-  onCommentClick, // NHẬN: Comment click handler
+  onPostClick,
+  onCommentClick,
 }) => {
   const { handleFollow, getFollowState, followLoading } = useFollowArtisan();
 
@@ -60,7 +60,7 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
         </section>
       )}
 
-      {/* Top Posts - SỬA: Thêm post handlers */}
+      {/* Top Posts */}
       {content.posts.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -81,8 +81,8 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
                 key={post.id}
                 post={post}
                 compact
-                onClick={onPostClick} // THÊM: Pass post click handler
-                onCommentClick={onCommentClick} // THÊM: Pass comment click handler
+                onClick={onPostClick}
+                onCommentClick={onCommentClick}
               />
             ))}
           </div>
@@ -106,7 +106,11 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {content.products.slice(0, 8).map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                isManagementView={false}
+              />
             ))}
           </div>
         </section>

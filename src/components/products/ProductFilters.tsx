@@ -1,17 +1,17 @@
 import React from 'react';
-import { Category } from '../../types/product';
-import { Select } from '../ui/Dropdown';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
 import {
   AdjustmentsHorizontalIcon,
-  MagnifyingGlassIcon,
+  FunnelIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { Button } from '../ui/Button';
+import { Select } from '../ui/Dropdown';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { Card } from '../ui/Card';
+import { Category } from '../../types/product';
 
 interface ProductFiltersProps {
-  categories: Category[];
   filters: {
     search?: string;
     categoryIds?: string[];
@@ -22,97 +22,112 @@ interface ProductFiltersProps {
     minPrice?: number;
     maxPrice?: number;
   };
-  onFiltersChange: (filters: any) => void;
+  onFilterChange: (filters: any) => void;
+  categories?: Category[];
   showStatusFilter?: boolean;
-  showPriceFilter?: boolean;
+  isManagementView?: boolean;
   className?: string;
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
-  categories,
   filters,
-  onFiltersChange,
+  onFilterChange,
+  categories = [],
   showStatusFilter = false,
-  showPriceFilter = true,
+  isManagementView = false,
   className = '',
 }) => {
   const handleFilterChange = (key: string, value: any) => {
-    onFiltersChange({ ...filters, [key]: value });
+    onFilterChange({ ...filters, [key]: value });
   };
 
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryToggle = (categoryId: string) => {
     const currentCategories = filters.categoryIds || [];
-    const newCategories = currentCategories.includes(categoryId)
-      ? currentCategories.filter((id) => id !== categoryId)
-      : [...currentCategories, categoryId];
+    let newCategories;
+
+    if (currentCategories.includes(categoryId)) {
+      newCategories = currentCategories.filter((id) => id !== categoryId);
+    } else {
+      newCategories = [...currentCategories, categoryId];
+    }
 
     handleFilterChange('categoryIds', newCategories);
   };
 
   const clearFilters = () => {
-    onFiltersChange({});
+    onFilterChange({});
   };
 
-  const hasActiveFilters = Object.keys(filters).some(
-    (key) =>
-      filters[key] !== undefined &&
-      filters[key] !== '' &&
-      (Array.isArray(filters[key]) ? filters[key].length > 0 : true),
-  );
+  const hasActiveFilters = Object.keys(filters).some((key) => {
+    const value = filters[key as keyof typeof filters];
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== undefined && value !== '';
+  });
+
+  const sortOptions = [
+    { label: 'Mới nhất', value: 'createdAt', order: 'desc' },
+    { label: 'Cũ nhất', value: 'createdAt', order: 'asc' },
+    { label: 'Giá thấp đến cao', value: 'price', order: 'asc' },
+    { label: 'Giá cao đến thấp', value: 'price', order: 'desc' },
+    { label: 'Tên A-Z', value: 'name', order: 'asc' },
+    { label: 'Tên Z-A', value: 'name', order: 'desc' },
+    { label: 'Phổ biến nhất', value: 'viewCount', order: 'desc' },
+    { label: 'Đánh giá cao', value: 'avgRating', order: 'desc' },
+  ];
+
+  const statusOptions = [
+    { label: 'Tất cả', value: '' },
+    { label: 'Đang bán', value: 'PUBLISHED' },
+    { label: 'Nháp', value: 'DRAFT' },
+    { label: 'Hết hàng', value: 'OUT_OF_STOCK' },
+  ];
 
   return (
     <Card className={`p-4 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <AdjustmentsHorizontalIcon className="w-5 h-5 text-gray-500 mr-2" />
-          <h3 className="font-medium text-gray-900">Bộ lọc</h3>
-        </div>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Xóa bộ lọc
-          </Button>
-        )}
-      </div>
-
       <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FunnelIcon className="w-5 h-5 text-gray-500" />
+            <h3 className="font-medium text-gray-900">Bộ lọc</h3>
+          </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <XMarkIcon className="w-4 h-4 mr-1" />
+              Xóa bộ lọc
+            </Button>
+          )}
+        </div>
+
         {/* Search */}
         <div>
           <Input
             placeholder="Tìm kiếm sản phẩm..."
             value={filters.search || ''}
             onChange={(e) => handleFilterChange('search', e.target.value)}
-            leftIcon={<MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />}
           />
         </div>
 
-        {/* Categories */}
+        {/* Sort */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Danh mục
+            Sắp xếp
           </label>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {categories.map((category) => (
-              <label key={category.id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={filters.categoryIds?.includes(category.id) || false}
-                  onChange={() => handleCategoryChange(category.id)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {category.name}
-                  {category.productCount !== undefined && (
-                    <span className="text-gray-500 ml-1">
-                      ({category.productCount})
-                    </span>
-                  )}
-                </span>
-              </label>
-            ))}
-          </div>
+          <Select
+            value={`${filters.sortBy}-${filters.sortOrder}`}
+            onChange={(value) => {
+              const [sortBy, sortOrder] = value.split('-');
+              handleFilterChange('sortBy', sortBy);
+              handleFilterChange('sortOrder', sortOrder);
+            }}
+            options={sortOptions.map((opt) => ({
+              label: opt.label,
+              value: `${opt.value}-${opt.order}`,
+            }))}
+          />
         </div>
 
-        {/* Status Filter for management view */}
+        {/* Status Filter (for management view) */}
         {showStatusFilter && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -121,131 +136,152 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             <Select
               value={filters.status || ''}
               onChange={(value) => handleFilterChange('status', value)}
-              options={[
-                { label: 'Tất cả', value: '' },
-                { label: 'Đã xuất bản', value: 'PUBLISHED' },
-                { label: 'Bản nháp', value: 'DRAFT' },
-                { label: 'Hết hàng', value: 'OUT_OF_STOCK' },
-              ]}
+              options={statusOptions}
             />
           </div>
         )}
 
+        {/* Stock Filter */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tình trạng kho
+          </label>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="stock"
+                checked={filters.inStock === undefined}
+                onChange={() => handleFilterChange('inStock', undefined)}
+                className="mr-2"
+              />
+              <span className="text-sm">Tất cả</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="stock"
+                checked={filters.inStock === true}
+                onChange={() => handleFilterChange('inStock', true)}
+                className="mr-2"
+              />
+              <span className="text-sm">Còn hàng</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="stock"
+                checked={filters.inStock === false}
+                onChange={() => handleFilterChange('inStock', false)}
+                className="mr-2"
+              />
+              <span className="text-sm">Hết hàng</span>
+            </label>
+          </div>
+        </div>
+
         {/* Price Range */}
-        {showPriceFilter && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Khoảng giá
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="number"
+              placeholder="Từ"
+              value={filters.minPrice || ''}
+              onChange={(e) =>
+                handleFilterChange(
+                  'minPrice',
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+            />
+            <Input
+              type="number"
+              placeholder="Đến"
+              value={filters.maxPrice || ''}
+              onChange={(e) =>
+                handleFilterChange(
+                  'maxPrice',
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+            />
+          </div>
+        </div>
+
+        {/* Categories */}
+        {categories.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Khoảng giá
+              Danh mục
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="number"
-                placeholder="Từ"
-                value={filters.minPrice || ''}
-                onChange={(e) =>
-                  handleFilterChange(
-                    'minPrice',
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-              />
-              <Input
-                type="number"
-                placeholder="Đến"
-                value={filters.maxPrice || ''}
-                onChange={(e) =>
-                  handleFilterChange(
-                    'maxPrice',
-                    e.target.value ? Number(e.target.value) : undefined,
-                  )
-                }
-              />
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={(filters.categoryIds || []).includes(category.id)}
+                    onChange={() => handleCategoryToggle(category.id)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">{category.name}</span>
+                </label>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Sort */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Sắp xếp theo
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <Select
-              value={filters.sortBy || 'createdAt'}
-              onChange={(value) => handleFilterChange('sortBy', value)}
-              options={[
-                { label: 'Mới nhất', value: 'createdAt' },
-                { label: 'Giá', value: 'price' },
-                { label: 'Tên', value: 'name' },
-                { label: 'Lượt xem', value: 'viewCount' },
-                { label: 'Đánh giá', value: 'avgRating' },
-              ]}
-            />
-            <Select
-              value={filters.sortOrder || 'desc'}
-              onChange={(value) => handleFilterChange('sortOrder', value)}
-              options={[
-                { label: 'Giảm dần', value: 'desc' },
-                { label: 'Tăng dần', value: 'asc' },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Stock Status */}
-        <div>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={filters.inStock || false}
-              onChange={(e) => handleFilterChange('inStock', e.target.checked)}
-              className="rounded border-gray-300 text-primary focus:ring-primary"
-            />
-            <span className="ml-2 text-sm text-gray-700">
-              Chỉ hiển thị sản phẩm còn hàng
-            </span>
-          </label>
-        </div>
-      </div>
-
-      {/* Active Filters */}
-      {hasActiveFilters && (
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2">
-            {filters.search && (
-              <Badge
-                variant="secondary"
-                className="cursor-pointer hover:bg-gray-300"
-                onClick={() => handleFilterChange('search', '')}
-              >
-                "{filters.search}" ×
-              </Badge>
-            )}
-            {filters.categoryIds?.map((categoryId) => {
-              const category = categories.find((c) => c.id === categoryId);
-              return category ? (
+        {/* Active Filters */}
+        {hasActiveFilters && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Bộ lọc đang áp dụng
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {filters.search && (
                 <Badge
-                  key={categoryId}
                   variant="secondary"
-                  className="cursor-pointer hover:bg-gray-300"
-                  onClick={() => handleCategoryChange(categoryId)}
+                  className="cursor-pointer"
+                  onClick={() => handleFilterChange('search', '')}
                 >
-                  {category.name} ×
+                  Tìm kiếm: {filters.search} ×
                 </Badge>
-              ) : null;
-            })}
-            {filters.status && (
-              <Badge
-                variant="secondary"
-                className="cursor-pointer hover:bg-gray-300"
-                onClick={() => handleFilterChange('status', '')}
-              >
-                {filters.status} ×
-              </Badge>
-            )}
+              )}
+              {filters.status && (
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer"
+                  onClick={() => handleFilterChange('status', '')}
+                >
+                  Trạng thái:{' '}
+                  {
+                    statusOptions.find((opt) => opt.value === filters.status)
+                      ?.label
+                  }{' '}
+                  ×
+                </Badge>
+              )}
+              {filters.categoryIds?.map((categoryId) => {
+                const category = categories.find(
+                  (cat) => cat.id === categoryId,
+                );
+                return category ? (
+                  <Badge
+                    key={categoryId}
+                    variant="secondary"
+                    className="cursor-pointer"
+                    onClick={() => handleCategoryToggle(categoryId)}
+                  >
+                    {category.name} ×
+                  </Badge>
+                ) : null;
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Card>
   );
 };

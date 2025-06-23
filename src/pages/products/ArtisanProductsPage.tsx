@@ -1,253 +1,292 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { useProducts } from '../../hooks/products/useProducts';
-import { useProductCategories } from '../../hooks/products/useProductCategories';
-import { ProductList } from '../../components/products/ProductList';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import {
+  CubeIcon,
+  PlusIcon,
+  AdjustmentsHorizontalIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
+import { ProductCard } from '../../components/products/ProductCard';
 import { ProductFilters } from '../../components/products/ProductFilters';
+import { CategorySidebar } from '../../components/products/CategorySidebar';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { Product } from '../../types/product';
-import { getRouteHelpers } from '../../constants/routes';
+import { EmptyState } from '../../components/common/EmptyState';
+import { useProducts } from '../../hooks/products/useProducts';
+import { useCategories } from '../../hooks/products/useCategories';
+import { useToastContext } from '../../contexts/ToastContext';
+import { productService } from '../../services/product.service';
 
 export const ArtisanProductsPage: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { success, error: showError } = useToastContext();
   const [showFilters, setShowFilters] = useState(false);
 
-  // Get filters from URL params
+  // Get filters from URL
   const filters = {
-    search: searchParams.get('search') || '',
-    categoryIds: searchParams.getAll('categoryId'),
-    status: searchParams.get('status') || '',
-    sortBy: searchParams.get('sortBy') || 'updatedAt',
+    search: searchParams.get('search') || undefined,
+    categoryIds: searchParams.getAll('categoryId') || undefined,
+    status: searchParams.get('status') || undefined,
+    minPrice: searchParams.get('minPrice')
+      ? Number(searchParams.get('minPrice'))
+      : undefined,
+    maxPrice: searchParams.get('maxPrice')
+      ? Number(searchParams.get('maxPrice'))
+      : undefined,
+    sortBy: searchParams.get('sortBy') || 'createdAt',
     sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc',
-    inStock: searchParams.get('inStock') === 'true',
+    inStock: searchParams.get('inStock')
+      ? searchParams.get('inStock') === 'true'
+      : undefined,
+    page: Number(searchParams.get('page')) || 1,
+    limit: 20,
   };
 
-  const { products, loading, error, meta, loadMore, hasMore, refetch } =
-    useProducts({
-      ...filters,
-      limit: 20,
-    });
+  const { products, loading, error, meta, refetch } = useProducts({
+    ...filters,
+    publicOnly: false, // Show all products including drafts
+  });
 
-  const { categories, loading: categoriesLoading } = useProductCategories();
+  const { categories, loading: categoriesLoading } = useCategories();
 
-  const handleFiltersChange = (newFilters: any) => {
-    const newParams = new URLSearchParams();
+  const handleFilterChange = (newFilters: any) => {
+    const params = new URLSearchParams();
 
     Object.entries(newFilters).forEach(([key, value]) => {
       if (value !== undefined && value !== '' && value !== null) {
         if (Array.isArray(value)) {
-          value.forEach((v: string) =>
-            newParams.append(key === 'categoryIds' ? 'categoryId' : key, v),
+          value.forEach((v) =>
+            params.append(key === 'categoryIds' ? 'categoryId' : key, v),
           );
         } else {
-          newParams.set(key, String(value));
+          params.set(key, String(value));
         }
       }
     });
 
-    setSearchParams(newParams);
+    params.set('page', '1');
+    setSearchParams(params);
   };
 
-  const handleProductEdit = (product: Product) => {
-    navigate(getRouteHelpers.editProduct(product.id));
-  };
-
-  const handleProductStatusChange = async (
-    product: Product,
-    newStatus: string,
-  ) => {
-    // TODO: Implement status change API call
-    try {
-      // await productService.updateProductStatus(product.id, newStatus);
-      refetch();
-    } catch (error) {
-      console.error('Failed to update product status:', error);
+  const handleCategorySelect = (categoryId: string) => {
+    const newFilters = { ...filters };
+    if (categoryId) {
+      newFilters.categoryIds = [categoryId];
+    } else {
+      delete newFilters.categoryIds;
     }
+    handleFilterChange(newFilters);
   };
 
-  const handleProductDelete = async (product: Product) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-      return;
-    }
+  const handleEdit = (productId: string) => {
+    navigate(`/products/${productId}/edit`);
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return;
 
     try {
-      // await productService.deleteProduct(product.id);
+      await productService.deleteProduct(productId);
+      success('Đã xóa sản phẩm thành công');
       refetch();
-    } catch (error) {
-      console.error('Failed to delete product:', error);
+    } catch (err: any) {
+      showError(err.message || 'Không thể xóa sản phẩm');
     }
   };
 
-  // Calculate stats
-  const stats = products.reduce(
-    (acc, product) => {
-      acc.total++;
-      switch (product.status) {
-        case 'PUBLISHED':
-          acc.published++;
-          break;
-        case 'DRAFT':
-          acc.draft++;
-          break;
-        case 'OUT_OF_STOCK':
-          acc.outOfStock++;
-          break;
+  const handleStatusChange = async (productId: string, status: string) => {
+    try {
+      if (status === 'PUBLISHED') {
+        await productService.publishProduct(productId);
+        success('Đã đăng bán sản phẩm');
+      } else {
+        await productService.unpublishProduct(productId);
+        success('Đã ẩn sản phẩm');
       }
-      if (product.quantity <= 0) acc.lowStock++;
-      return acc;
-    },
-    { total: 0, published: 0, draft: 0, outOfStock: 0, lowStock: 0 },
-  );
+      refetch();
+    } catch (err: any) {
+      showError(err.message || 'Không thể thay đổi trạng thái sản phẩm');
+    }
+  };
 
-  if (categoriesLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  const getProductStats = () => {
+    if (!products.length) return null;
+
+    const stats = {
+      total: products.length,
+      published: products.filter((p) => p.status === 'PUBLISHED').length,
+      draft: products.filter((p) => p.status === 'DRAFT').length,
+      outOfStock: products.filter((p) => p.quantity === 0).length,
+    };
+
+    return stats;
+  };
+
+  const selectedCategoryId = filters.categoryIds?.[0];
+  const stats = getProductStats();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <>
+      <Helmet>
+        <title>Quản lý sản phẩm - Artisan Connect</title>
+        <meta name="description" content="Quản lý sản phẩm của nghệ nhân" />
+      </Helmet>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Quản lý sản phẩm
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Quản lý tất cả sản phẩm của bạn
+            <div className="flex items-center gap-3 mb-2">
+              <CubeIcon className="w-8 h-8 text-primary" />
+              <h1 className="text-3xl font-bold text-gray-900">
+                Sản phẩm của tôi
+              </h1>
+            </div>
+            <p className="text-lg text-gray-600">
+              Quản lý và theo dõi các sản phẩm của bạn
             </p>
           </div>
-          <Button
-            onClick={() => navigate('/products/create')}
-            leftIcon={<PlusIcon className="w-5 h-5" />}
-          >
-            Thêm sản phẩm mới
-          </Button>
+
+          <div className="flex gap-3">
+            <Button
+              as={Link}
+              to="/products/stats"
+              variant="outline"
+              leftIcon={<ChartBarIcon className="w-4 h-4" />}
+            >
+              Thống kê
+            </Button>
+            <Button
+              as={Link}
+              to="/products/create"
+              leftIcon={<PlusIcon className="w-4 h-4" />}
+            >
+              Thêm sản phẩm
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {stats.total}
-            </div>
-            <div className="text-sm text-gray-600">Tổng sản phẩm</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {stats.published}
-            </div>
-            <div className="text-sm text-gray-600">Đã xuất bản</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.draft}
-            </div>
-            <div className="text-sm text-gray-600">Bản nháp</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {stats.outOfStock}
-            </div>
-            <div className="text-sm text-gray-600">Hết hàng</div>
-          </Card>
-          <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {stats.lowStock}
-            </div>
-            <div className="text-sm text-gray-600">Sắp hết hàng</div>
-          </Card>
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-gray-900">
+                {stats.total}
+              </div>
+              <div className="text-sm text-gray-600">Tổng sản phẩm</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-green-600">
+                {stats.published}
+              </div>
+              <div className="text-sm text-gray-600">Đang bán</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats.draft}
+              </div>
+              <div className="text-sm text-gray-600">Nháp</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-2xl font-bold text-red-600">
+                {stats.outOfStock}
+              </div>
+              <div className="text-sm text-gray-600">Hết hàng</div>
+            </Card>
+          </div>
+        )}
+
+        {/* Controls */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              leftIcon={<AdjustmentsHorizontalIcon className="w-4 h-4" />}
+            >
+              Bộ lọc
+            </Button>
+
+            {meta && (
+              <span className="text-sm text-gray-600">
+                Hiển thị {products.length} / {meta.total} sản phẩm
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <div
-            className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}
-          >
-            <ProductFilters
-              categories={categories}
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              showStatusFilter={true}
-              showPriceFilter={false}
-              className="sticky top-4"
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {/* Categories */}
+              {!categoriesLoading && (
+                <CategorySidebar
+                  categories={categories}
+                  selectedCategoryId={selectedCategoryId}
+                  onCategorySelect={handleCategorySelect}
+                  isManagementView
+                />
+              )}
+
+              {/* Filters */}
+              {showFilters && (
+                <ProductFilters
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  categories={categories}
+                  showStatusFilter
+                  isManagementView
+                />
+              )}
+            </div>
           </div>
 
-          {/* Products */}
-          <div className="flex-1">
-            {/* Controls */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden"
-                >
-                  Bộ lọc
-                </Button>
-
-                {/* Quick Status Filters */}
-                <div className="hidden md:flex space-x-2">
-                  {[
-                    { label: 'Tất cả', value: '', count: stats.total },
-                    {
-                      label: 'Đã xuất bản',
-                      value: 'PUBLISHED',
-                      count: stats.published,
-                    },
-                    { label: 'Bản nháp', value: 'DRAFT', count: stats.draft },
-                    {
-                      label: 'Hết hàng',
-                      value: 'OUT_OF_STOCK',
-                      count: stats.outOfStock,
-                    },
-                  ].map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() =>
-                        handleFiltersChange({ ...filters, status: item.value })
-                      }
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        filters.status === item.value
-                          ? 'bg-primary text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {item.label} ({item.count})
-                    </button>
-                  ))}
-                </div>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {loading && products.length === 0 ? (
+              <div className="text-center py-12">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-gray-600">Đang tải sản phẩm...</p>
               </div>
-
-              {meta && <p className="text-gray-600">{meta.total} sản phẩm</p>}
-            </div>
-
-            {/* Products List */}
-            <ProductList
-              products={products}
-              loading={loading}
-              error={error}
-              meta={meta}
-              viewMode="management"
-              onLoadMore={hasMore ? loadMore : undefined}
-              onProductEdit={handleProductEdit}
-              onProductStatusChange={handleProductStatusChange}
-              onProductDelete={handleProductDelete}
-              emptyTitle="Chưa có sản phẩm nào"
-              emptyDescription="Bắt đầu bằng cách tạo sản phẩm đầu tiên của bạn"
-            />
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={refetch}>Thử lại</Button>
+              </div>
+            ) : products.length === 0 ? (
+              <EmptyState
+                title="Chưa có sản phẩm nào"
+                description="Hãy tạo sản phẩm đầu tiên của bạn"
+                icon={<CubeIcon className="w-12 h-12" />}
+                action={{
+                  label: 'Thêm sản phẩm',
+                  onClick: () => navigate('/products/create'),
+                }}
+              />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isManagementView
+                    onEdit={() => handleEdit(product.id)}
+                    onDelete={() => handleDelete(product.id)}
+                    onStatusChange={(status) =>
+                      handleStatusChange(product.id, status)
+                    }
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
