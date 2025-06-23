@@ -28,11 +28,12 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
   >(null);
   const { success, error } = useToastContext();
 
+  // ✅ SỬA: Use dedicated publish/unpublish APIs
   const handlePublish = async () => {
     setLoading(true);
     try {
-      await productService.publishProduct(productId);
-      onStatusChange(ProductStatus.PUBLISHED);
+      const updatedProduct = await productService.publishProduct(productId);
+      onStatusChange(updatedProduct.status as ProductStatus);
       success('Sản phẩm đã được xuất bản');
     } catch (err: any) {
       error(err.message || 'Không thể xuất bản sản phẩm');
@@ -44,8 +45,8 @@ export const ProductActions: React.FC<ProductActionsProps> = ({
   const handleUnpublish = async () => {
     setLoading(true);
     try {
-      await productService.unpublishProduct(productId);
-      onStatusChange(ProductStatus.DRAFT);
+      const updatedProduct = await productService.unpublishProduct(productId);
+      onStatusChange(updatedProduct.status as ProductStatus);
       success('Sản phẩm đã được ẩn');
     } catch (err: any) {
       error(err.message || 'Không thể ẩn sản phẩm');

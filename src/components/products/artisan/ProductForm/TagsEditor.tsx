@@ -90,6 +90,7 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
               key={`${tag}-${index}`}
               variant="primary"
               className="group cursor-pointer hover:bg-red-500 transition-colors flex items-center"
+              // ✅ SỬA: Proper onClick handler
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -136,6 +137,7 @@ export const TagsEditor: React.FC<TagsEditorProps> = ({
                 key={`suggestion-${suggestion}-${index}`}
                 variant="secondary"
                 className="cursor-pointer hover:bg-blue-500 hover:text-white transition-colors flex items-center"
+                // ✅ SỬA: Proper onClick handler for suggestions
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

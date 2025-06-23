@@ -93,14 +93,15 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
     return errors;
   };
 
-  // ✅ SỬA: Đổi onSubmit thành async void function
+  // ✅ SỬA: Đơn giản hóa handleSubmit
   const handleSubmit = async (values: CreateProductRequest): Promise<void> => {
-    // Default status cho form submit thông thường
-    const status = isEditing ? values.status : ProductStatus.DRAFT;
+    // Dùng status từ form, default là DRAFT cho create, giữ nguyên cho edit
+    const status =
+      values.status || (isEditing ? values.status : ProductStatus.DRAFT);
     await submitWithStatus(values, status);
   };
 
-  // ✅ SỬA: Function riêng để submit với status cụ thể
+  // ✅ SỬA: Improved submitWithStatus function
   const submitWithStatus = async (
     values: CreateProductRequest,
     status: ProductStatus,
@@ -111,20 +112,29 @@ export const useProductForm = (options: UseProductFormOptions = {}) => {
 
       const submitData = {
         ...values,
-        status, // Set status được truyền vào
-        // Auto set featured image nếu chưa có
+        status, // ✅ Đảm bảo status được truyền đúng
         featuredImage: values.featuredImage || values.images[0],
-        // Ensure tags is array
         tags: values.tags || [],
       };
 
       if (isEditing) {
-        product = await productService.updateProduct(
-          productId!,
-          submitData as UpdateProductRequest,
-        );
+        // ✅ SỬA: Cho editing, phân biệt update vs publish
+        if (
+          status === ProductStatus.PUBLISHED &&
+          values.status === ProductStatus.DRAFT
+        ) {
+          // Nếu từ DRAFT -> PUBLISHED, dùng publishProduct API
+          product = await productService.publishProduct(productId!);
+        } else {
+          // Ngược lại dùng updateProduct bình thường
+          product = await productService.updateProduct(
+            productId!,
+            submitData as UpdateProductRequest,
+          );
+        }
         success('Cập nhật sản phẩm thành công!');
       } else {
+        // ✅ SỬA: Cho create, truyền status vào data
         product = await productService.createProduct(submitData);
         success(
           `${
