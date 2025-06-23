@@ -3,5 +3,5 @@ export { Sidebar } from './Sidebar';
 export { Footer } from './Footer';
 export { MainLayout } from './MainLayout';
 export { AuthLayout } from './AuthLayout';
-export { AdminLayout } from './AdminLayout';
+export { ArtisanNavigation } from './ArtisanNavigation';
 export { MobileNavigation } from './MobileNavigation';

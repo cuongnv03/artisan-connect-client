@@ -9,10 +9,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { useOrderDetail } from '../../hooks/orders/useOrderDetail';
 import { UpdateOrderStatusRequest } from '../../types/order';
-import { UpdateOrderStatusModal } from '../../components/orders/UpdateOrderStatusModal/UpdateOrderStatusModal';
-import { OrderDetailContent } from '../../components/orders/OrderDetailContent/OrderDetailContent';
-import { OrderSidebar } from '../../components/orders/OrderSidebar/OrderSidebar';
-import { OrderStatusBadge } from '../../components/orders/OrderStatusBadge/OrderStatusBadge';
+import { UpdateOrderStatusModal } from '../../components/orders/UpdateOrderStatusModal';
+import { OrderDetailContent } from '../../components/orders/OrderDetailContent';
+import { OrderSidebar } from '../../components/orders/OrderSidebar';
+import { OrderStatusBadge } from '../../components/orders/OrderStatusBadge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';

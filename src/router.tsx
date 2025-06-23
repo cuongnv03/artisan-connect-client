@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { MainLayout, AuthLayout, AdminLayout } from './components/layout';
+import { MainLayout, AuthLayout } from './components/layout';
 
 // Pages
 import { LandingPage } from './pages/home/LandingPage';
@@ -17,27 +17,27 @@ import { DiscoverPage } from './pages/discover/DiscoverPage';
 import { SearchResultsPage } from './pages/discover/SearchResultsPage';
 
 // Customer Posts
-import { PostsPage as CustomerPostsPage } from './pages/posts/customer/PostsPage';
+import { PostsPage as CustomerPostsPage } from './pages/posts/PostsPage';
 
 // Artisan Posts
-import { MyPostsPage } from './pages/posts/artisan/MyPostsPage';
-import { CreatePostPage } from './pages/posts/artisan/CreatePostPage';
-import { EditPostPage } from './pages/posts/artisan/EditPostPage';
-import { PostDetailPage } from './pages/posts/artisan/PostDetailPage';
+import { MyPostsPage } from './pages/posts/MyPostsPage';
+import { CreatePostPage } from './pages/posts/CreatePostPage';
+import { EditPostPage } from './pages/posts/EditPostPage';
+import { PostDetailPage } from './pages/posts/PostDetailPage';
 
 // Admin Posts
-import { PostsManagementPage } from './pages/posts/admin/PostsManagementPage';
+import { PostsManagementPage } from './pages/admin/PostsManagementPage';
 
 // Product pages
-import { ShopPage } from './pages/products/customer/ShopPage';
-import { SearchPage } from './pages/products/customer/SearchPage';
-import { CategoryPage } from './pages/products/customer/CategoryPage';
-import { ProductDetailPage } from './pages/products/customer/ProductDetailPage';
+import { ShopPage } from './pages/products/ShopPage';
+import { SearchPage } from './pages/products/SearchPage';
+import { CategoryPage } from './pages/products/CategoryPage';
+import { ProductDetailPage } from './pages/products/ProductDetailPage';
 
 // Artisan Product Pages
-import { ProductsPage as ArtisanProductsPage } from './pages/products/artisan/ProductsPage';
-import { CreateProductPage } from './pages/products/artisan/CreateProductPage';
-import { EditProductPage } from './pages/products/artisan/EditProductPage';
+import { ProductsPage as ArtisanProductsPage } from './pages/products/ProductsPage';
+import { CreateProductPage } from './pages/products/CreateProductPage';
+import { EditProductPage } from './pages/products/EditProductPage';
 
 // Profile pages
 import { ProfileManagementPage } from './pages/profile/ProfileManagementPage';
@@ -55,9 +55,9 @@ import { TrackingPage } from './pages/orders/TrackingPage';
 // import { ReturnPage } from './pages/orders/ReturnPage';
 
 // Price Negotiations
-import { CustomerNegotiationsPage } from './pages/negotiations/customer/CustomerNegotiationsPage';
-import { ArtisanNegotiationsPage } from './pages/negotiations/artisan/ArtisanNegotiationsPage';
-import { NegotiationDetailPage } from './pages/negotiations/common/NegotiationDetailPage';
+import { CustomerNegotiationsPage } from './pages/negotiations/CustomerNegotiationsPage';
+import { ArtisanNegotiationsPage } from './pages/negotiations/ArtisanNegotiationsPage';
+import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
 
 import { MyReviewsPage } from './pages/reviews/MyReviewsPage';
 import { ReviewableProductsPage } from './pages/reviews/ReviewableProductsPage';
@@ -91,17 +91,17 @@ import { UserRole } from './types/auth';
 import { NegotiationRedirect } from './components/common/NegotiationRedirect';
 
 // Admin Product pages
-import { AdminProductsPage } from './pages/products/admin/AdminProductsPage';
-import { CategoryAttributesPage } from './pages/products/admin/CategoryAttributesPage';
-import { AdminCategoriesPage } from './pages/products/admin/AdminCategoriesPage';
-import { CreateCategoryPage } from './pages/products/admin/CreateCategoryPage';
-import { EditCategoryPage } from './pages/products/admin/EditCategoryPage';
+import { AdminProductsPage } from './pages/admin/products/AdminProductsPage';
+import { CategoryAttributesPage } from './pages/admin/products/CategoryAttributesPage';
+import { AdminCategoriesPage } from './pages/admin/products/AdminCategoriesPage';
+import { CreateCategoryPage } from './pages/admin/products/CreateCategoryPage';
+import { EditCategoryPage } from './pages/admin/products/EditCategoryPage';
 import { CustomOrderRedirect } from './components/common/CustomOrderRedirect';
-import { CustomerCustomOrdersPage } from './pages/custom-orders/customer/CustomerCustomOrdersPage';
-import { CreateCustomOrderPage } from './pages/custom-orders/customer/CreateCustomOrderPage';
-import { ArtisanCustomOrdersPage } from './pages/custom-orders/artisan/ArtisanCustomOrdersPage';
-import { CustomOrderStatsPage } from './pages/custom-orders/artisan/CustomOrderStatsPage';
-import { CustomOrderDetailPage } from './pages/custom-orders/common/CustomOrderDetailPage';
+import { CustomerCustomOrdersPage } from './pages/custom-orders/CustomerCustomOrdersPage';
+import { CreateCustomOrderPage } from './pages/custom-orders/CreateCustomOrderPage';
+import { ArtisanCustomOrdersPage } from './pages/custom-orders/ArtisanCustomOrdersPage';
+import { CustomOrderStatsPage } from './pages/custom-orders/CustomOrderStatsPage';
+import { CustomOrderDetailPage } from './pages/custom-orders/CustomOrderDetailPage';
 import { ArtisanRequestDetailPage } from './pages/admin/ArtisanRequestDetailPage';
 
 export const router = createBrowserRouter(

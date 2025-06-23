@@ -5,7 +5,7 @@ import { useArtisanProducts } from '../../../hooks/artisan/useArtisanProducts';
 import { Button } from '../../ui/Button';
 import { EmptyState } from '../../common/EmptyState';
 import { LoadingSpinner } from '../../ui/LoadingSpinner';
-import { ProductCard } from '../../products/customer/ProductCard/ProductCard';
+import { ProductCard } from '../../products/customer/ProductCard';
 import { UserProfileDto } from '../../../types/user';
 
 interface ArtisanProductsSectionProps {

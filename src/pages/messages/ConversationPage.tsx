@@ -7,7 +7,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ConversationHeader } from '../../components/messages/ConversationHeader';
 import { MessageList } from '../../components/messages/MessageList';
 import { MessageInput } from '../../components/messages/MessageInput';
-import { CustomOrderForm } from '../../components/custom-orders/CustomOrderForm/CustomOrderForm';
+import { CustomOrderForm } from '../../components/custom-orders/CustomOrderForm';
 import { useConversation } from '../../hooks/messages/useConversation';
 import { useToastContext } from '../../contexts/ToastContext';
 import { uploadService } from '../../services/upload.service';

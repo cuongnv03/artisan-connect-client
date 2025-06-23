@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { ArtisanCard } from '../common/ArtisanCard';
 import { PostCard } from '../posts/customer/PostCard';
-import { ProductCard } from '../products/customer/ProductCard/ProductCard';
+import { ProductCard } from '../products/customer/ProductCard';
 import { useFollowArtisan } from '../../hooks/discover/useFollowArtisan';
 import { Post } from '../../types/post';
 

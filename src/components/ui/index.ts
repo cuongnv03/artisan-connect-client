@@ -9,3 +9,4 @@ export { Badge } from './Badge';
 export { Dropdown, Select } from './Dropdown';
 export { Pagination } from './Pagination';
 export { Tabs } from './Tabs';
+export { Toggle } from './Toggle';

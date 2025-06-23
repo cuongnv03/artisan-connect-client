@@ -7,10 +7,10 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { ConfirmModal } from '../../components/ui/Modal';
 
 // Cart Components
-import { CartHeader } from '../../components/cart/CartHeader/CartHeader';
+import { CartHeader } from '../../components/cart/CartHeader';
 import { CartItemsList } from '../../components/cart/CartItemsList/CartItemsList';
-import { CartSummary } from '../../components/cart/CartSummary/CartSummary';
-import { EmptyCart } from '../../components/cart/EmptyCart/EmptyCart';
+import { CartSummary } from '../../components/cart/CartSummary';
+import { EmptyCart } from '../../components/cart/EmptyCart';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();

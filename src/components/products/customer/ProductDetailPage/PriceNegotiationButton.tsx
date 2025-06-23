@@ -7,8 +7,8 @@ import { NegotiationStatus } from '../../../../types/price-negotiation';
 import { Button } from '../../../ui/Button';
 import { Modal } from '../../../ui/Modal';
 import { LoadingSpinner } from '../../../ui/LoadingSpinner';
-import { CreateNegotiationForm } from '../../../negotiations/customer/CreateNegotiationForm';
-import { ExistingNegotiationCard } from '../../../negotiations/common/ExistingNegotiationCard';
+import { CreateNegotiationForm } from '../../../negotiations/CreateNegotiationForm';
+import { ExistingNegotiationCard } from '../../../negotiations/ExistingNegotiationCard';
 import {
   ChatBubbleLeftRightIcon,
   ExclamationTriangleIcon,

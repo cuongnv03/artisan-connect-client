@@ -8,7 +8,7 @@ import { MessageWithUsers, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { CustomOrderCard } from '../custom-orders/CustomOrderCard/CustomOrderCard';
+import { CustomOrderCard } from '../custom-orders/CustomOrderCard';
 
 interface MessageItemProps {
   message: MessageWithUsers;
