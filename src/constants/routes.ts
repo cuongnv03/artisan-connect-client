@@ -30,16 +30,22 @@ export const ROUTE_PATHS = {
       MY_POSTS: '/posts/me', // API: GET /posts/user/me (artisan only)
     },
 
-    // === PRODUCTS MODULE ===
+    // SHOP ROUTES (Customer + Artisan view)
+    SHOP: {
+      BASE: '/shop', // API: GET /products?status=PUBLISHED
+      PRODUCT_DETAIL: '/shop/:productId', // API: GET /products/:id
+      CATEGORIES: '/shop/categories/:categorySlug', // API: GET /products?categoryIds[]=...
+      SEARCH: '/shop/search', // API: GET /products/search
+    },
+
+    // ARTISAN PRODUCT MANAGEMENT ROUTES
     PRODUCTS: {
-      LIST: '/products', // API: GET /products
-      DETAIL: '/products/:slug', // API: GET /products/slug/:slug
-      SEARCH: '/products/search', // API: GET /products/search
-      CATEGORY: '/products/category/:categorySlug', // API: GET /categories/slug/:slug
-      MY_PRODUCTS: '/products/manage', // API: GET /products/my/products (artisan only)
-      CREATE: '/products/manage/create', // API: POST /products (artisan only)
-      EDIT: '/products/manage/:productId/edit', // API: PUT /products/:id (artisan only)
-      STATS: '/products/manage/stats', // API: GET /products/my/stats (artisan only)
+      BASE: '/products', // API: GET /products/my/products (artisan only)
+      DETAIL: '/products/:productId', // API: GET /products/:id (owner only)
+      CREATE: '/products/create', // API: POST /products
+      EDIT: '/products/:productId/edit', // API: PUT /products/:id
+      CATEGORIES: '/products/categories/:categoryId', // API: GET /products/my/products?categoryIds[]=...
+      STATS: '/products/stats', // API: GET /products/my/stats
     },
 
     // === ORDERS MODULE ===
@@ -225,11 +231,19 @@ export const getRouteHelpers = {
     getRoutePath(ROUTE_PATHS.APP.POSTS.DETAIL, { slug }),
   editPost: (id: string) => getRoutePath(ROUTE_PATHS.APP.POSTS.EDIT, { id }),
 
-  // Products
-  productDetail: (slug: string) =>
-    getRoutePath(ROUTE_PATHS.APP.PRODUCTS.DETAIL, { slug }),
-  editProduct: (id: string) =>
-    getRoutePath(ROUTE_PATHS.APP.PRODUCTS.EDIT, { id }),
+  // Shop routes
+  shopProductDetail: (productId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.SHOP.PRODUCT_DETAIL, { productId }),
+  shopCategoryProducts: (categorySlug: string) =>
+    getRoutePath(ROUTE_PATHS.APP.SHOP.CATEGORIES, { categorySlug }),
+
+  // Artisan product routes
+  productDetail: (productId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.PRODUCTS.DETAIL, { productId }),
+  editProduct: (productId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.PRODUCTS.EDIT, { productId }),
+  productsByCategory: (categoryId: string) =>
+    getRoutePath(ROUTE_PATHS.APP.PRODUCTS.CATEGORIES, { categoryId }),
 
   // Orders
   orderDetail: (id: string) =>
@@ -283,7 +297,7 @@ export const ROUTE_META = {
     api: 'POST /posts',
   },
 
-  [ROUTE_PATHS.APP.PRODUCTS.MY_PRODUCTS]: {
+  [ROUTE_PATHS.APP.PRODUCTS.BASE]: {
     title: 'Sản phẩm của tôi',
     description: 'Quản lý sản phẩm',
     requiresAuth: true,
@@ -359,7 +373,7 @@ export const NAVIGATION_MENUS = {
       icon: 'search',
     },
     {
-      path: ROUTE_PATHS.APP.PRODUCTS.LIST,
+      path: ROUTE_PATHS.APP.SHOP.BASE,
       label: 'Cửa hàng',
       icon: 'shopping-bag',
     },
@@ -402,7 +416,7 @@ export const NAVIGATION_MENUS = {
       icon: 'search',
     },
     {
-      path: ROUTE_PATHS.APP.PRODUCTS.LIST,
+      path: ROUTE_PATHS.APP.SHOP.BASE,
       label: 'Cửa hàng',
       icon: 'shopping-bag',
     },
@@ -442,7 +456,7 @@ export const NAVIGATION_MENUS = {
       business: true,
     },
     {
-      path: ROUTE_PATHS.APP.PRODUCTS.MY_PRODUCTS,
+      path: ROUTE_PATHS.APP.PRODUCTS.BASE,
       label: 'Sản phẩm',
       subtitle: 'Quản lý sản phẩm',
       icon: 'package',

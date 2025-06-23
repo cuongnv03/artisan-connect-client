@@ -30,14 +30,12 @@ import { PostsManagementPage } from './pages/admin/PostsManagementPage';
 
 // Product pages
 import { ShopPage } from './pages/products/ShopPage';
-import { SearchPage } from './pages/products/SearchPage';
-import { CategoryPage } from './pages/products/CategoryPage';
 import { ProductDetailPage } from './pages/products/ProductDetailPage';
 
 // Artisan Product Pages
-import { ProductsPage as ArtisanProductsPage } from './pages/products/ProductsPage';
 import { CreateProductPage } from './pages/products/CreateProductPage';
 import { EditProductPage } from './pages/products/EditProductPage';
+import { ArtisanProductsPage } from './pages/products/ArtisanProductsPage';
 
 // Profile pages
 import { ProfileManagementPage } from './pages/profile/ProfileManagementPage';
@@ -205,11 +203,10 @@ export const router = createBrowserRouter(
           ],
         },
 
-        // Product routes
+        // === SHOP ROUTES (Public product viewing) ===
         {
-          path: 'products',
+          path: 'shop',
           children: [
-            // Customer routes
             {
               index: true,
               element: (
@@ -218,69 +215,85 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
+            // {
+            //   path: 'search',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <SearchPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
+            // {
+            //   path: 'categories/:categorySlug',
+            //   element: (
+            //     <ProtectedRoute>
+            //       <CategoryPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
             {
-              path: 'search',
-              element: (
-                <ProtectedRoute>
-                  <SearchPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'category/:categorySlug',
-              element: (
-                <ProtectedRoute>
-                  <CategoryPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: ':slug',
+              path: ':productId',
               element: (
                 <ProtectedRoute>
                   <ProductDetailPage />
                 </ProtectedRoute>
               ),
             },
+          ],
+        },
 
-            // Artisan routes
+        // === ARTISAN PRODUCT MANAGEMENT ROUTES ===
+        {
+          path: 'products',
+          children: [
             {
-              path: 'manage',
-              children: [
-                {
-                  index: true,
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <ArtisanProductsPage />
-                    </ProtectedRoute>
-                  ),
-                },
-                {
-                  path: 'create',
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <CreateProductPage />
-                    </ProtectedRoute>
-                  ),
-                },
-                {
-                  path: ':productId/edit',
-                  element: (
-                    <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                      <EditProductPage />
-                    </ProtectedRoute>
-                  ),
-                },
-                // {
-                //   path: 'stats',
-                //   element: (
-                //     <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                //       <ProductStatsPage />
-                //     </ProtectedRoute>
-                //   ),
-                // },
-              ],
+              index: true,
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanProductsPage />
+                </ProtectedRoute>
+              ),
             },
+            {
+              path: 'create',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <CreateProductPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':productId',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ProductDetailPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: ':productId/edit',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <EditProductPage />
+                </ProtectedRoute>
+              ),
+            },
+            {
+              path: 'categories/:categoryId',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ArtisanProductsPage />
+                </ProtectedRoute>
+              ),
+            },
+            // {
+            //   path: 'stats',
+            //   element: (
+            //     <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+            //       <ProductStatsPage />
+            //     </ProtectedRoute>
+            //   ),
+            // },
           ],
         },
 

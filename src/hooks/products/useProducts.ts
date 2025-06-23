@@ -1,43 +1,25 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { productService } from '../../services/product.service';
 import { Product, GetProductsQuery } from '../../types/product';
 import { PaginatedResponse } from '../../types/common';
+import { useToastContext } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export interface UseProductsOptions extends GetProductsQuery {
   enabled?: boolean;
-  isMyProducts?: boolean; // New option to distinguish
+  publicOnly?: boolean; // For shop view
 }
 
-export interface UseProductsReturn {
-  products: Product[];
-  loading: boolean;
-  error: string | null;
-  pagination: {
-    total: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
-  };
-  refetch: () => Promise<void>;
-  loadMore: () => Promise<void>;
-  hasMore: boolean;
-}
-
-export const useProducts = (
-  options: UseProductsOptions = {},
-): UseProductsReturn => {
-  const { enabled = true, isMyProducts = false, ...query } = options;
-  const { state: authState } = useAuth();
+export const useProducts = (options: UseProductsOptions = {}) => {
+  const { enabled = true, publicOnly = false, ...query } = options;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    totalPages: 0,
-    currentPage: query.page || 1,
-    limit: query.limit || 20,
-  });
+  const [meta, setMeta] = useState<PaginatedResponse<Product>['meta'] | null>(
+    null,
+  );
+  const { error: showError } = useToastContext();
+  const { state: authState } = useAuth();
 
   const fetchProducts = async (reset = true) => {
     if (!enabled) return;
@@ -46,61 +28,51 @@ export const useProducts = (
       setLoading(true);
       setError(null);
 
-      let response: PaginatedResponse<Product>;
+      const finalQuery = {
+        ...query,
+        page: reset ? 1 : (meta?.page || 1) + 1,
+      };
 
-      if (isMyProducts) {
-        // Call artisan's own products endpoint
-        response = await productService.getMyProducts({
-          ...query,
-          page: reset ? 1 : pagination.currentPage + 1,
-        });
-      } else {
-        // Call public products endpoint
-        response = await productService.getProducts({
-          ...query,
-          page: reset ? 1 : pagination.currentPage + 1,
-          userId: authState.user?.id,
-        });
+      // For public shop view, only get published products
+      if (publicOnly) {
+        finalQuery.status = 'PUBLISHED';
       }
+
+      const response = publicOnly
+        ? await productService.getProducts(finalQuery)
+        : await productService.getMyProducts(finalQuery);
 
       if (reset) {
         setProducts(response.data);
-        setPagination({
-          total: response.meta.total,
-          totalPages: response.meta.totalPages,
-          currentPage: response.meta.page,
-          limit: response.meta.limit,
-        });
       } else {
         setProducts((prev) => [...prev, ...response.data]);
-        setPagination((prev) => ({
-          ...prev,
-          currentPage: response.meta.page,
-        }));
       }
+      setMeta(response.meta);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải sản phẩm');
+      const errorMessage = err.message || 'Không thể tải danh sách sản phẩm';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const refetch = () => fetchProducts(true);
-  const loadMore = () => fetchProducts(false);
-
   useEffect(() => {
-    if (enabled) {
+    if (enabled && (publicOnly || authState.isAuthenticated)) {
       fetchProducts(true);
     }
-  }, [enabled, isMyProducts, JSON.stringify(query)]);
+  }, [enabled, publicOnly, authState.isAuthenticated, JSON.stringify(query)]);
+
+  const refetch = () => fetchProducts(true);
+  const loadMore = () => fetchProducts(false);
 
   return {
     products,
     loading,
     error,
-    pagination,
+    meta,
     refetch,
     loadMore,
-    hasMore: pagination.currentPage < pagination.totalPages,
+    hasMore: meta ? meta.page < meta.totalPages : false,
   };
 };

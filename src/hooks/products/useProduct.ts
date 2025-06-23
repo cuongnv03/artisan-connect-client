@@ -1,61 +1,74 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/product.service';
 import { Product } from '../../types/product';
+import { useToastContext } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { getRouteHelpers } from '../../constants/routes';
 
-export interface UseProductOptions {
-  productId?: string;
-  slug?: string;
-  enabled?: boolean;
-}
-
-export interface UseProductReturn {
-  product: Product | null;
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-export const useProduct = (options: UseProductOptions): UseProductReturn => {
-  const { productId, slug, enabled = true } = options;
-  const { state: authState } = useAuth();
+export const useProduct = (productId: string, isManagementView = false) => {
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(enabled);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { error: showError } = useToastContext();
+  const { state: authState } = useAuth();
+  const navigate = useNavigate();
 
-  const fetchProduct = async () => {
-    if (!enabled || (!productId && !slug)) return;
+  useEffect(() => {
+    if (!productId) return;
+
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const productData = await productService.getProduct(productId);
+        setProduct(productData);
+
+        // Auto-redirect logic for artisan viewing their own product
+        if (
+          !isManagementView &&
+          authState.user?.role === 'ARTISAN' &&
+          productData.seller?.id === authState.user.id
+        ) {
+          navigate(getRouteHelpers.productDetail(productId), { replace: true });
+        }
+      } catch (err: any) {
+        const errorMessage = err.message || 'Không thể tải thông tin sản phẩm';
+        setError(errorMessage);
+        showError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId, isManagementView, authState.user, navigate]);
+
+  const refetch = async () => {
+    if (!productId) return;
 
     try {
       setLoading(true);
-      setError(null);
-
-      let productData: Product;
-      if (slug) {
-        productData = await productService.getProductBySlug(slug);
-      } else if (productId) {
-        productData = await productService.getProduct(productId);
-      } else {
-        throw new Error('Product ID or slug is required');
-      }
-
+      const productData = await productService.getProduct(productId);
       setProduct(productData);
     } catch (err: any) {
       setError(err.message || 'Không thể tải thông tin sản phẩm');
-      setProduct(null);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProduct();
-  }, [productId, slug, enabled]);
+  // Check if current user is the owner
+  const isOwner =
+    authState.user?.role === 'ARTISAN' &&
+    product?.seller?.id === authState.user.id;
 
   return {
     product,
     loading,
     error,
-    refetch: fetchProduct,
+    isOwner,
+    refetch,
   };
 };

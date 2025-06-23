@@ -1,73 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/product.service';
-import { ProductForm } from '../../components/products/artisan/ProductForm/ProductForm';
+import { ProductForm } from '../../components/products/ProductForm';
 import { CreateProductRequest } from '../../types/product';
+import { useToastContext } from '../../contexts/ToastContext';
+import { getRouteHelpers } from '../../constants/routes';
 
 export const CreateProductPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const duplicateId = searchParams.get('duplicate');
-  const [initialData, setInitialData] = useState<
-    Partial<CreateProductRequest> | undefined
-  >();
-  const [loading, setLoading] = useState(!!duplicateId);
+  const navigate = useNavigate();
+  const { success, error } = useToastContext();
 
-  useEffect(() => {
-    if (duplicateId) {
-      loadProductToDuplicate();
-    }
-  }, [duplicateId]);
-
-  const loadProductToDuplicate = async () => {
-    if (!duplicateId) return;
-
+  const handleSubmit = async (data: CreateProductRequest) => {
     try {
-      setLoading(true);
-      const product = await productService.getProduct(duplicateId);
-
-      const duplicateData: Partial<CreateProductRequest> = {
-        name: `${product.name} (Bản sao)`,
-        description: product.description || undefined,
-        price: product.price,
-        discountPrice: product.discountPrice || undefined,
-        quantity: 0,
-        minOrderQty: product.minOrderQty,
-        maxOrderQty: product.maxOrderQty || undefined,
-        isCustomizable: product.isCustomizable,
-        allowNegotiation: product.allowNegotiation,
-        categoryIds: product.categories?.map((c) => c.id) || [],
-        images: [],
-        tags: product.tags,
-      };
-
-      setInitialData(duplicateData);
-    } catch (err) {
-      console.error('Error loading product to duplicate:', err);
-    } finally {
-      setLoading(false);
+      const product = await productService.createProduct(data);
+      success('Tạo sản phẩm thành công!');
+      navigate(getRouteHelpers.productDetail(product.id));
+      return product;
+    } catch (err: any) {
+      error(err.message || 'Không thể tạo sản phẩm');
+      return null;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const handleCancel = () => {
+    navigate('/products');
+  };
 
-  return (
-    <div className="mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900">
-        {duplicateId ? 'Sao chép sản phẩm' : 'Tạo sản phẩm mới'}
-      </h1>
-      <p className="text-gray-600">
-        {duplicateId
-          ? 'Tạo sản phẩm mới dựa trên sản phẩm đã có'
-          : 'Điền thông tin để tạo sản phẩm mới'}
-      </p>
-
-      <ProductForm initialData={initialData} />
-    </div>
-  );
+  return <ProductForm onSubmit={handleSubmit} onCancel={handleCancel} />;
 };
