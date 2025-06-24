@@ -39,7 +39,7 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
         <div className="flex justify-between items-start mb-2">
           <div>
             <Link
-              to={`/products/${item.product?.slug || item.productId}`}
+              to={`/shop/${item.productId}`}
               className="font-medium text-gray-900 hover:text-primary"
             >
               {item.product?.name || 'Unknown Product'}

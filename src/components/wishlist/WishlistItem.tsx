@@ -63,7 +63,7 @@ export const WishlistItem: React.FC<WishlistItemProps> = ({
         <div className="flex">
           {/* Product Image */}
           <div className="w-32 h-32 flex-shrink-0">
-            <Link to={`/products/${product.slug || product.id}`}>
+            <Link to={`/shop/${product.id}`}>
               <img
                 src={product.images[0] || '/placeholder-image.jpg'}
                 alt={product.name}
@@ -96,7 +96,7 @@ export const WishlistItem: React.FC<WishlistItemProps> = ({
 
                 {/* Product Name */}
                 <Link
-                  to={`/products/${product.slug || product.id}`}
+                  to={`/shop/${product.id}`}
                   className="block font-medium text-gray-900 hover:text-primary transition-colors mb-2"
                 >
                   <h3 className="line-clamp-2">{product.name}</h3>
@@ -149,7 +149,7 @@ export const WishlistItem: React.FC<WishlistItemProps> = ({
                 >
                   Bỏ thích
                 </Button>
-                <Link to={`/products/${product.slug || product.id}`}>
+                <Link to={`/shop/${product.id}`}>
                   <Button
                     variant="ghost"
                     size="sm"

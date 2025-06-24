@@ -49,7 +49,7 @@ export const OrderDetailContent: React.FC<OrderDetailContentProps> = ({
                   </div>
                 ) : (
                   <Link
-                    to={`/products/${item.product?.slug || item.product?.id}`}
+                    to={`/shop/${item.product?.id}`}
                     className="font-medium text-gray-900 hover:text-primary"
                   >
                     {item.product?.name}

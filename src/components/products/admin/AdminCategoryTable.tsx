@@ -127,7 +127,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </td>
         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <div className="flex items-center justify-end space-x-2">
-            <Link to={`/products/category/${category.slug}`}>
+            <Link to={`/products/categories/${category.slug}`}>
               <Button variant="ghost" size="sm" title="Xem danh mục">
                 <EyeIcon className="h-4 w-4" />
               </Button>

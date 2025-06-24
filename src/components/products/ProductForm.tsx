@@ -11,6 +11,7 @@ import {
   TruckIcon,
   ScaleIcon,
   CubeIcon,
+  ArrowsRightLeftIcon,
 } from '@heroicons/react/24/outline';
 import { useForm } from '../../hooks/common/useForm';
 import { Button } from '../ui/Button';
@@ -109,6 +110,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     sku: product?.sku || '',
     barcode: product?.barcode || '',
     weight: product?.weight || 0,
+    // Fix dimensions - should be object, not number
+    dimensionLength: product?.dimensions?.length || 0,
+    dimensionWidth: product?.dimensions?.width || 0,
+    dimensionHeight: product?.dimensions?.height || 0,
+    dimensionUnit: product?.dimensions?.unit || 'cm',
     isCustomizable: product?.isCustomizable || false,
     allowNegotiation: product?.allowNegotiation ?? true,
     categoryIds: product?.categories?.map((cat) => cat.id) || [],
@@ -116,9 +122,9 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     seoDescription: product?.seoDescription || '',
 
     // Shipping fields
-    shippingTime: '',
-    shippingCost: 0,
-    freeShippingThreshold: 0,
+    shippingTime: product?.shippingInfo?.estimatedDays || '',
+    shippingCost: product?.shippingInfo?.cost || 0,
+    freeShippingThreshold: product?.shippingInfo?.freeThreshold || 0,
   };
 
   const validate = (values: any) => {
@@ -195,30 +201,39 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
         const allImages = [...existingImages, ...newImageUrls];
 
-        // Prepare shipping info
-        const shippingData = Object.keys({
-          estimatedDays: data.shippingTime,
-          cost: data.shippingCost,
-          freeThreshold: data.freeShippingThreshold,
-        }).reduce((acc, key) => {
-          const value = data[key];
-          if (value !== undefined && value !== '' && value !== 0) {
-            acc[key] = value;
-          }
-          return acc;
-        }, {} as any);
+        // Prepare dimensions object
+        const dimensionsData = {
+          length: data.dimensionLength || null,
+          width: data.dimensionWidth || null,
+          height: data.dimensionHeight || null,
+          unit: data.dimensionUnit || 'cm',
+        };
 
-        const productData = {
+        // Only include dimensions if at least one value is provided
+        const hasDimensions =
+          dimensionsData.length ||
+          dimensionsData.width ||
+          dimensionsData.height;
+
+        // Prepare shipping info
+        const shippingData: any = {};
+        if (data.shippingTime) shippingData.estimatedDays = data.shippingTime;
+        if (data.shippingCost) shippingData.cost = data.shippingCost;
+        if (data.freeShippingThreshold)
+          shippingData.freeThreshold = data.freeShippingThreshold;
+
+        const productData: CreateProductRequest | UpdateProductRequest = {
           name: data.name,
           description: data.description,
-          price: data.price,
-          discountPrice: data.discountPrice || null,
-          quantity: data.quantity,
-          minOrderQty: data.minOrderQty || 1,
-          maxOrderQty: data.maxOrderQty || null,
+          price: Number(data.price),
+          discountPrice: data.discountPrice ? Number(data.discountPrice) : null,
+          quantity: Number(data.quantity),
+          minOrderQty: Number(data.minOrderQty) || 1,
+          maxOrderQty: data.maxOrderQty ? Number(data.maxOrderQty) : null,
           sku: data.sku || undefined,
           barcode: data.barcode || undefined,
-          weight: data.weight || null,
+          weight: data.weight ? Number(data.weight) : null,
+          dimensions: hasDimensions ? dimensionsData : null,
           isCustomizable: data.isCustomizable || false,
           allowNegotiation: data.allowNegotiation ?? true,
           images: allImages,
@@ -235,13 +250,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           shippingInfo:
             Object.keys(shippingData).length > 0 ? shippingData : null,
           variants: variants.length > 0 ? variants : undefined,
-          status:
-            mode === 'create'
-              ? saveAsPublished
-                ? ProductStatus.PUBLISHED
-                : ProductStatus.DRAFT
-              : undefined,
         };
+
+        // Add status for create mode
+        if (mode === 'create') {
+          (productData as CreateProductRequest).status = saveAsPublished
+            ? ProductStatus.PUBLISHED
+            : ProductStatus.DRAFT;
+        }
 
         await onSubmit(productData);
       } catch (err: any) {
@@ -331,12 +347,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </div>
       </Card>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Content - Improved Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Left Column - Basic Info & Images */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-3 space-y-6">
           {/* Basic Information */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <CubeIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">Thông tin cơ bản</h3>
@@ -404,7 +420,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </Card>
 
           {/* Images */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <PhotoIcon className="w-5 h-5 text-primary mr-2" />
@@ -459,7 +475,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </Card>
 
           {/* Attributes */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <SwatchIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">
@@ -476,15 +492,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* Pricing */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <CurrencyDollarIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">Giá & Kho</h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 name="price"
                 label="Giá bán (₫)"
@@ -514,7 +530,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <Input
                   name="quantity"
                   label="Số lượng"
@@ -536,7 +552,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </Card>
 
           {/* Categories */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <TagIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">Danh mục</h3>
@@ -592,13 +608,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </Card>
 
           {/* Physical Properties */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <ScaleIcon className="w-5 h-5 text-primary mr-2" />
-              <h3 className="font-semibold text-gray-900">Thuộc tính</h3>
+              <h3 className="font-semibold text-gray-900">Thuộc tính vật lý</h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 name="weight"
                 label="Trọng lượng (kg)"
@@ -608,7 +624,66 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 onChange={handleChange}
               />
 
-              <div className="space-y-2">
+              {/* Dimensions Section */}
+              <div>
+                <div className="flex items-center mb-3">
+                  <ArrowsRightLeftIcon className="w-4 h-4 text-gray-500 mr-2" />
+                  <label className="text-sm font-medium text-gray-700">
+                    Kích thước
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <Input
+                    name="dimensionLength"
+                    label="Dài"
+                    type="number"
+                    step="0.1"
+                    value={values.dimensionLength || ''}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                  <Input
+                    name="dimensionWidth"
+                    label="Rộng"
+                    type="number"
+                    step="0.1"
+                    value={values.dimensionWidth || ''}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    name="dimensionHeight"
+                    label="Cao"
+                    type="number"
+                    step="0.1"
+                    value={values.dimensionHeight || ''}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Đơn vị
+                    </label>
+                    <select
+                      name="dimensionUnit"
+                      value={values.dimensionUnit}
+                      onChange={handleChange}
+                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+                    >
+                      <option value="cm">cm</option>
+                      <option value="m">m</option>
+                      <option value="mm">mm</option>
+                      <option value="inch">inch</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     Cho phép tùy chỉnh
@@ -636,13 +711,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </Card>
 
           {/* Shipping */}
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <TruckIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">Vận chuyển</h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 name="shippingTime"
                 label="Thời gian giao (ngày)"
@@ -658,6 +733,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 value={values.shippingCost || ''}
                 onChange={handleChange}
               />
+
+              <Input
+                name="freeShippingThreshold"
+                label="Miễn phí ship từ (₫)"
+                type="number"
+                value={values.freeShippingThreshold || ''}
+                onChange={handleChange}
+              />
             </div>
           </Card>
         </div>
@@ -666,7 +749,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       {/* Full Width Sections */}
       <div className="space-y-6">
         {/* Dynamic Specifications */}
-        <Card className="p-4">
+        <Card className="p-6">
           <div className="flex items-center mb-4">
             <DocumentTextIcon className="w-5 h-5 text-primary mr-2" />
             <h3 className="font-semibold text-gray-900">Thông số kỹ thuật</h3>
@@ -682,7 +765,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </Card>
 
         {/* Dynamic Custom Fields */}
-        <Card className="p-4">
+        <Card className="p-6">
           <div className="flex items-center mb-4">
             <SparklesIcon className="w-5 h-5 text-primary mr-2" />
             <h3 className="font-semibold text-gray-900">Thông tin bổ sung</h3>
@@ -699,7 +782,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
         {/* Variants */}
         {values.categoryIds && values.categoryIds.length > 0 && (
-          <Card className="p-4">
+          <Card className="p-6">
             <div className="flex items-center mb-4">
               <Cog6ToothIcon className="w-5 h-5 text-primary mr-2" />
               <h3 className="font-semibold text-gray-900">
@@ -722,7 +805,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         )}
 
         {/* Tags & SEO */}
-        <Card className="p-4">
+        <Card className="p-6">
           <div className="flex items-center mb-4">
             <DocumentTextIcon className="w-5 h-5 text-primary mr-2" />
             <h3 className="font-semibold text-gray-900">Thẻ & SEO</h3>
@@ -837,7 +920,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       </div>
 
       {/* Form Actions */}
-      <div className="flex gap-3 justify-end bg-gray-50 p-4 rounded-lg">
+      <div className="flex gap-3 justify-end bg-gray-50 p-6 rounded-lg">
         <Button
           type="button"
           variant="outline"

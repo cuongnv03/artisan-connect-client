@@ -175,11 +175,7 @@ export const NegotiationDetailPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-3 flex space-x-3">
-                  <Link
-                    to={`/products/${
-                      negotiation.product.slug || negotiation.product.id
-                    }`}
-                  >
+                  <Link to={`/shop/${negotiation.product.id}`}>
                     <Button
                       size="sm"
                       variant="outline"
@@ -350,11 +346,7 @@ export const NegotiationDetailPage: React.FC = () => {
               Thao tác nhanh
             </h3>
             <div className="space-y-3">
-              <Link
-                to={`/products/${
-                  negotiation.product.slug || negotiation.product.id
-                }`}
-              >
+              <Link to={`/shop/${negotiation.product.id}`}>
                 <Button
                   variant="outline"
                   fullWidth

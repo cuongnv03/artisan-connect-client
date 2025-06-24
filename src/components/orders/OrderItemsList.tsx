@@ -91,9 +91,9 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
                   </div>
                 ) : (
                   <div>
-                    {item.product?.slug ? (
+                    {item.product?.id ? (
                       <Link
-                        to={`/products/${item.product.slug}`}
+                        to={`/shop/${item.product.id}`}
                         className="font-medium text-gray-900 hover:text-primary"
                       >
                         {item.product.name}

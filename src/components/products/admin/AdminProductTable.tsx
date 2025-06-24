@@ -256,7 +256,7 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end space-x-2">
-                    <Link to={`/products/${product.slug || product.id}`}>
+                    <Link to={`/shop/${product.id}`}>
                       <Button variant="ghost" size="sm" title="Xem sản phẩm">
                         <EyeIcon className="h-4 w-4" />
                       </Button>
