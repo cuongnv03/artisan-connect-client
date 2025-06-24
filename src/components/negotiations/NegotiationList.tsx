@@ -3,7 +3,10 @@ import { NegotiationSummary } from '../../types/price-negotiation';
 import { NegotiationCard } from './NegotiationCard';
 import { Button } from '../ui/Button';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  ChatBubbleLeftRightIcon,
+} from '@heroicons/react/24/outline';
 
 interface NegotiationListProps {
   negotiations: NegotiationSummary[];
@@ -56,24 +59,32 @@ export const NegotiationList: React.FC<NegotiationListProps> = ({
 
   if (negotiations.length === 0) {
     return (
-      <div className="text-center py-12">
-        <ChatBubbleLeftRightIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          {emptyMessage}
-        </h3>
-        <p className="text-gray-500 mb-6">{emptyDescription}</p>
-        {onRetry && (
-          <Button onClick={onRetry} variant="outline">
-            Làm mới
-          </Button>
-        )}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+        <div className="text-center max-w-md mx-auto">
+          <div className="mx-auto h-24 w-24 rounded-full bg-blue-50 flex items-center justify-center mb-6">
+            <ChatBubbleLeftRightIcon className="h-12 w-12 text-blue-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            {emptyMessage}
+          </h3>
+          <p className="text-gray-500 mb-6">{emptyDescription}</p>
+          {onRetry && (
+            <Button
+              onClick={onRetry}
+              leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+            >
+              Làm mới
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
+      {/* Grid layout cho negotiations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {negotiations.map((negotiation) => (
           <NegotiationCard
             key={negotiation.id}
@@ -91,6 +102,7 @@ export const NegotiationList: React.FC<NegotiationListProps> = ({
             loading={loadingMore}
             variant="outline"
             disabled={loadingMore}
+            className="px-8 py-3"
           >
             {loadingMore ? 'Đang tải...' : 'Xem thêm'}
           </Button>

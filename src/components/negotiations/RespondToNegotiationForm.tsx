@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 
 interface RespondToNegotiationFormProps {

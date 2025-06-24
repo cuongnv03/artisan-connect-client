@@ -220,6 +220,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
             name="proposedPrice"
             label="Giá bạn mong muốn"
             type="number"
+            step="any"
             value={values.proposedPrice}
             onChange={handleChange}
             onBlur={handleBlur}
