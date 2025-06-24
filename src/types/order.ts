@@ -164,7 +164,6 @@ export interface OrderItemWithDetails {
     name: string;
     slug?: string;
     images: string[];
-    isCustomizable: boolean;
   };
   variant?: {
     id: string;

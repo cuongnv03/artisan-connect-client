@@ -51,6 +51,11 @@ export const productService = {
       ...data,
       tags: data.tags || [],
       featuredImage: data.featuredImage || data.images[0],
+      price: Number(data.price),
+      discountPrice: data.discountPrice ? Number(data.discountPrice) : null,
+      quantity: Number(data.quantity),
+      minOrderQty: Number(data.minOrderQty) || 1,
+      maxOrderQty: data.maxOrderQty ? Number(data.maxOrderQty) : null,
     });
   },
 
@@ -61,6 +66,14 @@ export const productService = {
     return await apiClient.patch<Product>(API_ENDPOINTS.PRODUCTS.BY_ID(id), {
       ...data,
       tags: data.tags || [],
+      featuredImage:
+        data.featuredImage ||
+        (data.images && data.images.length > 0 ? data.images[0] : undefined),
+      price: Number(data.price),
+      discountPrice: data.discountPrice ? Number(data.discountPrice) : null,
+      quantity: Number(data.quantity),
+      minOrderQty: Number(data.minOrderQty) || 1,
+      maxOrderQty: data.maxOrderQty ? Number(data.maxOrderQty) : null,
     });
   },
 

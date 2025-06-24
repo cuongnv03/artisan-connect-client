@@ -172,11 +172,6 @@ export const CustomOrderDetailPage: React.FC = () => {
                   <p className="text-gray-600">
                     {formatPrice(order.referenceProduct.price)}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {order.referenceProduct.isCustomizable
-                      ? 'Có thể tùy chỉnh'
-                      : 'Không thể tùy chỉnh'}
-                  </p>
                 </div>
               </div>
             </Card>

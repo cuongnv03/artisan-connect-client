@@ -34,7 +34,6 @@ export interface Product extends SoftDeleteEntity {
   barcode?: string | null;
   weight?: number | null;
   dimensions?: Record<string, any> | null;
-  isCustomizable: boolean;
   allowNegotiation: boolean;
   shippingInfo?: Record<string, any> | null;
   status: ProductStatus;
@@ -166,7 +165,6 @@ export interface CreateProductRequest {
   barcode?: string;
   weight?: number;
   dimensions?: Record<string, any>;
-  isCustomizable?: boolean;
   allowNegotiation?: boolean;
   shippingInfo?: Record<string, any>;
   status?: ProductStatus;
@@ -210,7 +208,7 @@ export interface GetProductsQuery extends PaginationParams {
   sellerId?: string;
   categoryIds?: string | string[]; // Support both single and multiple
   search?: string;
-  status?: ProductStatus;
+  status?: ProductStatus | ProductStatus[];
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   inStock?: boolean;

@@ -9,9 +9,11 @@ interface BadgeProps {
     | 'success'
     | 'warning'
     | 'danger'
-    | 'info';
+    | 'info'
+    | 'outline';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  onClick?: () => void;
 }
 
 const variantClasses = {
@@ -22,6 +24,8 @@ const variantClasses = {
   warning: 'bg-yellow-100 text-yellow-800',
   danger: 'bg-red-100 text-red-800',
   info: 'bg-blue-100 text-blue-800',
+  outline:
+    'border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-50',
 };
 
 const sizeClasses = {
@@ -35,15 +39,27 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'default',
   size = 'md',
   className = '',
+  onClick,
 }) => {
   const classes = [
     'inline-flex items-center font-medium rounded-full',
     variantClasses[variant],
     sizeClasses[size],
+    onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  return <span className={classes}>{children}</span>;
+  const Component = onClick ? 'button' : 'span';
+
+  return (
+    <Component
+      className={classes}
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+    >
+      {children}
+    </Component>
+  );
 };

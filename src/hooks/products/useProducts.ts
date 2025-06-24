@@ -28,19 +28,39 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       setLoading(true);
       setError(null);
 
-      const finalQuery = {
+      // Clean up query parameters
+      const cleanQuery: GetProductsQuery = {
         ...query,
         page: reset ? 1 : (meta?.page || 1) + 1,
       };
 
+      // Remove undefined values
+      Object.keys(cleanQuery).forEach((key) => {
+        const value = cleanQuery[key as keyof GetProductsQuery];
+        if (
+          value === undefined ||
+          value === '' ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
+          delete cleanQuery[key as keyof GetProductsQuery];
+        }
+      });
+
       // For public shop view, only get published products
       if (publicOnly) {
-        finalQuery.status = 'PUBLISHED';
+        cleanQuery.status = 'PUBLISHED';
+      }
+
+      // Handle category IDs properly
+      if (cleanQuery.categoryIds) {
+        if (typeof cleanQuery.categoryIds === 'string') {
+          cleanQuery.categoryIds = [cleanQuery.categoryIds];
+        }
       }
 
       const response = publicOnly
-        ? await productService.getProducts(finalQuery)
-        : await productService.getMyProducts(finalQuery);
+        ? await productService.getProducts(cleanQuery)
+        : await productService.getMyProducts(cleanQuery);
 
       if (reset) {
         setProducts(response.data);
@@ -51,7 +71,9 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     } catch (err: any) {
       const errorMessage = err.message || 'Không thể tải danh sách sản phẩm';
       setError(errorMessage);
-      showError(errorMessage);
+      if (reset) {
+        showError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
