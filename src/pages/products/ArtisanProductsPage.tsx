@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   CubeIcon,
   PlusIcon,
-  AdjustmentsHorizontalIcon,
   ChartBarIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  XMarkIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { ProductCard } from '../../components/products/ProductCard';
 import { ProductFilters } from '../../components/products/ProductFilters';
@@ -19,27 +17,35 @@ import { CategorySidebar } from '../../components/products/CategorySidebar';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ConfirmModal } from '../../components/ui/Modal';
-import { SearchBox } from '../../components/common/SearchBox';
+import { Pagination } from '../../components/ui/Pagination';
 import { useProducts } from '../../hooks/products/useProducts';
 import { useCategories } from '../../hooks/products/useCategories';
 import { useToastContext } from '../../contexts/ToastContext';
 import { productService } from '../../services/product.service';
+import { useDebounce } from '../../hooks/common/useDebounce';
 
 export const ArtisanProductsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { success, error: showError } = useToastContext();
+
+  // UI States
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [bulkSelected, setBulkSelected] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchValue, setSearchValue] = useState(
+    searchParams.get('search') || '',
+  );
+  const debouncedSearch = useDebounce(searchValue, 500);
 
   // Get filters from URL
   const filters = {
-    search: searchParams.get('search') || undefined,
+    search: debouncedSearch || undefined,
     categoryIds: searchParams.getAll('categoryId') || undefined,
     status: searchParams.get('status') || undefined,
     minPrice: searchParams.get('minPrice')
@@ -64,6 +70,18 @@ export const ArtisanProductsPage: React.FC = () => {
 
   const { categories, loading: categoriesLoading } = useCategories();
 
+  // Update URL when search changes
+  React.useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch);
+    } else {
+      params.delete('search');
+    }
+    params.set('page', '1');
+    setSearchParams(params);
+  }, [debouncedSearch, setSearchParams]);
+
   const handleFilterChange = (newFilters: any) => {
     const params = new URLSearchParams();
 
@@ -80,6 +98,12 @@ export const ArtisanProductsPage: React.FC = () => {
     });
 
     params.set('page', '1');
+    setSearchParams(params);
+  };
+
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page.toString());
     setSearchParams(params);
   };
 
@@ -103,6 +127,7 @@ export const ArtisanProductsPage: React.FC = () => {
       success('Đã xóa sản phẩm thành công');
       refetch();
       setDeleteProductId(null);
+      setBulkSelected((prev) => prev.filter((id) => id !== productId));
     } catch (err: any) {
       showError(err.message || 'Không thể xóa sản phẩm');
     }
@@ -159,22 +184,36 @@ export const ArtisanProductsPage: React.FC = () => {
     }
   };
 
+  const clearFilters = () => {
+    setSearchParams(new URLSearchParams());
+    setSearchValue('');
+  };
+
+  const hasActiveFilters = Object.keys(filters).some((key) => {
+    const value = filters[key as keyof typeof filters];
+    if (
+      key === 'page' ||
+      key === 'limit' ||
+      key === 'sortBy' ||
+      key === 'sortOrder'
+    )
+      return false;
+    if (Array.isArray(value)) return value.length > 0;
+    return value !== undefined && value !== '';
+  });
+
   const getProductStats = () => {
     if (!products.length) return null;
-
-    const stats = {
-      total: products.length,
+    return {
+      total: meta?.total || 0,
       published: products.filter((p) => p.status === 'PUBLISHED').length,
       draft: products.filter((p) => p.status === 'DRAFT').length,
       outOfStock: products.filter((p) => p.quantity === 0).length,
-      inStock: products.filter((p) => p.quantity > 0).length,
     };
-
-    return stats;
   };
 
-  const selectedCategoryId = filters.categoryIds?.[0];
   const stats = getProductStats();
+  const selectedCategoryId = filters.categoryIds?.[0];
 
   return (
     <>
@@ -187,19 +226,16 @@ export const ArtisanProductsPage: React.FC = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <CubeIcon className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold text-gray-900">
-                Quản lý sản phẩm
-              </h1>
-            </div>
-            <p className="text-lg text-gray-600">
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <CubeIcon className="w-8 h-8 text-primary mr-3" />
+              Quản lý sản phẩm
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
               Tạo, chỉnh sửa và theo dõi các sản phẩm của bạn
             </p>
           </div>
 
           <div className="flex gap-3">
-            {/* SỬA: Sử dụng navigate thay vì as={Link} */}
             <Button
               variant="outline"
               onClick={() => navigate('/products/stats')}
@@ -217,14 +253,14 @@ export const ArtisanProductsPage: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+        {stats && meta && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Card
               className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleFilterChange({})}
+              onClick={() => clearFilters()}
             >
               <div className="text-2xl font-bold text-blue-600">
-                {stats.total}
+                {meta.total}
               </div>
               <div className="text-sm text-gray-600">Tổng sản phẩm</div>
             </Card>
@@ -255,32 +291,23 @@ export const ArtisanProductsPage: React.FC = () => {
               </div>
               <div className="text-sm text-gray-600">Hết hàng</div>
             </Card>
-            <Card
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleFilterChange({ inStock: true })}
-            >
-              <div className="text-2xl font-bold text-purple-600">
-                {stats.inStock}
-              </div>
-              <div className="text-sm text-gray-600">Còn hàng</div>
-            </Card>
           </div>
         )}
 
         {/* Search and Controls */}
         <div className="mb-6 space-y-4">
           {/* Search Bar */}
-          <SearchBox
-            value={filters.search || ''}
-            onChange={(value) =>
-              handleFilterChange({ ...filters, search: value })
-            }
-            onSubmit={(value) =>
-              handleFilterChange({ ...filters, search: value })
-            }
-            placeholder="Tìm kiếm sản phẩm theo tên, SKU..."
-            className="max-w-lg"
-          />
+          <div className="relative max-w-lg">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            </div>
+            <Input
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Tìm kiếm sản phẩm theo tên, SKU..."
+              className="pl-10"
+            />
+          </div>
 
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -301,22 +328,33 @@ export const ArtisanProductsPage: React.FC = () => {
                   className={`px-3 py-1 text-sm ${
                     viewMode === 'grid'
                       ? 'bg-primary text-white'
-                      : 'bg-white text-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  Lưới
+                  <Squares2X2Icon className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
                   className={`px-3 py-1 text-sm ${
                     viewMode === 'list'
                       ? 'bg-primary text-white'
-                      : 'bg-white text-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  Danh sách
+                  <ListBulletIcon className="w-4 h-4" />
                 </button>
               </div>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  leftIcon={<XMarkIcon className="w-4 h-4" />}
+                >
+                  Xóa bộ lọc
+                </Button>
+              )}
 
               {meta && (
                 <span className="text-sm text-gray-600">
@@ -410,25 +448,16 @@ export const ArtisanProductsPage: React.FC = () => {
               <EmptyState
                 title="Chưa có sản phẩm nào"
                 description={
-                  filters.search ||
-                  filters.categoryIds?.length ||
-                  filters.status
+                  hasActiveFilters
                     ? 'Không tìm thấy sản phẩm phù hợp với bộ lọc'
                     : 'Hãy tạo sản phẩm đầu tiên của bạn'
                 }
                 icon={<CubeIcon className="w-12 h-12" />}
                 action={{
-                  label:
-                    filters.search ||
-                    filters.categoryIds?.length ||
-                    filters.status
-                      ? 'Xóa bộ lọc'
-                      : 'Thêm sản phẩm',
+                  label: hasActiveFilters ? 'Xóa bộ lọc' : 'Thêm sản phẩm',
                   onClick: () =>
-                    filters.search ||
-                    filters.categoryIds?.length ||
-                    filters.status
-                      ? handleFilterChange({})
+                    hasActiveFilters
+                      ? clearFilters()
                       : navigate('/products/create'),
                 }}
               />
@@ -552,15 +581,37 @@ export const ArtisanProductsPage: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(product.id)}
-                              leftIcon={<PencilIcon className="w-4 h-4" />}
                             >
                               Sửa
                             </Button>
+
+                            {product.status === 'DRAFT' ? (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() =>
+                                  handleStatusChange(product.id, 'PUBLISHED')
+                                }
+                              >
+                                Đăng bán
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleStatusChange(product.id, 'DRAFT')
+                                }
+                              >
+                                Ẩn
+                              </Button>
+                            )}
+
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setDeleteProductId(product.id)}
-                              leftIcon={<TrashIcon className="w-4 h-4" />}
+                              className="text-red-600 hover:text-red-700"
                             >
                               Xóa
                             </Button>
@@ -568,6 +619,19 @@ export const ArtisanProductsPage: React.FC = () => {
                         </div>
                       </Card>
                     ))}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {meta && meta.totalPages > 1 && (
+                  <div className="mt-8">
+                    <Pagination
+                      currentPage={meta.page}
+                      totalPages={meta.totalPages}
+                      totalItems={meta.total}
+                      itemsPerPage={meta.limit}
+                      onPageChange={handlePageChange}
+                    />
                   </div>
                 )}
               </div>
