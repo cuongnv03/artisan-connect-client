@@ -48,29 +48,58 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   );
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  // NEW: Get display information based on variants
+  // ===== COMPLETELY FIXED: Enhanced variant logic =====
   const hasVariants =
     product.hasVariants && product.variants && product.variants.length > 0;
-  const defaultVariant =
-    product.variants?.find((v) => v.isDefault) || product.variants?.[0];
+  const defaultVariant = hasVariants
+    ? product.variants?.find((v) => v.isDefault) || product.variants?.[0]
+    : null;
 
-  // NEW: Calculate display values
-  const displayPrice =
-    hasVariants && defaultVariant
-      ? defaultVariant.discountPrice || defaultVariant.price
-      : product.discountPrice || product.price;
+  // ===== FIXED: All display values based on variants =====
+  const getDisplayPrice = () => {
+    if (hasVariants && defaultVariant) {
+      return defaultVariant.discountPrice || defaultVariant.price;
+    }
+    return product.discountPrice || product.price;
+  };
 
-  const displayOriginalPrice =
-    hasVariants && defaultVariant ? defaultVariant.price : product.price;
+  const getDisplayOriginalPrice = () => {
+    if (hasVariants && defaultVariant) {
+      return defaultVariant.price;
+    }
+    return product.price;
+  };
 
-  // NEW: Total quantity is sum of all variants OR product quantity
-  const displayQuantity = hasVariants
-    ? product.variants!.reduce((sum, variant) => sum + variant.quantity, 0)
-    : product.quantity;
+  const getDisplayImage = () => {
+    if (hasVariants && defaultVariant && defaultVariant.images.length > 0) {
+      return defaultVariant.images[0];
+    }
+    return product.featuredImage || product.images[0];
+  };
 
-  // NEW: Individual variant quantity for cart operations
-  const defaultVariantQuantity =
-    hasVariants && defaultVariant ? defaultVariant.quantity : product.quantity;
+  const getDisplayStock = () => {
+    if (hasVariants && defaultVariant) {
+      return defaultVariant.quantity;
+    }
+    return product.quantity;
+  };
+
+  const getTotalStock = () => {
+    if (hasVariants && product.variants) {
+      return product.variants.reduce(
+        (sum, variant) => sum + variant.quantity,
+        0,
+      );
+    }
+    return product.quantity;
+  };
+
+  // ===== FIXED: Use calculated values consistently =====
+  const displayPrice = getDisplayPrice();
+  const displayOriginalPrice = getDisplayOriginalPrice();
+  const displayImage = getDisplayImage();
+  const displayStock = getDisplayStock();
+  const totalStock = getTotalStock();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -109,18 +138,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  // ===== FIXED: Add to cart handler =====
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!authState.isAuthenticated) return;
 
-    // NEW: Add with default variant if product has variants
-    await addToCartWithLoading(
-      product.id,
-      1,
-      hasVariants && defaultVariant ? defaultVariant.id : undefined,
-    );
+    // FIXED: Always pass variant ID for products with variants
+    const variantId =
+      hasVariants && defaultVariant ? defaultVariant.id : undefined;
+
+    console.log('ProductCard: Adding to cart:', {
+      productId: product.id,
+      variantId,
+      hasVariants,
+      defaultVariant: defaultVariant?.name || 'N/A',
+      defaultVariantPrice: defaultVariant?.price,
+      displayPrice,
+    });
+
+    await addToCartWithLoading(product.id, 1, variantId);
   };
 
   const getProductLink = () => {
@@ -132,20 +170,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isOwner = authState.user?.id === product.seller?.id;
 
-  // NEW: Can add to cart if default variant (or product) has stock
+  // ===== FIXED: Discount calculation using display prices =====
+  const hasDiscount = displayPrice < displayOriginalPrice;
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100,
+      )
+    : 0;
+
+  // ===== FIXED: Can add to cart logic =====
   const canAddToCart =
     authState.isAuthenticated &&
     !isOwner &&
     product.status === 'PUBLISHED' &&
-    defaultVariantQuantity > 0;
+    displayStock > 0;
 
   const statusConfig = getStatusBadge(product.status);
-  const discountPercent =
-    displayPrice < displayOriginalPrice
-      ? Math.round(
-          ((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100,
-        )
-      : 0;
 
   const cardSizeClasses = {
     sm: 'h-80',
@@ -166,13 +206,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <Link to={getProductLink()} className="block h-full flex flex-col">
         {/* Image Section */}
         <div className={`relative ${imageSizeClasses[size]} overflow-hidden`}>
+          {/* ===== UPDATED: Use display image ===== */}
           <img
-            src={
-              // NEW: Use default variant image if available, otherwise use product image
-              hasVariants && defaultVariant && defaultVariant.images.length > 0
-                ? defaultVariant.images[0]
-                : product.featuredImage || product.images[0]
-            }
+            src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -182,7 +218,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <Badge variant={statusConfig.variant} size="sm">
               {statusConfig.label}
             </Badge>
-            {discountPercent > 0 && (
+            {hasDiscount && (
               <Badge variant="danger" size="sm">
                 -{discountPercent}%
               </Badge>
@@ -231,17 +267,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
 
-          {/* Quick Add to Cart */}
+          {/* ===== FIXED: Quick Add to Cart button text ===== */}
           {canAddToCart && size !== 'sm' && (
             <div className="absolute inset-x-3 bottom-3 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 onClick={handleAddToCart}
-                loading={loading[`add-${product.id}`]}
+                loading={
+                  loading[
+                    `add-${product.id}${
+                      hasVariants && defaultVariant
+                        ? `-${defaultVariant.id}`
+                        : ''
+                    }`
+                  ]
+                }
                 size="sm"
                 className="w-full bg-primary/90 hover:bg-primary"
                 leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
               >
-                {hasVariants ? 'Thêm biến thể mặc định' : 'Thêm vào giỏ'}
+                {hasVariants
+                  ? `Thêm ${defaultVariant?.name || 'tùy chọn mặc định'}`
+                  : 'Thêm vào giỏ'}
               </Button>
             </div>
           )}
@@ -252,7 +298,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Product Name */}
           <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors">
             {product.name}
-            {/* NEW: Show default variant info if applicable */}
+            {/* ===== UPDATED: Show default variant name ===== */}
             {hasVariants && defaultVariant && defaultVariant.name && (
               <span className="text-sm text-gray-500 block font-normal">
                 Mặc định: {defaultVariant.name}
@@ -268,10 +314,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           )}
 
-          {/* Price Section - Updated to use display values */}
+          {/* ===== UPDATED: Price Section using display prices ===== */}
           <div className="mb-3">
-            {discountPercent > 0 ? (
-              <div className="flex items-center gap-2">
+            {hasDiscount ? (
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-lg font-bold text-red-600">
                   {formatPrice(displayPrice)}
                 </span>
@@ -283,6 +329,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               <span className="text-lg font-bold text-gray-900">
                 {formatPrice(displayPrice)}
               </span>
+            )}
+            {/* FIXED: Show variant price indicator */}
+            {hasVariants && defaultVariant && (
+              <div className="text-xs text-gray-500 mt-1">
+                Giá {defaultVariant.name || 'tùy chọn mặc định'}
+                {product.variants!.length > 1 && (
+                  <span className="ml-1">
+                    ({product.variants!.length} tùy chọn)
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -310,32 +367,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Additional Info for larger cards */}
           {size === 'lg' && showFullInfo && (
             <div className="space-y-2 mb-3 text-sm text-gray-600">
-              {/* Stock Info */}
+              {/* ===== UPDATED: Stock Info showing total quantity ===== */}
               <div className="flex items-center justify-between">
                 <span>Kho:</span>
                 <span
                   className={
-                    displayQuantity > 0 ? 'text-green-600' : 'text-red-600'
+                    totalQuantity > 0 ? 'text-green-600' : 'text-red-600'
                   }
                 >
-                  {displayQuantity > 0
-                    ? `${displayQuantity} sản phẩm${
-                        hasVariants ? ' (tổng)' : ''
-                      }`
+                  {totalQuantity > 0
+                    ? `${totalQuantity} sản phẩm${hasVariants ? ' (tổng)' : ''}`
                     : 'Hết hàng'}
                 </span>
               </div>
 
-              {/* Physical info */}
-              {(product.weight || (hasVariants && defaultVariant?.weight)) && (
+              {/* ===== UPDATED: Physical info from default variant ===== */}
+              {displayWeight && (
                 <div className="flex items-center gap-1">
                   <ScaleIcon className="w-3 h-3" />
-                  <span>
-                    {hasVariants && defaultVariant?.weight
-                      ? defaultVariant.weight
-                      : product.weight}
-                    kg
-                  </span>
+                  <span>{displayWeight}kg</span>
+                  {hasVariants && (
+                    <span className="text-xs text-gray-500">
+                      (tùy chọn mặc định)
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -349,18 +404,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
           )}
 
-          {/* Stock Info (for all sizes) - Updated */}
+          {/* ===== FIXED: Stock Info =====*/}
           {!showFullInfo && (
             <div className="text-sm text-gray-600 mb-3">
-              {displayQuantity > 0 ? (
-                <span>
-                  Còn {displayQuantity} sản phẩm
-                  {hasVariants && (
-                    <span className="text-xs text-gray-500 block">
-                      ({product.variants!.length} tùy chọn)
-                    </span>
+              {totalStock > 0 ? (
+                <div>
+                  {hasVariants ? (
+                    <div>
+                      <span className="text-green-600">
+                        Còn {displayStock} sản phẩm{' '}
+                        {defaultVariant?.name && `(${defaultVariant.name})`}
+                      </span>
+                      {product.variants!.length > 1 && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Tổng {totalStock} sản phẩm •{' '}
+                          {product.variants!.length} tùy chọn
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span>Còn {totalStock} sản phẩm</span>
                   )}
-                </span>
+                </div>
               ) : (
                 <span className="text-red-600">Hết hàng</span>
               )}
@@ -432,13 +497,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               size === 'sm' && (
                 <Button
                   onClick={handleAddToCart}
-                  loading={loading[`add-${product.id}`]}
-                  disabled={defaultVariantQuantity === 0}
+                  loading={
+                    loading[
+                      `add-${product.id}${
+                        hasVariants && defaultVariant
+                          ? `-${defaultVariant.id}`
+                          : ''
+                      }`
+                    ]
+                  }
+                  disabled={displayStock === 0}
                   size="sm"
                   className="w-full"
                   leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
                 >
-                  {hasVariants ? 'Thêm biến thể mặc định' : 'Thêm vào giỏ'}
+                  {hasVariants
+                    ? `Thêm ${defaultVariant?.name || 'mặc định'}`
+                    : 'Thêm vào giỏ'}
                 </Button>
               )
             )}

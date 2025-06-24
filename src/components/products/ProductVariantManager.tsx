@@ -99,20 +99,30 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
   );
 
   const addVariant = () => {
+    const isFirstVariant = variants.length === 0;
+
     const newVariant: VariantFormData = {
-      name: `Biến thể ${variants.length + 1}`,
+      name: isFirstVariant
+        ? 'Biến thể mặc định'
+        : `Biến thể ${variants.length + 1}`,
       price: basePrice,
-      discountPrice: baseDiscountPrice || undefined, // NEW: Copy from base product
+      discountPrice: baseDiscountPrice || undefined,
       quantity: 0,
-      attributes: variants.length === 0 ? { ...currentAttributes } : {},
+      attributes: isFirstVariant ? { ...currentAttributes } : {},
       images: [],
       isActive: true,
-      isDefault: variants.length === 0,
-      weight: baseWeight || undefined, // NEW: Copy from base product
+      isDefault: isFirstVariant, // Biến thể đầu tiên là mặc định
+      weight: isFirstVariant ? baseWeight || undefined : undefined,
     };
 
     onVariantsChange([...variants, newVariant]);
     setExpandedVariant(variants.length);
+
+    if (isFirstVariant) {
+      success(
+        'Đã tạo biến thể mặc định. Hãy điều chỉnh thông tin và phân bổ số lượng.',
+      );
+    }
   };
 
   const updateVariant = (index: number, field: string, value: any) => {

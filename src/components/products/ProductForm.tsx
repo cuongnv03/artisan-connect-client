@@ -308,8 +308,18 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   // NEW: Update hasVariants when variants change
   useEffect(() => {
-    setHasVariants(variants.length > 0);
-  }, [variants]);
+    if (hasVariants && variants.length > 0) {
+      const hasDefaultVariant = variants.some((v) => v.isDefault);
+      if (!hasDefaultVariant) {
+        // Đặt biến thể đầu tiên làm mặc định
+        const updatedVariants = variants.map((variant, index) => ({
+          ...variant,
+          isDefault: index === 0,
+        }));
+        setVariants(updatedVariants);
+      }
+    }
+  }, [variants, hasVariants]);
 
   // NEW: Validate total quantity when variants change
   useEffect(() => {
@@ -364,14 +374,26 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       return;
     }
 
+    // Tạo biến thể mặc định với tất cả thông tin từ sản phẩm gốc
     const firstVariant = {
       name: 'Biến thể mặc định',
       price: values.price,
-      discountPrice: values.discountPrice || 0,
-      quantity: values.quantity,
-      images: [],
-      weight: values.weight || 0,
-      attributes: { ...productAttributes }, // Copy current attributes
+      discountPrice: values.discountPrice || undefined,
+      quantity: values.quantity, // Chuyển toàn bộ quantity cho biến thể mặc định
+      images: [], // Sẽ sử dụng ảnh sản phẩm gốc khi không có ảnh riêng
+      weight: values.weight || undefined,
+      dimensions:
+        values.dimensionLength ||
+        values.dimensionWidth ||
+        values.dimensionHeight
+          ? {
+              length: values.dimensionLength || null,
+              width: values.dimensionWidth || null,
+              height: values.dimensionHeight || null,
+              unit: values.dimensionUnit || 'cm',
+            }
+          : undefined,
+      attributes: { ...productAttributes }, // Copy tất cả attributes
       isActive: true,
       isDefault: true,
       sortOrder: 0,
@@ -379,6 +401,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
     setVariants([firstVariant]);
     setHasVariants(true);
+
+    // Clear product-level attributes vì giờ sẽ quản lý ở variant level
+    setProductAttributes({});
+
+    success(
+      'Đã tạo biến thể mặc định từ thông tin sản phẩm. Thuộc tính giờ sẽ được quản lý ở mỗi biến thể.',
+    );
   };
 
   const discountPercent =
@@ -1029,26 +1058,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   onChange={handleChange}
                   placeholder="VD: 3-5 ngày"
                   helperText="Thời gian dự kiến giao hàng"
-                />
-
-                <Input
-                  name="shippingCost"
-                  label="Phí vận chuyển (₫)"
-                  type="number"
-                  value={values.shippingCost || ''}
-                  onChange={handleChange}
-                  placeholder="30000"
-                  helperText="Phí ship cố định"
-                />
-
-                <Input
-                  name="freeShippingThreshold"
-                  label="Miễn phí ship từ (₫)"
-                  type="number"
-                  value={values.freeShippingThreshold || ''}
-                  onChange={handleChange}
-                  placeholder="500000"
-                  helperText="Giá trị đơn hàng để miễn phí ship"
                 />
               </div>
             </Card>

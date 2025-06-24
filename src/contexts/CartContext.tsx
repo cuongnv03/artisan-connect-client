@@ -202,6 +202,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // ===== UPDATED: Enhanced cart operations with proper variant handling =====
   const addToCart = async (
     productId: string,
     quantity: number,
@@ -219,7 +220,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      // Create the proper AddToCartRequest object
+      // ===== UPDATED: Create proper request object =====
       const addToCartData: AddToCartRequest = {
         productId,
         quantity,
@@ -227,13 +228,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         ...(negotiationId && { negotiationId }),
       };
 
+      console.log('CartContext: Adding to cart', addToCartData);
+
       const cartItem = await cartService.addToCart(addToCartData);
       dispatch({ type: 'ITEM_ADDED', payload: cartItem });
 
       // Refresh full cart to get updated totals
       await loadCart();
 
-      success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng`);
+      // ===== UPDATED: Better success message with variant info =====
+      const variantInfo = variantId ? ' (tùy chọn đã chọn)' : '';
+      success(`Đã thêm ${quantity} sản phẩm${variantInfo} vào giỏ hàng`);
     } catch (err: any) {
       const errorMessage =
         err.message || 'Không thể thêm sản phẩm vào giỏ hàng';
@@ -243,6 +248,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // ===== UPDATED: Enhanced updateCartItem with proper variant key =====
   const updateCartItem = async (
     productId: string,
     quantity: number,
@@ -254,16 +260,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     if (quantity <= 0) {
-      // If quantity is 0 or negative, remove the item
       await removeFromCart(productId, variantId);
       return;
     }
 
     try {
-      // Create the proper UpdateCartItemRequest object
-      const updateData: UpdateCartItemRequest = {
-        quantity,
-      };
+      const updateData: UpdateCartItemRequest = { quantity };
 
       const cartItem = await cartService.updateCartItem(
         productId,
@@ -282,6 +284,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // ===== UPDATED: Enhanced removeFromCart with proper variant handling =====
   const removeFromCart = async (productId: string, variantId?: string) => {
     if (!authState.isAuthenticated) {
       showError('Vui lòng đăng nhập để xóa sản phẩm khỏi giỏ hàng');
@@ -395,6 +398,7 @@ export function useCart() {
 }
 
 // Helper hook for cart operations with loading states
+// ===== UPDATED: Enhanced useCartOperations with proper loading keys =====
 export function useCartOperations() {
   const cart = useCart();
   const [loading, setLoading] = React.useState<Record<string, boolean>>({});
@@ -414,6 +418,11 @@ export function useCartOperations() {
     }
   };
 
+  // ===== UPDATED: Create proper loading keys for variants =====
+  const createLoadingKey = (productId: string, variantId?: string) => {
+    return `${productId}${variantId ? `-${variantId}` : ''}`;
+  };
+
   return {
     ...cart,
     loading,
@@ -421,21 +430,25 @@ export function useCartOperations() {
       productId: string,
       quantity: number,
       variantId?: string,
-    ) =>
-      withLoading(`add-${productId}`, () =>
+    ) => {
+      const key = `add-${createLoadingKey(productId, variantId)}`;
+      return withLoading(key, () =>
         cart.addToCart(productId, quantity, variantId),
-      ),
+      );
+    },
     updateCartItemWithLoading: (
       productId: string,
       quantity: number,
       variantId?: string,
-    ) =>
-      withLoading(`update-${productId}`, () =>
+    ) => {
+      const key = `update-${createLoadingKey(productId, variantId)}`;
+      return withLoading(key, () =>
         cart.updateCartItem(productId, quantity, variantId),
-      ),
-    removeFromCartWithLoading: (productId: string, variantId?: string) =>
-      withLoading(`remove-${productId}`, () =>
-        cart.removeFromCart(productId, variantId),
-      ),
+      );
+    },
+    removeFromCartWithLoading: (productId: string, variantId?: string) => {
+      const key = `remove-${createLoadingKey(productId, variantId)}`;
+      return withLoading(key, () => cart.removeFromCart(productId, variantId));
+    },
   };
 }

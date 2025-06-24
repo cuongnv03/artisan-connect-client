@@ -16,6 +16,11 @@ export const useCartOperations = () => {
   const { success, error } = useToastContext();
   const [updating, setUpdating] = useState<string | null>(null);
 
+  // ===== UPDATED: Create proper item key for variants =====
+  const createItemKey = (productId: string, variantId?: string) => {
+    return `${productId}${variantId ? `-${variantId}` : ''}`;
+  };
+
   const handleUpdateQuantity = async (
     productId: string,
     newQuantity: number,
@@ -26,7 +31,8 @@ export const useCartOperations = () => {
       return;
     }
 
-    setUpdating(productId);
+    const itemKey = createItemKey(productId, variantId);
+    setUpdating(itemKey);
     try {
       await updateCartItem(productId, newQuantity, variantId);
     } catch (err) {
@@ -37,7 +43,8 @@ export const useCartOperations = () => {
   };
 
   const handleRemoveItem = async (productId: string, variantId?: string) => {
-    setUpdating(productId);
+    const itemKey = createItemKey(productId, variantId);
+    setUpdating(itemKey);
     try {
       await removeFromCart(productId, variantId);
     } catch (err) {

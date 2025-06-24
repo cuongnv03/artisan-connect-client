@@ -134,6 +134,13 @@ export const ProductDetailPage: React.FC = () => {
     return product.discountPrice || product.price;
   };
 
+  const getCurrentAttributes = () => {
+    if (selectedVariant && selectedVariant.attributes) {
+      return selectedVariant.attributes;
+    }
+    return product.attributes || {};
+  };
+
   const getOriginalPrice = () => {
     if (selectedVariant) {
       return selectedVariant.price;
@@ -249,28 +256,40 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Product Attributes */}
-          {product.attributes && Object.keys(product.attributes).length > 0 && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <SwatchIcon className="w-5 h-5 mr-2" />
-                Thuộc tính sản phẩm
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {Object.entries(product.attributes).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex justify-between py-2 border-b border-gray-100"
-                  >
-                    <dt className="font-medium text-gray-600">{key}:</dt>
-                    <dd className="text-gray-900">{String(value)}</dd>
+          {/* UPDATED: Product Attributes - Show from selected variant */}
+          {(() => {
+            const currentAttributes = getCurrentAttributes();
+            return (
+              Object.keys(currentAttributes).length > 0 && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <SwatchIcon className="w-5 h-5 mr-2" />
+                    {selectedVariant
+                      ? 'Thuộc tính tùy chọn'
+                      : 'Thuộc tính sản phẩm'}
+                    {selectedVariant && (
+                      <Badge variant="primary" size="sm" className="ml-2">
+                        {selectedVariant.name || 'Tùy chọn hiện tại'}
+                      </Badge>
+                    )}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(currentAttributes).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex justify-between py-2 border-b border-gray-100"
+                      >
+                        <dt className="font-medium text-gray-600">{key}:</dt>
+                        <dd className="text-gray-900">{String(value)}</dd>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                </Card>
+              )
+            );
+          })()}
 
-          {/* Specifications */}
+          {/* Specifications - Only from product level */}
           {product.specifications &&
             Object.keys(product.specifications).length > 0 && (
               <Card className="p-6">
@@ -296,7 +315,7 @@ export const ProductDetailPage: React.FC = () => {
               </Card>
             )}
 
-          {/* Custom Fields */}
+          {/* Custom Fields - Only from product level */}
           {product.customFields &&
             Object.keys(product.customFields).length > 0 && (
               <Card className="p-6 bg-amber-50 border-amber-200">
@@ -315,42 +334,65 @@ export const ProductDetailPage: React.FC = () => {
               </Card>
             )}
 
-          {/* Physical Properties */}
-          {(product.weight || product.dimensions) && (
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <ScaleIcon className="w-5 h-5 mr-2" />
-                Thông tin vật lý
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {product.weight && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <dt className="font-medium text-gray-600">Trọng lượng:</dt>
-                    <dd className="text-gray-900">{product.weight} kg</dd>
-                  </div>
-                )}
-                {product.dimensions && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <dt className="font-medium text-gray-600">Kích thước:</dt>
-                    <dd className="text-gray-900">
-                      {[
-                        product.dimensions.length &&
-                          `${product.dimensions.length}${product.dimensions.unit}`,
-                        product.dimensions.width &&
-                          `${product.dimensions.width}${product.dimensions.unit}`,
-                        product.dimensions.height &&
-                          `${product.dimensions.height}${product.dimensions.unit}`,
-                      ]
-                        .filter(Boolean)
-                        .join(' × ') || 'Chưa có thông tin'}
-                    </dd>
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
+          {/* UPDATED: Physical Properties - Show from selected variant if available */}
+          {(() => {
+            const currentWeight = selectedVariant?.weight || product.weight;
+            const currentDimensions =
+              selectedVariant?.dimensions || product.dimensions;
 
-          {/* Shipping Info */}
+            return (
+              (currentWeight || currentDimensions) && (
+                <Card className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <ScaleIcon className="w-5 h-5 mr-2" />
+                    Thông tin vật lý
+                    {selectedVariant && (
+                      <Badge variant="info" size="sm" className="ml-2">
+                        Của tùy chọn hiện tại
+                      </Badge>
+                    )}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {currentWeight && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <dt className="font-medium text-gray-600">
+                          Trọng lượng:
+                        </dt>
+                        <dd className="text-gray-900">{currentWeight} kg</dd>
+                      </div>
+                    )}
+                    {currentDimensions && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <dt className="font-medium text-gray-600">
+                          Kích thước:
+                        </dt>
+                        <dd className="text-gray-900">
+                          {[
+                            currentDimensions.length &&
+                              `${currentDimensions.length}${
+                                currentDimensions.unit || 'cm'
+                              }`,
+                            currentDimensions.width &&
+                              `${currentDimensions.width}${
+                                currentDimensions.unit || 'cm'
+                              }`,
+                            currentDimensions.height &&
+                              `${currentDimensions.height}${
+                                currentDimensions.unit || 'cm'
+                              }`,
+                          ]
+                            .filter(Boolean)
+                            .join(' × ') || 'Chưa có thông tin'}
+                        </dd>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )
+            );
+          })()}
+
+          {/* Shipping Info - Only from product level */}
           {product.shippingInfo && (
             <Card className="p-6 bg-blue-50 border-blue-200">
               <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
@@ -364,20 +406,6 @@ export const ProductDetailPage: React.FC = () => {
                       Thời gian giao hàng:
                     </span>
                     <span>{product.shippingInfo.estimatedDays}</span>
-                  </div>
-                )}
-                {product.shippingInfo.cost && (
-                  <div className="flex items-center text-blue-800">
-                    <span className="font-medium mr-2">Phí vận chuyển:</span>
-                    <span>{formatPrice(product.shippingInfo.cost)}</span>
-                  </div>
-                )}
-                {product.shippingInfo.freeThreshold && (
-                  <div className="flex items-center text-blue-800">
-                    <span className="font-medium mr-2">Miễn phí ship từ:</span>
-                    <span>
-                      {formatPrice(product.shippingInfo.freeThreshold)}
-                    </span>
                   </div>
                 )}
               </div>

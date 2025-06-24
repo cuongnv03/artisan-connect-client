@@ -36,18 +36,19 @@ export interface ProductInCart {
   };
 }
 
+// ===== UPDATED: ProductVariantInCart with proper attributes =====
 export interface ProductVariantInCart {
   id: string;
   sku: string;
   name?: string;
   price: number;
   discountPrice?: number;
+  quantity: number; // Available stock for this variant
   images: string[];
-  attributes: Array<{
-    key: string;
-    name: string;
-    value: string;
-  }>;
+  attributes: Record<string, any>; // UPDATED: Object instead of array
+  isActive: boolean;
+  weight?: number;
+  dimensions?: Record<string, any>;
 }
 
 export interface NegotiationInCart {
@@ -85,14 +86,20 @@ export interface SellerCartGroup {
 export interface CartValidation {
   isValid: boolean;
   errors: Array<{
-    type: 'OUT_OF_STOCK' | 'PRODUCT_UNAVAILABLE' | 'INVALID_QUANTITY';
+    type:
+      | 'OUT_OF_STOCK'
+      | 'PRODUCT_UNAVAILABLE'
+      | 'VARIANT_UNAVAILABLE'
+      | 'INVALID_QUANTITY';
     productId: string;
+    variantId?: string;
     productName: string;
     message: string;
   }>;
   warnings: Array<{
-    type: 'LOW_STOCK' | 'PRICE_CHANGED';
+    type: 'LOW_STOCK' | 'PRICE_CHANGED' | 'VARIANT_PRICE_CHANGED';
     productId: string;
+    variantId?: string;
     productName: string;
     message: string;
   }>;

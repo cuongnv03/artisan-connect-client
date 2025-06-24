@@ -14,7 +14,7 @@ export const EmptyCart: React.FC = () => {
         description="Bạn chưa thêm sản phẩm nào vào giỏ hàng. Hãy khám phá cửa hàng để tìm những sản phẩm thú vị!"
         action={{
           label: 'Tiếp tục mua sắm',
-          onClick: () => navigate('/products'),
+          onClick: () => navigate('/shop'),
         }}
       />
     </div>
