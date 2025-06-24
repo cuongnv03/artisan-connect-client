@@ -57,7 +57,7 @@ import { TrackingPage } from './pages/orders/TrackingPage';
 // Price Negotiations
 import { CustomerNegotiationsPage } from './pages/negotiations/CustomerNegotiationsPage';
 import { ArtisanNegotiationsPage } from './pages/negotiations/ArtisanNegotiationsPage';
-// import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
+import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
 
 import { WishlistPage } from './pages/wishlist/WishlistPage';
 
@@ -448,7 +448,7 @@ export const router = createBrowserRouter(
               path: 'requests',
               element: (
                 <ProtectedRoute
-                  allowedRoles={[UserRole.CUSTOMER, UserRole.ARTISAN]}
+                  allowedRoles={[UserRole.CUSTOMER, UserRole.ARTISAN]} // NEW: Allow both roles
                 >
                   <CustomerNegotiationsPage />
                 </ProtectedRoute>
@@ -464,14 +464,14 @@ export const router = createBrowserRouter(
               ),
             },
             // Common detail page
-            // {
-            //   path: ':id',
-            //   element: (
-            //     <ProtectedRoute>
-            //       <NegotiationDetailPage />
-            //     </ProtectedRoute>
-            //   ),
-            // },
+            {
+              path: ':id',
+              element: (
+                <ProtectedRoute>
+                  <NegotiationDetailPage />
+                </ProtectedRoute>
+              ),
+            },
           ],
         },
 

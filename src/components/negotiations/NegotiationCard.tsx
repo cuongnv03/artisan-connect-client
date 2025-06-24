@@ -13,6 +13,7 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   EyeIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 
 interface NegotiationCardProps {
@@ -100,13 +101,22 @@ export const NegotiationCard: React.FC<NegotiationCardProps> = ({
     >
       <div className="flex items-start space-x-4">
         {/* Product Image */}
-        {showProduct && negotiation.productImages?.[0] && (
+        {showProduct && (
           <div className="flex-shrink-0">
             <img
-              src={negotiation.productImages[0]}
+              src={negotiation.productImages?.[0]}
               alt={negotiation.productName}
               className="w-16 h-16 rounded-lg object-cover"
             />
+            {/* NEW: Variant indicator */}
+            {negotiation.variantId && (
+              <div className="mt-1">
+                <div className="flex items-center text-xs text-blue-600">
+                  <SwatchIcon className="w-3 h-3 mr-1" />
+                  <span>Tùy chọn</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -118,8 +128,22 @@ export const NegotiationCard: React.FC<NegotiationCardProps> = ({
               {showProduct && (
                 <h3 className="font-medium text-gray-900 line-clamp-1">
                   {negotiation.productName}
+                  {negotiation.variantName && (
+                    <span className="text-sm text-blue-600 block font-normal">
+                      Tùy chọn: {negotiation.variantName}
+                    </span>
+                  )}
                 </h3>
               )}
+
+              {negotiation.variantAttributes &&
+                Object.keys(negotiation.variantAttributes).length > 0 && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {Object.entries(negotiation.variantAttributes)
+                      .map(([key, value]) => `${key}: ${value}`)
+                      .join(', ')}
+                  </div>
+                )}
 
               {/* User Info */}
               {showUser &&

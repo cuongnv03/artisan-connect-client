@@ -15,6 +15,7 @@ import {
   EyeIcon,
   TrashIcon,
   ShoppingCartIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 
 interface ExistingNegotiationCardProps {
@@ -103,6 +104,11 @@ export const ExistingNegotiationCard: React.FC<
     }
   };
 
+  // NEW: Get display images based on variant or product
+  const displayImages = negotiation.variant?.images.length
+    ? negotiation.variant.images
+    : negotiation.product.images;
+
   return (
     <>
       <Card className="p-6">
@@ -118,8 +124,40 @@ export const ExistingNegotiationCard: React.FC<
 
         <p className="text-sm text-gray-600 mb-4">{statusConfig.description}</p>
 
-        {/* Price info */}
+        {/* Product info with variant */}
         <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="flex items-start space-x-3 mb-3">
+            <img
+              src={displayImages[0]}
+              alt={negotiation.product.name}
+              className="w-12 h-12 rounded-lg object-cover"
+            />
+            <div className="flex-1">
+              <h4 className="font-medium text-gray-900">
+                {negotiation.product.name}
+              </h4>
+
+              {/* NEW: Variant information */}
+              {negotiation.variant && (
+                <div className="mt-1">
+                  <div className="flex items-center gap-1 text-sm text-blue-700">
+                    <SwatchIcon className="w-3 h-3" />
+                    <span>
+                      Tùy chọn: {negotiation.variant.name || 'Biến thể'}
+                    </span>
+                  </div>
+                  {Object.keys(negotiation.variant.attributes).length > 0 && (
+                    <div className="text-xs text-gray-600 mt-1">
+                      {Object.entries(negotiation.variant.attributes)
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Giá gốc:</span>

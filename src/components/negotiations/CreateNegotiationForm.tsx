@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useForm } from '../../hooks/common/useForm';
 import { usePriceNegotiation } from '../../hooks/price-negotiation/usePriceNegotiation';
 import { CreateNegotiationRequest } from '../../types/price-negotiation';
-import { Product } from '../../types/product';
+import { Product, ProductVariant } from '../../types/product';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card } from '../ui/Card';
@@ -12,25 +12,53 @@ import {
   CurrencyDollarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 
 interface CreateNegotiationFormProps {
   product: Product;
+  selectedVariant?: ProductVariant | null; // NEW: Selected variant
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
   product,
+  selectedVariant,
   onSuccess,
   onCancel,
 }) => {
   const { createNegotiation, loading } = usePriceNegotiation();
   const [apiError, setApiError] = useState<string>('');
 
-  const currentPrice = product.discountPrice || product.price;
-  const maxNegotiablePrice = currentPrice * 0.95; // Maximum 5% discount
-  const minNegotiablePrice = currentPrice * 0.7; // Minimum 30% of original price
+  // Calculate prices based on variant selection
+  const {
+    currentPrice,
+    maxNegotiablePrice,
+    minNegotiablePrice,
+    displayImages,
+  } = useMemo(() => {
+    let price: number;
+    let images: string[] = product.images;
+
+    if (selectedVariant) {
+      price = selectedVariant.discountPrice || selectedVariant.price;
+      if (selectedVariant.images.length > 0) {
+        images = selectedVariant.images;
+      }
+    } else {
+      price = product.discountPrice || product.price;
+    }
+
+    return {
+      currentPrice: price,
+      maxNegotiablePrice: price * 0.95, // Maximum 5% discount
+      minNegotiablePrice: price * 0.7, // Minimum 30% of original price
+      displayImages: images,
+    };
+  }, [product, selectedVariant]);
+
+  const availableQuantity = selectedVariant?.quantity || product.quantity;
 
   const validate = (values: CreateNegotiationRequest) => {
     const errors: Record<string, string> = {};
@@ -47,8 +75,10 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
 
     if (!values.quantity || values.quantity <= 0) {
       errors.quantity = 'Số lượng phải lớn hơn 0';
-    } else if (values.quantity > product.quantity) {
-      errors.quantity = `Chỉ còn ${product.quantity} sản phẩm`;
+    } else if (values.quantity > availableQuantity) {
+      errors.quantity = `Chỉ còn ${availableQuantity} sản phẩm${
+        selectedVariant ? ` cho tùy chọn này` : ''
+      }`;
     }
 
     if (values.customerReason && values.customerReason.length > 500) {
@@ -71,6 +101,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
   } = useForm<CreateNegotiationRequest>({
     initialValues: {
       productId: product.id,
+      variantId: selectedVariant?.id, // NEW: Include variant ID
       proposedPrice: Math.round(currentPrice * 0.85),
       quantity: 1,
       customerReason: '',
@@ -84,15 +115,14 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
 
         if (result && result.id) {
           resetForm();
-          onSuccess?.(); // Này sẽ trigger refetch ở parent
+          onSuccess?.();
         }
       } catch (error: any) {
         if (error.message?.includes('already have an active')) {
-          // Show existing message but still call success to refresh
           setApiError('Đã tìm thấy thương lượng hiện tại. Đang tải lại...');
           setTimeout(() => {
             resetForm();
-            onSuccess?.(); // Force refresh
+            onSuccess?.();
           }, 1500);
         } else {
           setApiError(error.message || 'Có lỗi xảy ra khi tạo thương lượng');
@@ -127,12 +157,32 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <div className="flex items-start space-x-4">
           <img
-            src={product.images[0]}
+            src={displayImages[0]}
             alt={product.name}
             className="w-16 h-16 rounded-lg object-cover"
           />
           <div className="flex-1">
             <h4 className="font-medium text-gray-900 mb-1">{product.name}</h4>
+
+            {/* NEW: Variant information */}
+            {selectedVariant && (
+              <div className="mb-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <SwatchIcon className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">
+                    Tùy chọn: {selectedVariant.name || 'Biến thể đã chọn'}
+                  </span>
+                </div>
+                {Object.keys(selectedVariant.attributes).length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    {Object.entries(selectedVariant.attributes)
+                      .map(([key, value]) => `${key}: ${value}`)
+                      .join(', ')}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Giá hiện tại:</span>
@@ -142,7 +192,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
               </div>
               <div>
                 <span className="text-gray-600">Còn lại:</span>
-                <p className="font-medium">{product.quantity}</p>
+                <p className="font-medium">{availableQuantity}</p>
               </div>
             </div>
           </div>
@@ -209,7 +259,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
             error={touched.quantity ? errors.quantity : undefined}
             required
             min={1}
-            max={product.quantity}
+            max={availableQuantity}
           />
         </div>
 
@@ -263,6 +313,13 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
             Tóm tắt thương lượng
           </h4>
           <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-blue-700">Sản phẩm:</span>
+              <span className="text-blue-900 font-medium">
+                {product.name}
+                {selectedVariant && ` (${selectedVariant.name || 'Tùy chọn'})`}
+              </span>
+            </div>
             <div className="flex justify-between">
               <span className="text-blue-700">Giá gốc:</span>
               <span className="text-blue-900 font-medium">

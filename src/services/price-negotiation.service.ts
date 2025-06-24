@@ -7,6 +7,7 @@ import {
   RespondToNegotiationRequest,
   NegotiationStats,
   NegotiationStatus,
+  CheckExistingNegotiationQuery,
 } from '../types/price-negotiation';
 import { PaginatedResponse } from '../types/common';
 
@@ -15,6 +16,7 @@ export interface GetNegotiationsQuery {
   limit?: number;
   status?: NegotiationStatus | NegotiationStatus[];
   productId?: string;
+  variantId?: string; // NEW
   dateFrom?: string;
   dateTo?: string;
   sortBy?: 'createdAt' | 'updatedAt' | 'status' | 'proposedPrice' | 'expiresAt';
@@ -33,7 +35,6 @@ export const priceNegotiationService = {
   async createNegotiation(
     data: CreateNegotiationRequest,
   ): Promise<PriceNegotiationWithDetails> {
-    // Đơn giản hóa - chỉ return negotiation thôi
     return await apiClient.post<PriceNegotiationWithDetails>(
       API_ENDPOINTS.PRICE_NEGOTIATION.BASE,
       data,
@@ -75,8 +76,10 @@ export const priceNegotiationService = {
     );
   },
 
-  // Negotiation management
-  async checkExistingNegotiation(productId: string): Promise<{
+  // UPDATED: Check existing negotiation with variant support
+  async checkExistingNegotiation(
+    query: CheckExistingNegotiationQuery,
+  ): Promise<{
     hasActive: boolean;
     negotiation?: PriceNegotiationWithDetails;
   }> {
@@ -86,7 +89,8 @@ export const priceNegotiationService = {
       >(API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS, {
         page: 1,
         limit: 1,
-        productId,
+        productId: query.productId,
+        variantId: query.variantId,
         status: [NegotiationStatus.PENDING, NegotiationStatus.COUNTER_OFFERED],
       });
 
@@ -106,7 +110,7 @@ export const priceNegotiationService = {
     }
   },
 
-  // Thêm method cancel negotiation
+  // Cancel negotiation
   async cancelNegotiation(
     id: string,
     reason?: string,

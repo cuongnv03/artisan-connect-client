@@ -43,7 +43,7 @@ import { WishlistItemType } from '../../types/wishlist';
 import { ProductVariant } from '../../types/product';
 import { reviewService } from '../../services/review.service';
 import { useReview } from '../../hooks/reviews/useReview';
-import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { ReviewForm } from '../../components/reviews/ReviewForm';
 
 export const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -60,6 +60,9 @@ export const ProductDetailPage: React.FC = () => {
     productId!,
     isManagementView,
   );
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null,
+  );
   const {
     reviews,
     statistics,
@@ -72,16 +75,19 @@ export const ProductDetailPage: React.FC = () => {
     refetch: refetchNegotiation,
     cancelNegotiation,
     canceling,
-  } = useExistingNegotiation(productId!, authState.isAuthenticated && !isOwner);
+  } = useExistingNegotiation(
+    {
+      productId: productId!,
+      variantId: selectedVariant?.id, // NEW: Pass selected variant ID
+    },
+    authState.isAuthenticated && !isOwner,
+  );
 
   const { addToCartWithLoading, loading: cartLoading } = useCartOperations();
   const { toggleWishlistItem, checkWishlistStatus } = useWishlist();
   const { createReview, loading: createReviewLoading } = useReview();
 
   // Component state
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    null,
-  );
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showNegotiationForm, setShowNegotiationForm] = useState(false);
@@ -663,7 +669,11 @@ export const ProductDetailPage: React.FC = () => {
               <div>
                 <h4 className="font-medium">Thương lượng giá với nghệ nhân</h4>
                 <p className="text-sm mt-1">
-                  Bạn có thể đề xuất mức giá phù hợp cho sản phẩm này
+                  {selectedVariant
+                    ? `Thương lượng cho tùy chọn: ${
+                        selectedVariant.name || 'Biến thể đã chọn'
+                      }`
+                    : 'Bạn có thể đề xuất mức giá phù hợp cho sản phẩm này'}
                 </p>
               </div>
             </div>
@@ -679,6 +689,7 @@ export const ProductDetailPage: React.FC = () => {
           ) : (
             <CreateNegotiationForm
               product={product}
+              selectedVariant={selectedVariant} // NEW: Pass selected variant
               onSuccess={() => {
                 refetchNegotiation();
                 setShowNegotiationForm(false);

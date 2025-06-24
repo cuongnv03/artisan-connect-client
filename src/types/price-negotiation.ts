@@ -20,6 +20,7 @@ export enum NegotiationAction {
 
 export interface PriceNegotiation extends BaseEntity {
   productId: string;
+  variantId?: string | null; // NEW: Support for variants
   customerId: string;
   artisanId: string;
   originalPrice: number;
@@ -44,6 +45,7 @@ export interface PriceNegotiationWithDetails extends PriceNegotiation {
     quantity: number;
     allowNegotiation: boolean;
     status: string;
+    hasVariants: boolean; // NEW
     seller: {
       id: string;
       firstName: string;
@@ -56,12 +58,24 @@ export interface PriceNegotiationWithDetails extends PriceNegotiation {
       };
     };
   };
+  variant?: {
+    // NEW: Variant details if negotiating for a variant
+    id: string;
+    name?: string;
+    price: number;
+    discountPrice?: number;
+    quantity: number;
+    images: string[];
+    attributes: Record<string, any>;
+    isActive: boolean;
+  } | null;
   customer: {
     id: string;
     firstName: string;
     lastName: string;
     username: string;
     avatarUrl?: string;
+    role: string; // NEW: To identify if customer is also an artisan
   };
   artisan: {
     id: string;
@@ -80,6 +94,9 @@ export interface NegotiationSummary {
   id: string;
   productName: string;
   productImages: string[];
+  variantId?: string | null; // NEW
+  variantName?: string | null; // NEW
+  variantAttributes?: Record<string, any> | null; // NEW
   originalPrice: number;
   proposedPrice: number;
   finalPrice?: number;
@@ -91,6 +108,7 @@ export interface NegotiationSummary {
     id: string;
     name: string;
     username: string;
+    role: string; // NEW
   };
   artisan?: {
     id: string;
@@ -102,6 +120,7 @@ export interface NegotiationSummary {
 // DTOs
 export interface CreateNegotiationRequest {
   productId: string;
+  variantId?: string; // NEW: Optional variant ID
   proposedPrice: number;
   quantity?: number;
   customerReason?: string;
@@ -112,6 +131,11 @@ export interface RespondToNegotiationRequest {
   action: 'ACCEPT' | 'REJECT' | 'COUNTER';
   counterPrice?: number;
   artisanResponse?: string;
+}
+
+export interface CheckExistingNegotiationQuery {
+  productId: string;
+  variantId?: string; // NEW
 }
 
 export interface NegotiationStats {

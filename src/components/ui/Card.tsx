@@ -5,6 +5,7 @@ interface CardProps {
   className?: string;
   padding?: boolean;
   hover?: boolean;
+  onClick?: () => void;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -12,15 +13,27 @@ export const Card: React.FC<CardProps> = ({
   className = '',
   padding = true,
   hover = false,
+  onClick,
 }) => {
   const classes = [
     'bg-white rounded-lg shadow-sm border border-gray-200',
     padding && 'p-6',
     hover && 'hover:shadow-md transition-shadow',
+    onClick ? 'cursor-pointer' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  return <div className={classes}>{children}</div>;
+  const Component = onClick ? 'button' : 'div';
+
+  return (
+    <Component
+      className={classes}
+      onClick={onClick}
+      type={onClick ? 'button' : undefined}
+    >
+      {children}
+    </Component>
+  );
 };

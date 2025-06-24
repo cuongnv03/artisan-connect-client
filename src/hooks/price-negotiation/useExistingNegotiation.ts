@@ -1,9 +1,9 @@
-// src/hooks/price-negotiation/useExistingNegotiation.ts
 import { useState, useEffect } from 'react';
 import { priceNegotiationService } from '../../services/price-negotiation.service';
 import {
   PriceNegotiationWithDetails,
   NegotiationStatus,
+  CheckExistingNegotiationQuery,
 } from '../../types/price-negotiation';
 
 export interface UseExistingNegotiationReturn {
@@ -17,7 +17,7 @@ export interface UseExistingNegotiationReturn {
 }
 
 export const useExistingNegotiation = (
-  productId: string,
+  query: CheckExistingNegotiationQuery,
   enabled: boolean = true,
 ): UseExistingNegotiationReturn => {
   const [existingNegotiation, setExistingNegotiation] =
@@ -27,14 +27,14 @@ export const useExistingNegotiation = (
   const [error, setError] = useState<string | null>(null);
 
   const fetchExistingNegotiation = async () => {
-    if (!enabled || !productId) return;
+    if (!enabled || !query.productId) return;
 
     setLoading(true);
     setError(null);
 
     try {
       const result = await priceNegotiationService.checkExistingNegotiation(
-        productId,
+        query,
       );
 
       if (result.hasActive && result.negotiation) {
@@ -70,7 +70,7 @@ export const useExistingNegotiation = (
 
   useEffect(() => {
     fetchExistingNegotiation();
-  }, [productId, enabled]);
+  }, [query.productId, query.variantId, enabled]);
 
   const hasActiveNegotiation =
     existingNegotiation &&
