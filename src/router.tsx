@@ -37,6 +37,7 @@ import { CategoryProductsPage } from './pages/products/CategoryProductsPage';
 import { CreateProductPage } from './pages/products/CreateProductPage';
 import { EditProductPage } from './pages/products/EditProductPage';
 import { ArtisanProductsPage } from './pages/products/ArtisanProductsPage';
+import { ProductStatsPage } from './pages/products/ProductStatsPage';
 
 // Profile pages
 import { ProfileManagementPage } from './pages/profile/ProfileManagementPage';
@@ -287,14 +288,14 @@ export const router = createBrowserRouter(
                 </ProtectedRoute>
               ),
             },
-            // {
-            //   path: 'stats',
-            //   element: (
-            //     <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-            //       <ProductStatsPage />
-            //     </ProtectedRoute>
-            //   ),
-            // },
+            {
+              path: 'stats',
+              element: (
+                <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
+                  <ProductStatsPage />
+                </ProtectedRoute>
+              ),
+            },
           ],
         },
 
