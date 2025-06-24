@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useForm } from '../../hooks/common/useForm';
 import { usePriceNegotiation } from '../../hooks/price-negotiation/usePriceNegotiation';
-import { CreateNegotiationRequest } from '../../types/price-negotiation';
+import {
+  CreateNegotiationRequest,
+  PriceNegotiationWithDetails,
+} from '../../types/price-negotiation';
 import { Product, ProductVariant } from '../../types/product';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -17,8 +20,8 @@ import {
 
 interface CreateNegotiationFormProps {
   product: Product;
-  selectedVariant?: ProductVariant | null; // NEW: Selected variant
-  onSuccess?: () => void;
+  selectedVariant?: ProductVariant | null;
+  onSuccess?: (negotiation?: PriceNegotiationWithDetails) => void; // UPDATED: Pass negotiation data
   onCancel?: () => void;
 }
 
@@ -115,14 +118,17 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
 
         if (result && result.id) {
           resetForm();
-          onSuccess?.();
+          onSuccess?.(result); // UPDATED: Pass the negotiation data
         }
       } catch (error: any) {
-        if (error.message?.includes('already have an active')) {
+        if (
+          error.message?.includes('already have an active') ||
+          error.message?.includes('Đã tìm thấy')
+        ) {
           setApiError('Đã tìm thấy thương lượng hiện tại. Đang tải lại...');
           setTimeout(() => {
             resetForm();
-            onSuccess?.();
+            onSuccess?.(); // This will trigger refetch
           }, 1500);
         } else {
           setApiError(error.message || 'Có lỗi xảy ra khi tạo thương lượng');

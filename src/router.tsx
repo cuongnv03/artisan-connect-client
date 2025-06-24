@@ -447,9 +447,7 @@ export const router = createBrowserRouter(
             {
               path: 'requests',
               element: (
-                <ProtectedRoute
-                  allowedRoles={[UserRole.CUSTOMER, UserRole.ARTISAN]} // NEW: Allow both roles
-                >
+                <ProtectedRoute>
                   <CustomerNegotiationsPage />
                 </ProtectedRoute>
               ),

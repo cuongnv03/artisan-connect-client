@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { usePriceNegotiations } from '../../hooks/price-negotiation/usePriceNegotiations';
+import { usePriceNegotiationsByType } from '../../hooks/price-negotiation/usePriceNegotiationsByType';
 import { usePriceNegotiationStats } from '../../hooks/price-negotiation/usePriceNegotiationStats';
 import { NegotiationList } from '../../components/negotiations/NegotiationList';
 import {
@@ -38,7 +38,8 @@ export const CustomerNegotiationsPage: React.FC = () => {
     refetch,
     loadMore,
     hasMore,
-  } = usePriceNegotiations({
+  } = usePriceNegotiationsByType({
+    type: 'sent', // Always get sent negotiations
     page: 1,
     limit: 10,
     status:
@@ -52,6 +53,16 @@ export const CustomerNegotiationsPage: React.FC = () => {
     userId: authState.user?.id,
     userRole: 'CUSTOMER',
   });
+
+  const pageTitle =
+    authState.user?.role === 'ARTISAN'
+      ? 'Thương lượng đã gửi'
+      : 'Thương lượng giá';
+
+  const pageDescription =
+    authState.user?.role === 'ARTISAN'
+      ? 'Quản lý các yêu cầu thương lượng bạn đã gửi cho nghệ nhân khác'
+      : 'Quản lý các yêu cầu thương lượng của bạn';
 
   const statusOptions = [
     { label: 'Tất cả', value: 'ALL' },
@@ -123,10 +134,8 @@ export const CustomerNegotiationsPage: React.FC = () => {
         <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-2xl p-8 mb-8 text-white">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Thương lượng giá</h1>
-              <p className="text-blue-100 text-lg">
-                Quản lý các yêu cầu thương lượng của bạn
-              </p>
+              <h1 className="text-3xl font-bold mb-2">{pageTitle}</h1>
+              <p className="text-blue-100 text-lg">{pageDescription}</p>
             </div>
             <div className="hidden md:block">
               <ChatBubbleLeftRightIcon className="w-16 h-16 text-white opacity-20" />

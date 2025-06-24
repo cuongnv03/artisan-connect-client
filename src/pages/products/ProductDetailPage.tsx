@@ -44,6 +44,7 @@ import { ProductVariant } from '../../types/product';
 import { reviewService } from '../../services/review.service';
 import { useReview } from '../../hooks/reviews/useReview';
 import { ReviewForm } from '../../components/reviews/ReviewForm';
+import { PriceNegotiationWithDetails } from '../../types/price-negotiation';
 
 export const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -290,6 +291,19 @@ export const ProductDetailPage: React.FC = () => {
       refetch();
     } catch (err: any) {
       showError(err.message || 'Không thể thay đổi trạng thái');
+    }
+  };
+
+  const handleNegotiationSuccess = (
+    negotiation?: PriceNegotiationWithDetails,
+  ) => {
+    setShowNegotiationForm(false);
+    // Refresh existing negotiation check
+    refetchNegotiation();
+
+    if (negotiation) {
+      // Optionally navigate to negotiation detail
+      navigate(`/negotiations/${negotiation.id}`);
     }
   };
 
@@ -690,10 +704,8 @@ export const ProductDetailPage: React.FC = () => {
             <CreateNegotiationForm
               product={product}
               selectedVariant={selectedVariant} // NEW: Pass selected variant
-              onSuccess={() => {
-                refetchNegotiation();
-                setShowNegotiationForm(false);
-              }}
+              onSuccess={handleNegotiationSuccess}
+              onCancel={() => setShowNegotiationForm(false)}
             />
           )}
         </div>

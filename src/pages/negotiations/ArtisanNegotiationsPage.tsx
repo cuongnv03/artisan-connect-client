@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { usePriceNegotiations } from '../../hooks/price-negotiation/usePriceNegotiations';
+import { usePriceNegotiationsByType } from '../../hooks/price-negotiation/usePriceNegotiationsByType';
 import { usePriceNegotiationStats } from '../../hooks/price-negotiation/usePriceNegotiationStats';
 import { NegotiationList } from '../../components/negotiations/NegotiationList';
 import {
@@ -39,7 +39,8 @@ export const ArtisanNegotiationsPage: React.FC = () => {
     refetch,
     loadMore,
     hasMore,
-  } = usePriceNegotiations({
+  } = usePriceNegotiationsByType({
+    type: 'received', // Get received negotiations
     page: 1,
     limit: 10,
     status:

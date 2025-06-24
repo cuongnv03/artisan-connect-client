@@ -58,12 +58,23 @@ export const priceNegotiationService = {
     );
   },
 
-  async getMyNegotiations(
+  // NEW: Get negotiations sent by current user (where they are customer)
+  async getMySentNegotiations(
     query: GetNegotiationsQuery = {},
   ): Promise<PaginatedResponse<NegotiationSummary>> {
     return await apiClient.get<PaginatedResponse<NegotiationSummary>>(
       API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS,
-      query,
+      { ...query, type: 'sent' },
+    );
+  },
+
+  // NEW: Get negotiations received by current user (where they are artisan)
+  async getMyReceivedNegotiations(
+    query: GetNegotiationsQuery = {},
+  ): Promise<PaginatedResponse<NegotiationSummary>> {
+    return await apiClient.get<PaginatedResponse<NegotiationSummary>>(
+      API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS,
+      { ...query, type: 'received' },
     );
   },
 

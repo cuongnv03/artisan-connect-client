@@ -42,12 +42,36 @@ export const usePriceNegotiation = (): UsePriceNegotiationReturn => {
 
       const result = await priceNegotiationService.createNegotiation(data);
 
-      if (result && result.id) {
-        setNegotiation(result);
-        success('Yêu cầu thương lượng thành công');
-        return result;
+      // FIXED: Handle server response structure
+      let negotiationData: PriceNegotiationWithDetails;
+
+      if (result && typeof result === 'object') {
+        // Check if result has the nested structure from server
+        if ('negotiation' in result && 'isNew' in result) {
+          negotiationData = (result as any).negotiation;
+          const isNew = (result as any).isNew;
+
+          if (isNew) {
+            success('Tạo yêu cầu thương lượng thành công');
+          } else {
+            success('Đã tìm thấy thương lượng hiện tại');
+          }
+        } else if ('id' in result) {
+          // Direct negotiation object
+          negotiationData = result as PriceNegotiationWithDetails;
+          success('Tạo yêu cầu thương lượng thành công');
+        } else {
+          throw new Error('Invalid response structure from server');
+        }
       } else {
         throw new Error('Invalid response from server');
+      }
+
+      if (negotiationData && negotiationData.id) {
+        setNegotiation(negotiationData);
+        return negotiationData;
+      } else {
+        throw new Error('Invalid negotiation data received');
       }
     } catch (err: any) {
       let errorMessage = 'Không thể tạo yêu cầu thương lượng';
@@ -60,6 +84,8 @@ export const usePriceNegotiation = (): UsePriceNegotiationReturn => {
         } else {
           errorMessage = serverMessage || errorMessage;
         }
+      } else if (err.message && !err.message.includes('Invalid')) {
+        errorMessage = err.message;
       }
 
       setError(errorMessage);
