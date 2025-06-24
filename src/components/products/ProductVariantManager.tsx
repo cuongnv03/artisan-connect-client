@@ -5,6 +5,7 @@ import {
   PhotoIcon,
   DocumentDuplicateIcon,
   SwatchIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -14,49 +15,100 @@ import { Toggle } from '../ui/Toggle';
 import { FileUpload } from '../common/FileUpload';
 import { useToastContext } from '../../contexts/ToastContext';
 import { uploadService } from '../../services/upload.service';
-import { ProductVariant } from '../../types/product';
+import { productService } from '../../services/product.service';
+import { CategoryAttributeTemplate } from '../../types/product';
 
 interface ProductVariantManagerProps {
   variants: any[];
   onVariantsChange: (variants: any[]) => void;
   basePrice: number;
+  baseDiscountPrice?: number; // NEW: Add base discount price
+  baseWeight?: number; // NEW: Add base weight
   categoryIds: string[];
+  currentAttributes?: Record<string, any>;
 }
 
 interface VariantFormData {
   id?: string;
   name: string;
   price: number;
-  discountPrice: number;
+  discountPrice?: number; // Make optional
   quantity: number;
   attributes: Record<string, any>;
   images: string[];
   isActive: boolean;
   isDefault: boolean;
-  weight?: number;
+  weight?: number; // Make optional
 }
 
 export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
   variants,
   onVariantsChange,
   basePrice,
+  baseDiscountPrice, // NEW
+  baseWeight, // NEW
   categoryIds,
+  currentAttributes = {},
 }) => {
   const { success, error } = useToastContext();
   const [expandedVariant, setExpandedVariant] = useState<number | null>(null);
   const [uploading, setUploading] = useState<Record<number, boolean>>({});
+  const [attributeTemplates, setAttributeTemplates] = useState<
+    CategoryAttributeTemplate[]
+  >([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+  // NEW: Load attribute templates from categories
+  useEffect(() => {
+    const loadAttributeTemplates = async () => {
+      if (categoryIds.length === 0) {
+        setAttributeTemplates([]);
+        return;
+      }
+
+      setLoadingTemplates(true);
+      try {
+        const templatePromises = categoryIds.map((categoryId) =>
+          productService.getCategoryAttributeTemplates(categoryId),
+        );
+        const allTemplates = await Promise.all(templatePromises);
+
+        const templateMap = new Map<string, CategoryAttributeTemplate>();
+        allTemplates.flat().forEach((template) => {
+          if (template.isVariant && !templateMap.has(template.key)) {
+            templateMap.set(template.key, template);
+          }
+        });
+
+        setAttributeTemplates(Array.from(templateMap.values()));
+      } catch (err: any) {
+        console.error('Error loading attribute templates:', err);
+        setAttributeTemplates([]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    loadAttributeTemplates();
+  }, [categoryIds]);
+
+  // Calculate total quantity
+  const totalQuantity = variants.reduce(
+    (sum, variant) => sum + (variant.quantity || 0),
+    0,
+  );
 
   const addVariant = () => {
     const newVariant: VariantFormData = {
       name: `Biến thể ${variants.length + 1}`,
       price: basePrice,
-      discountPrice: 0,
+      discountPrice: baseDiscountPrice || undefined, // NEW: Copy from base product
       quantity: 0,
-      attributes: {},
+      attributes: variants.length === 0 ? { ...currentAttributes } : {},
       images: [],
       isActive: true,
       isDefault: variants.length === 0,
-      weight: 0,
+      weight: baseWeight || undefined, // NEW: Copy from base product
     };
 
     onVariantsChange([...variants, newVariant]);
@@ -104,6 +156,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
     const variantToDuplicate = { ...variants[index] };
     variantToDuplicate.name = `${variantToDuplicate.name} (Copy)`;
     variantToDuplicate.isDefault = false;
+    variantToDuplicate.quantity = 0;
     delete variantToDuplicate.id;
 
     onVariantsChange([...variants, variantToDuplicate]);
@@ -142,6 +195,166 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
     updateVariant(variantIndex, 'images', updatedImages);
   };
 
+  const updateVariantAttribute = (
+    variantIndex: number,
+    attributeKey: string,
+    value: any,
+  ) => {
+    const variant = variants[variantIndex];
+    const newAttributes = { ...variant.attributes, [attributeKey]: value };
+    updateVariant(variantIndex, 'attributes', newAttributes);
+  };
+
+  const renderAttributeInput = (
+    template: CategoryAttributeTemplate,
+    variantIndex: number,
+  ) => {
+    const value = variants[variantIndex]?.attributes?.[template.key] || '';
+
+    switch (template.type) {
+      case 'TEXT':
+        return (
+          <Input
+            label={template.name}
+            value={value}
+            onChange={(e) =>
+              updateVariantAttribute(variantIndex, template.key, e.target.value)
+            }
+            placeholder={
+              template.description || `Nhập ${template.name.toLowerCase()}`
+            }
+            required={template.isRequired}
+          />
+        );
+
+      case 'NUMBER':
+        return (
+          <Input
+            label={`${template.name}${
+              template.unit ? ` (${template.unit})` : ''
+            }`}
+            type="number"
+            value={value}
+            onChange={(e) =>
+              updateVariantAttribute(
+                variantIndex,
+                template.key,
+                Number(e.target.value),
+              )
+            }
+            placeholder={template.description}
+            required={template.isRequired}
+          />
+        );
+
+      case 'SELECT':
+        return (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {template.name}
+              {template.isRequired && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
+            </label>
+            <select
+              value={value}
+              onChange={(e) =>
+                updateVariantAttribute(
+                  variantIndex,
+                  template.key,
+                  e.target.value,
+                )
+              }
+              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              required={template.isRequired}
+            >
+              <option value="">Chọn {template.name.toLowerCase()}</option>
+              {template.options?.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+
+      case 'MULTI_SELECT':
+        const selectedValues = Array.isArray(value) ? value : [];
+        return (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {template.name}
+              {template.isRequired && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
+            </label>
+            <div className="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-2">
+              {template.options?.map((option) => (
+                <label key={option} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedValues.includes(option)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        updateVariantAttribute(variantIndex, template.key, [
+                          ...selectedValues,
+                          option,
+                        ]);
+                      } else {
+                        updateVariantAttribute(
+                          variantIndex,
+                          template.key,
+                          selectedValues.filter((v: string) => v !== option),
+                        );
+                      }
+                    }}
+                    className="mr-2 rounded text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'BOOLEAN':
+        return (
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="text-sm font-medium text-gray-900">
+                {template.name}
+                {template.isRequired && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </label>
+              {template.description && (
+                <p className="text-xs text-gray-500">{template.description}</p>
+              )}
+            </div>
+            <Toggle
+              checked={value || false}
+              onChange={(checked) =>
+                updateVariantAttribute(variantIndex, template.key, checked)
+              }
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <Input
+            label={template.name}
+            value={value}
+            onChange={(e) =>
+              updateVariantAttribute(variantIndex, template.key, e.target.value)
+            }
+            placeholder={template.description}
+            required={template.isRequired}
+          />
+        );
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -150,6 +363,15 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
           <p className="text-sm text-gray-600">
             Tạo các biến thể khác nhau cho sản phẩm (màu sắc, kích thước, v.v.)
           </p>
+          {variants.length > 0 && (
+            <div className="mt-2 flex items-center gap-2">
+              <ExclamationTriangleIcon className="w-4 h-4 text-amber-500" />
+              <span className="text-xs text-amber-700">
+                Tổng số lượng biến thể: <strong>{totalQuantity}</strong> sản
+                phẩm
+              </span>
+            </div>
+          )}
         </div>
         <Button
           type="button"
@@ -160,6 +382,32 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
           Thêm biến thể
         </Button>
       </div>
+
+      {/* Loading Templates */}
+      {loadingTemplates && (
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-600">
+            Đang tải thuộc tính từ danh mục...
+          </p>
+        </div>
+      )}
+
+      {/* Available Attributes Info */}
+      {attributeTemplates.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h5 className="text-sm font-medium text-blue-900 mb-2">
+            Thuộc tính có thể sử dụng cho biến thể:
+          </h5>
+          <div className="flex flex-wrap gap-2">
+            {attributeTemplates.map((template) => (
+              <Badge key={template.key} variant="info" size="sm">
+                {template.name}
+                {template.isRequired && <span className="ml-1">*</span>}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Variants List */}
       {variants.length === 0 ? (
@@ -199,8 +447,23 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                       )}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Giá: {variant.price?.toLocaleString() || 0}₫ • Kho:{' '}
-                      {variant.quantity || 0}
+                      Giá: {variant.price?.toLocaleString() || 0}₫
+                      {variant.discountPrice && (
+                        <span className="text-green-600 ml-1">
+                          (Giảm: {variant.discountPrice.toLocaleString()}₫)
+                        </span>
+                      )}
+                      • Kho: {variant.quantity || 0}
+                      {variant.attributes &&
+                        Object.keys(variant.attributes).length > 0 && (
+                          <span className="ml-2">
+                            •{' '}
+                            {Object.entries(variant.attributes)
+                              .filter(([_, value]) => value)
+                              .map(([key, value]) => `${key}: ${value}`)
+                              .join(', ')}
+                          </span>
+                        )}
                     </p>
                   </button>
                 </div>
@@ -273,20 +536,23 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                         updateVariant(index, 'price', Number(e.target.value))
                       }
                       placeholder="0"
+                      required
                     />
 
                     <Input
                       label="Giá khuyến mãi (₫)"
                       type="number"
                       value={variant.discountPrice || ''}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const value = e.target.value;
                         updateVariant(
                           index,
                           'discountPrice',
-                          Number(e.target.value),
-                        )
-                      }
-                      placeholder="0"
+                          value ? Number(value) : undefined, // NEW: Allow undefined for optional field
+                        );
+                      }}
+                      placeholder="Tùy chọn"
+                      helperText="Để trống nếu không có giảm giá"
                     />
 
                     <Input
@@ -297,6 +563,8 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                         updateVariant(index, 'quantity', Number(e.target.value))
                       }
                       placeholder="0"
+                      helperText="Số lượng riêng của biến thể này"
+                      required
                     />
 
                     <Input
@@ -304,68 +572,34 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                       type="number"
                       step="0.1"
                       value={variant.weight || ''}
-                      onChange={(e) =>
-                        updateVariant(index, 'weight', Number(e.target.value))
-                      }
-                      placeholder="0.0"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        updateVariant(
+                          index,
+                          'weight',
+                          value ? Number(value) : undefined, // NEW: Allow undefined for optional field
+                        );
+                      }}
+                      placeholder="Tùy chọn"
+                      helperText="Để trống để dùng trọng lượng sản phẩm gốc"
                     />
                   </div>
 
-                  {/* Attributes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Thuộc tính biến thể
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        label="Màu sắc"
-                        value={variant.attributes?.color || ''}
-                        onChange={(e) =>
-                          updateVariant(index, 'attributes', {
-                            ...variant.attributes,
-                            color: e.target.value,
-                          })
-                        }
-                        placeholder="VD: Đỏ, Xanh"
-                      />
-
-                      <Input
-                        label="Kích thước"
-                        value={variant.attributes?.size || ''}
-                        onChange={(e) =>
-                          updateVariant(index, 'attributes', {
-                            ...variant.attributes,
-                            size: e.target.value,
-                          })
-                        }
-                        placeholder="VD: S, M, L"
-                      />
-
-                      <Input
-                        label="Chất liệu"
-                        value={variant.attributes?.material || ''}
-                        onChange={(e) =>
-                          updateVariant(index, 'attributes', {
-                            ...variant.attributes,
-                            material: e.target.value,
-                          })
-                        }
-                        placeholder="VD: Cotton, Silk"
-                      />
-
-                      <Input
-                        label="Phong cách"
-                        value={variant.attributes?.style || ''}
-                        onChange={(e) =>
-                          updateVariant(index, 'attributes', {
-                            ...variant.attributes,
-                            style: e.target.value,
-                          })
-                        }
-                        placeholder="VD: Cổ điển, Hiện đại"
-                      />
+                  {/* Variant Attributes from Templates */}
+                  {attributeTemplates.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Thuộc tính biến thể
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {attributeTemplates.map((template) => (
+                          <div key={template.key}>
+                            {renderAttributeInput(template, index)}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Images */}
                   <div>
@@ -427,6 +661,21 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
               )}
             </Card>
           ))}
+
+          {/* Total Quantity Summary */}
+          <Card className="p-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">
+                Tổng số lượng tất cả biến thể:
+              </span>
+              <span className="text-lg font-bold text-primary">
+                {totalQuantity} sản phẩm
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Đây sẽ là tổng số lượng tồn kho của sản phẩm
+            </p>
+          </Card>
         </div>
       )}
     </div>

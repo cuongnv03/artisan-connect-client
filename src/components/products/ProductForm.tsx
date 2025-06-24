@@ -105,6 +105,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const [specifications, setSpecifications] = useState<Record<string, any>>({});
   const [customFields, setCustomFields] = useState<Record<string, any>>({});
   const [saveAsPublished, setSaveAsPublished] = useState(false);
+  const [hasVariants, setHasVariants] = useState(false);
 
   const initialValues = {
     name: product?.name || '',
@@ -160,8 +161,19 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       errors.discountPrice = 'Giá khuyến mãi phải nhỏ hơn giá gốc';
     }
 
-    if (values.quantity !== undefined && values.quantity < 0) {
-      errors.quantity = 'Số lượng không được âm';
+    // NEW: Validate quantity vs variants
+    if (hasVariants) {
+      const totalVariantQuantity = variants.reduce(
+        (sum, variant) => sum + (variant.quantity || 0),
+        0,
+      );
+      if (totalVariantQuantity !== values.quantity) {
+        errors.quantity = `Tổng số lượng biến thể (${totalVariantQuantity}) phải bằng số lượng tồn kho (${values.quantity})`;
+      }
+    } else {
+      if (values.quantity !== undefined && values.quantity < 0) {
+        errors.quantity = 'Số lượng không được âm';
+      }
     }
 
     if (!values.categoryIds?.length) {
@@ -251,7 +263,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           categoryIds: data.categoryIds,
           seoTitle: data.seoTitle || undefined,
           seoDescription: data.seoDescription || undefined,
-          attributes: productAttributes,
+          // NEW: Only include product-level attributes if no variants
+          attributes: hasVariants ? null : productAttributes,
           specifications:
             Object.keys(specifications).length > 0 ? specifications : null,
           customFields:
@@ -289,8 +302,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       setProductAttributes(product.attributes || {});
       setSpecifications(product.specifications || {});
       setCustomFields(product.customFields || {});
+      setHasVariants(product.hasVariants || false); // NEW: Set hasVariants from product
     }
   }, [product, mode]);
+
+  // NEW: Update hasVariants when variants change
+  useEffect(() => {
+    setHasVariants(variants.length > 0);
+  }, [variants]);
+
+  // NEW: Validate total quantity when variants change
+  useEffect(() => {
+    if (hasVariants && variants.length > 0) {
+      const totalVariantQuantity = variants.reduce(
+        (sum, variant) => sum + (variant.quantity || 0),
+        0,
+      );
+      if (totalVariantQuantity !== values.quantity) {
+        // Auto-update total quantity to match variants
+        setFieldValue('quantity', totalVariantQuantity);
+      }
+    }
+  }, [variants, hasVariants]);
 
   const handleCategoryToggle = (categoryId: string) => {
     const currentCategories = values.categoryIds || [];
@@ -324,6 +357,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
+  // NEW: Handle creating first variant from current attributes
+  const handleCreateFirstVariant = () => {
+    if (Object.keys(productAttributes).length === 0) {
+      showError('Vui lòng nhập thuộc tính sản phẩm trước khi tạo biến thể');
+      return;
+    }
+
+    const firstVariant = {
+      name: 'Biến thể mặc định',
+      price: values.price,
+      discountPrice: values.discountPrice || 0,
+      quantity: values.quantity,
+      images: [],
+      weight: values.weight || 0,
+      attributes: { ...productAttributes }, // Copy current attributes
+      isActive: true,
+      isDefault: true,
+      sortOrder: 0,
+    };
+
+    setVariants([firstVariant]);
+    setHasVariants(true);
+  };
+
   const discountPercent =
     values.discountPrice && values.price
       ? Math.round(((values.price - values.discountPrice) / values.price) * 100)
@@ -331,8 +388,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
   return (
     <div className="max-w-6xl mx-auto">
-      {' '}
-      {/* Thay đổi max-width */}
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Header Section */}
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
@@ -536,21 +591,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               </div>
             </Card>
 
-            {/* Attributes */}
-            <Card className="p-6">
-              <div className="flex items-center mb-6">
-                <SwatchIcon className="w-5 h-5 text-primary mr-2" />
-                <h3 className="font-semibold text-gray-900">
-                  Thuộc tính sản phẩm
-                </h3>
-              </div>
+            {/* Attributes - Only show if no variants */}
+            {!hasVariants && (
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <SwatchIcon className="w-5 h-5 text-primary mr-2" />
+                    <h3 className="font-semibold text-gray-900">
+                      Thuộc tính sản phẩm
+                    </h3>
+                  </div>
+                  {/* NEW: Button to create variants */}
+                  {Object.keys(productAttributes).length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreateFirstVariant}
+                    >
+                      Tạo biến thể từ thuộc tính
+                    </Button>
+                  )}
+                </div>
 
-              <ProductAttributesForm
-                categoryIds={values.categoryIds || []}
-                attributes={productAttributes}
-                onAttributesChange={setProductAttributes}
-              />
-            </Card>
+                <ProductAttributesForm
+                  categoryIds={values.categoryIds || []}
+                  attributes={productAttributes}
+                  onAttributesChange={setProductAttributes}
+                />
+              </Card>
+            )}
 
             {/* Specifications */}
             <Card className="p-6">
@@ -602,8 +672,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </Card>
 
-            {/* Variants */}
-            {values.categoryIds && values.categoryIds.length > 0 && (
+            {/* Variants - Only show if enabled */}
+            {(hasVariants || values.categoryIds?.length > 0) && (
               <Card className="p-6">
                 <div className="flex items-center mb-6">
                   <Cog6ToothIcon className="w-5 h-5 text-primary mr-2" />
@@ -620,7 +690,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
                   <p className="text-xs text-purple-800">
                     Tạo các phiên bản khác nhau của sản phẩm (màu sắc, kích
-                    thước, chất liệu...) để khách hàng có nhiều lựa chọn
+                    thước, chất liệu...) để khách hàng có nhiều lựa chọn.
+                    {hasVariants && (
+                      <span className="block mt-1 font-medium">
+                        ⚠️ Khi có biến thể, thuộc tính sẽ được quản lý ở từng
+                        biến thể riêng biệt.
+                      </span>
+                    )}
                   </p>
                 </div>
 
@@ -628,7 +704,10 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   variants={variants}
                   onVariantsChange={setVariants}
                   basePrice={values.price || 0}
+                  baseDiscountPrice={values.discountPrice || undefined} // NEW: Pass base discount price
+                  baseWeight={values.weight || undefined} // NEW: Pass base weight
                   categoryIds={values.categoryIds || []}
+                  currentAttributes={productAttributes}
                 />
               </Card>
             )}
@@ -682,7 +761,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <Input
                     name="quantity"
-                    label="Số lượng tồn kho"
+                    label={hasVariants ? 'Tổng tồn kho' : 'Số lượng tồn kho'}
                     type="number"
                     value={values.quantity || ''}
                     onChange={handleChange}
@@ -690,7 +769,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                     error={touched.quantity ? errors.quantity : undefined}
                     required
                     placeholder="10"
-                    helperText="Số lượng hiện có"
+                    helperText={
+                      hasVariants
+                        ? 'Sẽ được phân bổ cho các biến thể'
+                        : 'Số lượng hiện có'
+                    }
+                    disabled={hasVariants} // NEW: Disable when has variants
                   />
 
                   <Input
@@ -713,6 +797,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                   placeholder="Để trống = không giới hạn"
                   helperText="Số lượng tối đa mỗi đơn"
                 />
+
+                {/* NEW: Show variant quantity breakdown */}
+                {hasVariants && variants.length > 0 && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h5 className="text-xs font-medium text-blue-900 mb-2">
+                      Phân bổ tồn kho theo biến thể:
+                    </h5>
+                    <div className="space-y-1">
+                      {variants.map((variant, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between text-xs text-blue-800"
+                        >
+                          <span>{variant.name || `Biến thể ${index + 1}`}</span>
+                          <span>{variant.quantity || 0} sp</span>
+                        </div>
+                      ))}
+                      <div className="border-t border-blue-300 pt-1 flex justify-between text-xs font-medium text-blue-900">
+                        <span>Tổng:</span>
+                        <span>
+                          {variants.reduce(
+                            (sum, v) => sum + (v.quantity || 0),
+                            0,
+                          )}{' '}
+                          sp
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
 
