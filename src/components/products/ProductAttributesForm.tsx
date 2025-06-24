@@ -4,8 +4,8 @@ import { Toggle } from '../ui/Toggle';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { useCategoryAttributes } from '../../hooks/products/useCategoryAttributes';
 import { CategoryAttributeTemplate } from '../../types/product';
+import { productService } from '../../services/product.service';
 
 interface ProductAttributesFormProps {
   categoryIds: string[];
@@ -22,8 +22,8 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
     [],
   );
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load attribute templates for all selected categories
   useEffect(() => {
     const loadTemplates = async () => {
       if (categoryIds.length === 0) {
@@ -32,94 +32,30 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
       }
 
       setLoading(true);
-      try {
-        // This is a simplified approach - in real app, you'd load from each category
-        // For now, we'll create some common templates
-        const commonTemplates: CategoryAttributeTemplate[] = [
-          {
-            id: '1',
-            categoryId: '',
-            name: 'Chất liệu',
-            key: 'material',
-            type: 'TEXT',
-            isRequired: false,
-            isVariant: true,
-            sortOrder: 0,
-            description: 'Chất liệu chính của sản phẩm',
-            isCustom: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '2',
-            categoryId: '',
-            name: 'Xuất xứ',
-            key: 'origin',
-            type: 'SELECT',
-            isRequired: false,
-            isVariant: false,
-            options: [
-              'Việt Nam',
-              'Thái Lan',
-              'Trung Quốc',
-              'Nhật Bản',
-              'Hàn Quốc',
-            ],
-            sortOrder: 1,
-            description: 'Nơi sản xuất sản phẩm',
-            isCustom: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '3',
-            categoryId: '',
-            name: 'Độ bền',
-            key: 'durability',
-            type: 'SELECT',
-            isRequired: false,
-            isVariant: false,
-            options: ['Thấp', 'Trung bình', 'Cao', 'Rất cao'],
-            sortOrder: 2,
-            description: 'Mức độ bền của sản phẩm',
-            isCustom: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '4',
-            categoryId: '',
-            name: 'Thời gian bảo hành',
-            key: 'warranty',
-            type: 'NUMBER',
-            isRequired: false,
-            isVariant: false,
-            unit: 'tháng',
-            sortOrder: 3,
-            description: 'Thời gian bảo hành (tháng)',
-            isCustom: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '5',
-            categoryId: '',
-            name: 'Thân thiện môi trường',
-            key: 'eco_friendly',
-            type: 'BOOLEAN',
-            isRequired: false,
-            isVariant: false,
-            sortOrder: 4,
-            description: 'Sản phẩm có thân thiện với môi trường không',
-            isCustom: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ];
+      setError(null);
 
-        setAllTemplates(commonTemplates);
-      } catch (error) {
-        console.error('Error loading templates:', error);
+      try {
+        // Load attribute templates from all selected categories
+        const templatePromises = categoryIds.map((categoryId) =>
+          productService.getCategoryAttributeTemplates(categoryId),
+        );
+
+        const allCategoryTemplates = await Promise.all(templatePromises);
+
+        // Flatten and deduplicate templates by key
+        const templateMap = new Map<string, CategoryAttributeTemplate>();
+
+        allCategoryTemplates.flat().forEach((template) => {
+          if (!templateMap.has(template.key)) {
+            templateMap.set(template.key, template);
+          }
+        });
+
+        setAllTemplates(Array.from(templateMap.values()));
+      } catch (err: any) {
+        console.error('Error loading attribute templates:', err);
+        setError(err.message || 'Không thể tải thuộc tính');
+        setAllTemplates([]);
       } finally {
         setLoading(false);
       }
@@ -225,7 +161,7 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
                         );
                       }
                     }}
-                    className="mr-2"
+                    className="mr-2 rounded text-primary focus:ring-primary"
                   />
                   <span className="text-sm">{option}</span>
                 </label>
@@ -302,7 +238,7 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
 
   if (categoryIds.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
         <p>Chọn danh mục để hiển thị thuộc tính sản phẩm</p>
       </div>
     );
@@ -317,9 +253,17 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
     );
   }
 
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-600 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
+        <p>Lỗi: {error}</p>
+      </div>
+    );
+  }
+
   if (allTemplates.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
         <p>Không có thuộc tính nào cho danh mục đã chọn</p>
       </div>
     );
@@ -328,12 +272,13 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
   // Separate required and optional attributes
   const requiredTemplates = allTemplates.filter((t) => t.isRequired);
   const optionalTemplates = allTemplates.filter((t) => !t.isRequired);
+  const variantTemplates = allTemplates.filter((t) => t.isVariant);
 
   return (
     <div className="space-y-6">
       {/* Required Attributes */}
       {requiredTemplates.length > 0 && (
-        <div>
+        <Card className="p-6 border-l-4 border-l-red-500">
           <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
             Thuộc tính bắt buộc
             <Badge variant="danger" size="sm" className="ml-2">
@@ -345,12 +290,12 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
               <div key={template.id}>{renderAttributeInput(template)}</div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Optional Attributes */}
       {optionalTemplates.length > 0 && (
-        <div>
+        <Card className="p-6">
           <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
             Thuộc tính tùy chọn
             <Badge variant="secondary" size="sm" className="ml-2">
@@ -362,17 +307,28 @@ export const ProductAttributesForm: React.FC<ProductAttributesFormProps> = ({
               <div key={template.id}>{renderAttributeInput(template)}</div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Variant Attributes Note */}
-      {allTemplates.some((t) => t.isVariant) && (
+      {/* Variant Attributes Info */}
+      {variantTemplates.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            💡 <strong>Ghi chú:</strong> Các thuộc tính được đánh dấu là "biến
-            thể" có thể được sử dụng để tạo các phiên bản khác nhau của sản phẩm
-            trong phần quản lý biến thể.
-          </p>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">💡</span>
+            </div>
+            <div className="ml-3">
+              <h4 className="text-sm font-medium text-blue-900 mb-1">
+                Thuộc tính biến thể
+              </h4>
+              <p className="text-sm text-blue-800">
+                Các thuộc tính sau có thể được sử dụng để tạo biến thể sản phẩm:{' '}
+                <strong>
+                  {variantTemplates.map((t) => t.name).join(', ')}
+                </strong>
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>
