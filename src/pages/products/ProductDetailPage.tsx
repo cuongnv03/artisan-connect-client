@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ShoppingCartIcon,
@@ -17,6 +17,7 @@ import {
   CubeIcon,
   SwatchIcon,
   SparklesIcon,
+  ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { ImageGallery } from '../../components/common/ImageGallery';
@@ -44,11 +45,13 @@ import { ProductVariant } from '../../types/product';
 export const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { state: authState } = useAuth();
   const { success, error: showError } = useToastContext();
 
   // Determine if this is management view based on URL
-  const isManagementView = window.location.pathname.startsWith('/products/');
+  const isManagementView = location.pathname.startsWith('/products/');
+  const isShopView = location.pathname.startsWith('/shop/');
 
   const { product, loading, error, isOwner, refetch } = useProduct(
     productId!,
@@ -143,6 +146,24 @@ export const ProductDetailPage: React.FC = () => {
       return selectedVariant.quantity;
     }
     return product.quantity;
+  };
+
+  const getBackPath = () => {
+    if (isManagementView) {
+      return '/products'; // Back to artisan product management
+    } else if (isShopView) {
+      return '/shop'; // Back to shop
+    }
+    return '/'; // Default fallback
+  };
+
+  const getBackLabel = () => {
+    if (isManagementView) {
+      return 'Quay lại quản lý sản phẩm';
+    } else if (isShopView) {
+      return 'Quay lại cửa hàng';
+    }
+    return 'Quay lại';
   };
 
   const handleAddToCart = async () => {
@@ -430,29 +451,22 @@ export const ProductDetailPage: React.FC = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Management View Header */}
-        {isManagementView && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between">
-              <nav className="flex" aria-label="Breadcrumb">
-                <ol className="flex items-center space-x-4">
-                  <li>
-                    <Link
-                      to="/products"
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      Sản phẩm của tôi
-                    </Link>
-                  </li>
-                  <li>
-                    <span className="text-gray-400">/</span>
-                  </li>
-                  <li>
-                    <span className="text-gray-900">{product.name}</span>
-                  </li>
-                </ol>
-              </nav>
+        {/* Universal Back Navigation */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <nav className="flex" aria-label="Breadcrumb">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(getBackPath())}
+                leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
+                className="mb-4"
+              >
+                {getBackLabel()}
+              </Button>
+            </nav>
 
+            {/* Management View Actions */}
+            {isManagementView && isOwner && (
               <div className="flex gap-3">
                 <Button
                   variant="outline"
@@ -492,9 +506,69 @@ export const ProductDetailPage: React.FC = () => {
                   Xóa
                 </Button>
               </div>
-            </div>
+            )}
           </div>
-        )}
+
+          {/* Breadcrumb for different views */}
+          <nav className="flex text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol className="flex items-center space-x-2">
+              {isManagementView ? (
+                <>
+                  <li>
+                    <Link
+                      to="/products"
+                      className="hover:text-gray-700 transition-colors"
+                    >
+                      Sản phẩm của tôi
+                    </Link>
+                  </li>
+                  <li>
+                    <span className="mx-2">/</span>
+                  </li>
+                  <li>
+                    <span className="text-gray-900">{product.name}</span>
+                  </li>
+                </>
+              ) : isShopView ? (
+                <>
+                  <li>
+                    <Link
+                      to="/shop"
+                      className="hover:text-gray-700 transition-colors"
+                    >
+                      Cửa hàng
+                    </Link>
+                  </li>
+                  <li>
+                    <span className="mx-2">/</span>
+                  </li>
+                  {product.categories && product.categories.length > 0 && (
+                    <>
+                      <li>
+                        <Link
+                          to={`/shop/categories/${product.categories[0].slug}`}
+                          className="hover:text-gray-700 transition-colors"
+                        >
+                          {product.categories[0].name}
+                        </Link>
+                      </li>
+                      <li>
+                        <span className="mx-2">/</span>
+                      </li>
+                    </>
+                  )}
+                  <li>
+                    <span className="text-gray-900">{product.name}</span>
+                  </li>
+                </>
+              ) : (
+                <li>
+                  <span className="text-gray-900">{product.name}</span>
+                </li>
+              )}
+            </ol>
+          </nav>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
           {/* Images */}
@@ -535,6 +609,13 @@ export const ProductDetailPage: React.FC = () => {
 
               {hasDiscount && (
                 <Badge variant="danger">-{discountPercent}%</Badge>
+              )}
+
+              {/* Management view indicator */}
+              {isManagementView && (
+                <Badge variant="info" size="sm">
+                  Chế độ quản lý
+                </Badge>
               )}
             </div>
 
