@@ -41,6 +41,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import { WishlistItemType } from '../../types/wishlist';
 import { ProductVariant } from '../../types/product';
+import { reviewService } from '../../services/review.service';
+import { useReview } from '../../hooks/reviews/useReview';
+import { ReviewForm } from '@/components/reviews/ReviewForm';
 
 export const ProductDetailPage: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -57,10 +60,12 @@ export const ProductDetailPage: React.FC = () => {
     productId!,
     isManagementView,
   );
-  const { reviews, statistics, loadProductReviews } = useProductReviews(
-    productId!,
-    { page: 1, limit: 5 },
-  );
+  const {
+    reviews,
+    statistics,
+    loadProductReviews,
+    refetch: refetchReviews,
+  } = useProductReviews(productId!, { page: 1, limit: 5 });
   const {
     existingNegotiation,
     hasActiveNegotiation,
@@ -71,6 +76,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const { addToCartWithLoading, loading: cartLoading } = useCartOperations();
   const { toggleWishlistItem, checkWishlistStatus } = useWishlist();
+  const { createReview, loading: createReviewLoading } = useReview();
 
   // Component state
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
@@ -80,6 +86,14 @@ export const ProductDetailPage: React.FC = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showNegotiationForm, setShowNegotiationForm] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // NEW: Review states
+  const [canWriteReview, setCanWriteReview] = useState(false);
+  const [userExistingReview, setUserExistingReview] = useState<any>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewEligibilityLoading, setReviewEligibilityLoading] =
+    useState(false);
+  const [currentReviewCount, setCurrentReviewCount] = useState(0);
 
   // Check wishlist status
   useEffect(() => {
@@ -98,6 +112,55 @@ export const ProductDetailPage: React.FC = () => {
       setSelectedVariant(defaultVariant);
     }
   }, [product]);
+
+  // NEW: Check if user can write review
+  useEffect(() => {
+    const checkReviewEligibility = async () => {
+      if (!authState.isAuthenticated || isOwner || !product) {
+        setCanWriteReview(false);
+        setUserExistingReview(null);
+        return;
+      }
+
+      setReviewEligibilityLoading(true);
+      try {
+        // Check if user already has a review
+        const existingReview = await reviewService.getReviewByUserAndProduct(
+          product.id,
+        );
+        setUserExistingReview(existingReview);
+
+        // Check if user can write review (has purchased but not reviewed)
+        if (!existingReview) {
+          const reviewableProducts =
+            await reviewService.getReviewableProducts();
+          const canReview = reviewableProducts.some(
+            (item) => item.productId === product.id,
+          );
+          setCanWriteReview(canReview);
+        } else {
+          setCanWriteReview(false);
+        }
+      } catch (error) {
+        console.error('Error checking review eligibility:', error);
+        setCanWriteReview(false);
+        setUserExistingReview(null);
+      } finally {
+        setReviewEligibilityLoading(false);
+      }
+    };
+
+    checkReviewEligibility();
+  }, [product, authState.isAuthenticated, isOwner]);
+
+  // Update review count khi statistics thay đổi
+  useEffect(() => {
+    if (statistics) {
+      setCurrentReviewCount(statistics.totalReviews);
+    } else if (product) {
+      setCurrentReviewCount(product.reviewCount);
+    }
+  }, [statistics, product]);
 
   if (loading) {
     return (
@@ -221,6 +284,36 @@ export const ProductDetailPage: React.FC = () => {
       refetch();
     } catch (err: any) {
       showError(err.message || 'Không thể thay đổi trạng thái');
+    }
+  };
+
+  // NEW: Handle review submission
+  const handleCreateReview = async (data: any) => {
+    if (!product) return;
+
+    try {
+      // Optimistic update - tăng count ngay lập tức
+      setCurrentReviewCount((prev) => prev + 1);
+
+      const result = await createReview({
+        ...data,
+        productId: product.id,
+      });
+
+      if (result) {
+        setShowReviewForm(false);
+        setCanWriteReview(false);
+        setUserExistingReview(result);
+
+        // Refresh data to get accurate count
+        await refetchReviews();
+
+        success('Đánh giá của bạn đã được gửi thành công!');
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setCurrentReviewCount((prev) => Math.max(0, prev - 1));
+      // Error sẽ được handle bởi createReview hook
     }
   };
 
@@ -416,14 +509,143 @@ export const ProductDetailPage: React.FC = () => {
     },
     {
       key: 'reviews',
-      label: `Đánh giá (${product.reviewCount})`,
+      label: `Đánh giá (${currentReviewCount})`,
       content: (
         <div className="space-y-6">
+          {/* Review Statistics */}
           {statistics && <ReviewStats statistics={statistics} />}
+
+          {/* NEW: Write Review Section */}
+          {authState.isAuthenticated && !isOwner && (
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Đánh giá của bạn
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {userExistingReview
+                      ? 'Bạn đã đánh giá sản phẩm này'
+                      : canWriteReview
+                      ? 'Chia sẻ trải nghiệm của bạn về sản phẩm này'
+                      : 'Bạn cần mua sản phẩm để có thể đánh giá'}
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  {userExistingReview ? (
+                    <div className="text-right">
+                      <div className="flex items-center justify-end mb-1">
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < userExistingReview.rating
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <Badge variant="success" size="sm">
+                        Đã đánh giá {userExistingReview.rating}/5 sao
+                      </Badge>
+                    </div>
+                  ) : canWriteReview ? (
+                    <Button
+                      onClick={() => setShowReviewForm(true)}
+                      leftIcon={<StarIcon className="w-4 h-4" />}
+                      loading={reviewEligibilityLoading}
+                    >
+                      Viết đánh giá
+                    </Button>
+                  ) : authState.isAuthenticated ? (
+                    <Badge variant="secondary" size="sm">
+                      Chưa mua sản phẩm
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Show user's existing review */}
+              {userExistingReview && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  {userExistingReview.title && (
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      {userExistingReview.title}
+                    </h4>
+                  )}
+                  {userExistingReview.comment && (
+                    <p className="text-gray-700 mb-3">
+                      {userExistingReview.comment}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>
+                      Đánh giá vào{' '}
+                      {new Date(
+                        userExistingReview.createdAt,
+                      ).toLocaleDateString('vi-VN')}
+                    </span>
+                    {userExistingReview.isVerifiedPurchase && (
+                      <Badge variant="success" size="sm">
+                        Đã mua hàng
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Guest message */}
+          {!authState.isAuthenticated && (
+            <Card className="p-6 bg-blue-50 border-blue-200">
+              <div className="text-center">
+                <StarIcon className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+                <h3 className="font-medium text-blue-900 mb-2">
+                  Đăng nhập để viết đánh giá
+                </h3>
+                <p className="text-blue-700 text-sm mb-4">
+                  Chỉ những khách hàng đã mua sản phẩm mới có thể viết đánh giá
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/auth/login')}
+                  size="sm"
+                >
+                  Đăng nhập ngay
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Reviews List */}
           <ReviewsList
             reviews={reviews}
             onFilterChange={(filters) => loadProductReviews(filters)}
           />
+
+          {/* UPDATED: Show empty state with current count */}
+          {currentReviewCount === 0 && (
+            <Card className="p-8 text-center">
+              <StarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Chưa có đánh giá nào
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Hãy là người đầu tiên đánh giá sản phẩm này
+              </p>
+              {canWriteReview && (
+                <Button
+                  onClick={() => setShowReviewForm(true)}
+                  leftIcon={<StarIcon className="w-4 h-4" />}
+                >
+                  Viết đánh giá đầu tiên
+                </Button>
+              )}
+            </Card>
+          )}
         </div>
       ),
     },
@@ -890,6 +1112,21 @@ export const ProductDetailPage: React.FC = () => {
 
         {/* Tabs */}
         <Tabs items={tabItems} />
+
+        {/* NEW: Review Form Modal */}
+        <Modal
+          isOpen={showReviewForm}
+          onClose={() => setShowReviewForm(false)}
+          title={`Đánh giá sản phẩm: ${product.name}`}
+          size="lg"
+        >
+          <ReviewForm
+            productId={product.id}
+            onSubmit={handleCreateReview}
+            onCancel={() => setShowReviewForm(false)}
+            loading={createReviewLoading}
+          />
+        </Modal>
 
         {/* Delete Confirmation Modal */}
         <Modal

@@ -18,6 +18,7 @@ interface ReviewsListProps {
   onLoadMore?: () => void;
   onFilterChange?: (filters: Partial<ReviewFilterOptions>) => void;
   className?: string;
+  showEmptyState?: boolean;
 }
 
 export const ReviewsList: React.FC<ReviewsListProps> = ({
@@ -31,6 +32,7 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
   onLoadMore,
   onFilterChange,
   className = '',
+  showEmptyState = true,
 }) => {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [filterRating, setFilterRating] = useState<string>('');
@@ -68,7 +70,8 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
     );
   }
 
-  if (reviews.length === 0) {
+  // Chỉ show empty state nếu được enable
+  if (reviews.length === 0 && showEmptyState) {
     return (
       <EmptyState
         title="Chưa có đánh giá nào"

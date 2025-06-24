@@ -52,13 +52,17 @@ export const useProductReviews = (
     }
   };
 
+  // UPDATED: Thêm refetch function
+  const refetch = async () => {
+    await loadProductReviews({ ...options, page: 1 });
+  };
+
   useEffect(() => {
     if (productId) {
       loadProductReviews();
     }
   }, [productId]);
 
-  const refetch = () => loadProductReviews({ ...options, page: 1 });
   const loadMore = () => {
     if (meta && meta.page < meta.totalPages) {
       loadProductReviews({ ...options, page: meta.page + 1 });
@@ -72,7 +76,7 @@ export const useProductReviews = (
     error,
     meta,
     loadProductReviews,
-    refetch,
+    refetch, // UPDATED: Export refetch function
     loadMore,
     hasMore: meta ? meta.page < meta.totalPages : false,
   };

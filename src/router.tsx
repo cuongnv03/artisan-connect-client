@@ -59,8 +59,6 @@ import { CustomerNegotiationsPage } from './pages/negotiations/CustomerNegotiati
 import { ArtisanNegotiationsPage } from './pages/negotiations/ArtisanNegotiationsPage';
 // import { NegotiationDetailPage } from './pages/negotiations/NegotiationDetailPage';
 
-import { MyReviewsPage } from './pages/reviews/MyReviewsPage';
-import { ReviewableProductsPage } from './pages/reviews/ReviewableProductsPage';
 import { WishlistPage } from './pages/wishlist/WishlistPage';
 
 // Messages
@@ -477,27 +475,6 @@ export const router = createBrowserRouter(
           ],
         },
 
-        {
-          path: '/reviews',
-          children: [
-            {
-              path: 'my-reviews',
-              element: (
-                <ProtectedRoute>
-                  <MyReviewsPage />
-                </ProtectedRoute>
-              ),
-            },
-            {
-              path: 'reviewable-products',
-              element: (
-                <ProtectedRoute>
-                  <ReviewableProductsPage />
-                </ProtectedRoute>
-              ),
-            },
-          ],
-        },
         {
           path: '/wishlist',
           element: (
