@@ -3,6 +3,8 @@ import {
   PriceNegotiationWithDetails,
   NegotiationStatus,
 } from '../../types/price-negotiation';
+import { useAuth } from '../../contexts/AuthContext';
+import { CustomerResponseForm } from './CustomerResponseForm';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
@@ -22,14 +24,35 @@ interface ExistingNegotiationCardProps {
   negotiation: PriceNegotiationWithDetails;
   onCancel: (reason?: string) => Promise<void>;
   onCreateNew: () => void;
+  onResponseSuccess?: () => void;
   canceling?: boolean;
 }
 
 export const ExistingNegotiationCard: React.FC<
   ExistingNegotiationCardProps
-> = ({ negotiation, onCancel, onCreateNew, canceling = false }) => {
+> = ({
+  negotiation,
+  onCancel,
+  onCreateNew,
+  onResponseSuccess,
+  canceling = false,
+}) => {
+  const { state: authState } = useAuth();
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showResponseForm, setShowResponseForm] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  // Check if current user is customer and can respond
+  const isProductOwner = authState.user?.id === negotiation.product.seller.id;
+  const isCustomer = authState.user?.id === negotiation.customer.id;
+
+  const canRespond =
+    isCustomer && negotiation.status === NegotiationStatus.COUNTER_OFFERED;
+
+  const canAddToCart =
+    isCustomer &&
+    negotiation.status === NegotiationStatus.ACCEPTED &&
+    !isProductOwner;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -70,6 +93,12 @@ export const ExistingNegotiationCard: React.FC<
         icon: ClockIcon,
         description: 'Thời hạn thương lượng đã kết thúc',
       },
+      [NegotiationStatus.COMPLETED]: {
+        variant: 'success' as const,
+        label: 'Đã hoàn thành',
+        icon: CheckCircleIcon,
+        description: 'Thương lượng đã được hoàn thành.',
+      },
     };
     return configs[status] || configs[NegotiationStatus.PENDING];
   };
@@ -93,6 +122,11 @@ export const ExistingNegotiationCard: React.FC<
     NegotiationStatus.REJECTED,
     NegotiationStatus.EXPIRED,
   ].includes(negotiation.status);
+
+  const handleResponseSuccess = () => {
+    setShowResponseForm(false);
+    onResponseSuccess?.();
+  };
 
   const handleCancel = async () => {
     try {
@@ -219,6 +253,30 @@ export const ExistingNegotiationCard: React.FC<
           </div>
         )}
 
+        {/* NEW: Customer Response Section */}
+        {canRespond && !showResponseForm && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-blue-900">
+                  Nghệ nhân đã phản hồi!
+                </h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  Họ đề nghị giá {formatPrice(negotiation.proposedPrice)}. Bạn
+                  muốn phản hồi như thế nào?
+                </p>
+              </div>
+              <Button
+                onClick={() => setShowResponseForm(true)}
+                size="sm"
+                leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+              >
+                Phản hồi ngay
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex space-x-3">
           <Button
@@ -232,7 +290,7 @@ export const ExistingNegotiationCard: React.FC<
             Xem chi tiết
           </Button>
 
-          {negotiation.status === NegotiationStatus.ACCEPTED && (
+          {canAddToCart && (
             <Button
               leftIcon={<ShoppingCartIcon className="w-4 h-4" />}
               className="flex-1"
@@ -240,6 +298,17 @@ export const ExistingNegotiationCard: React.FC<
               Thêm vào giỏ
             </Button>
           )}
+
+          {/* Show message for product owner */}
+          {isProductOwner &&
+            negotiation.status === NegotiationStatus.ACCEPTED && (
+              <div className="flex-1 p-2 bg-gray-50 rounded-lg border text-center">
+                <p className="text-xs text-gray-600">
+                  Khách hàng sẽ mua sản phẩm của bạn với giá{' '}
+                  {formatPrice(Number(negotiation.finalPrice))}.
+                </p>
+              </div>
+            )}
 
           {canCancel && (
             <Button
@@ -263,6 +332,15 @@ export const ExistingNegotiationCard: React.FC<
           )}
         </div>
       </Card>
+
+      {/* NEW: Customer Response Form */}
+      {showResponseForm && (
+        <CustomerResponseForm
+          negotiation={negotiation}
+          onSuccess={handleResponseSuccess}
+          onCancel={() => setShowResponseForm(false)}
+        />
+      )}
 
       {/* Cancel Modal */}
       <ConfirmModal

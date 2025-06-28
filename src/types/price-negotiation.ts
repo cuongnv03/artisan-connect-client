@@ -131,6 +131,7 @@ export interface RespondToNegotiationRequest {
   action: 'ACCEPT' | 'REJECT' | 'COUNTER';
   counterPrice?: number;
   artisanResponse?: string;
+  customerResponse?: string;
 }
 
 export interface CheckExistingNegotiationQuery {

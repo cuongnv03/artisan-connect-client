@@ -706,6 +706,10 @@ export const ProductDetailPage: React.FC = () => {
                   negotiation={existingNegotiation}
                   onCancel={cancelNegotiation}
                   onCreateNew={() => setShowNegotiationForm(true)}
+                  onResponseSuccess={() => {
+                    // Refresh negotiation data
+                    refetchNegotiation();
+                  }}
                   canceling={canceling}
                 />
               </div>

@@ -24,6 +24,7 @@ import {
   ArrowPathIcon,
   SwatchIcon,
 } from '@heroicons/react/24/outline';
+import { CustomerResponseForm } from '../../components/negotiations/CustomerResponseForm';
 
 export const NegotiationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,8 @@ export const NegotiationDetailPage: React.FC = () => {
   const { success, error: showError } = useToastContext();
   const { addNegotiatedItemToCart, loading: cartLoading } = useCartOperations();
   const [showRespondForm, setShowRespondForm] = useState(false);
+  const [showCustomerResponseForm, setShowCustomerResponseForm] =
+    useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
@@ -67,7 +70,6 @@ export const NegotiationDetailPage: React.FC = () => {
       await cancelNegotiation(id, cancelReason || 'Hủy bởi người dùng');
       setShowCancelModal(false);
       setCancelReason('');
-      success('Đã hủy thương lượng thành công');
       loadNegotiation();
     } catch (err: any) {
       showError(err.message || 'Không thể hủy thương lượng');
@@ -84,7 +86,6 @@ export const NegotiationDetailPage: React.FC = () => {
 
     try {
       await addNegotiatedItemToCart(negotiation.id, negotiation.quantity);
-      success('Đã thêm sản phẩm với giá thương lượng vào giỏ hàng!');
     } catch (err: any) {
       showError(err.message || 'Không thể thêm sản phẩm vào giỏ hàng');
     }
@@ -162,11 +163,16 @@ export const NegotiationDetailPage: React.FC = () => {
   const userRole =
     authState.user?.id === negotiation.customerId ? 'CUSTOMER' : 'ARTISAN';
   const isArtisan = userRole === 'ARTISAN';
+  const isCustomer = userRole === 'CUSTOMER';
+
   const canRespond =
     isArtisan &&
     [NegotiationStatus.PENDING, NegotiationStatus.COUNTER_OFFERED].includes(
       negotiation.status,
     );
+
+  const canCustomerRespond =
+    isCustomer && negotiation.status === NegotiationStatus.COUNTER_OFFERED;
   const canCancel = [
     NegotiationStatus.PENDING,
     NegotiationStatus.COUNTER_OFFERED,
@@ -406,11 +412,39 @@ export const NegotiationDetailPage: React.FC = () => {
             </Card>
           )}
 
+          {/* Customer Response Form */}
+          {canCustomerRespond && !showCustomerResponseForm && (
+            <Card className="p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Nghệ nhân đã phản hồi
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Họ đã gửi đề nghị mới cho bạn. Bạn muốn phản hồi như thế nào?
+                </p>
+                <Button onClick={() => setShowCustomerResponseForm(true)}>
+                  Phản hồi ngay
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {showRespondForm && (
             <RespondToNegotiationForm
               negotiation={negotiation}
               onSuccess={handleRespondSuccess}
               onCancel={() => setShowRespondForm(false)}
+            />
+          )}
+
+          {showCustomerResponseForm && (
+            <CustomerResponseForm
+              negotiation={negotiation}
+              onSuccess={() => {
+                setShowCustomerResponseForm(false);
+                loadNegotiation();
+              }}
+              onCancel={() => setShowCustomerResponseForm(false)}
             />
           )}
         </div>

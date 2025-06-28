@@ -104,20 +104,9 @@ export const usePriceNegotiation = (): UsePriceNegotiationReturn => {
       setLoading(true);
       setError(null);
 
-      // FIXED: Filter payload to only include allowed fields
-      const payload: RespondToNegotiationRequest = {
-        action: data.action,
-        artisanResponse: data.artisanResponse,
-      };
-
-      // Only include counterPrice if action is COUNTER
-      if (data.action === 'COUNTER' && data.counterPrice) {
-        payload.counterPrice = data.counterPrice;
-      }
-
       const result = await priceNegotiationService.respondToNegotiation(
         id,
-        payload,
+        data,
       );
       setNegotiation(result);
 

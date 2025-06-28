@@ -12,6 +12,8 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   SwatchIcon,
+  UserIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 interface RespondToNegotiationFormProps {
@@ -24,6 +26,10 @@ export const RespondToNegotiationForm: React.FC<
   RespondToNegotiationFormProps
 > = ({ negotiation, onSuccess, onCancel }) => {
   const { respondToNegotiation, loading } = usePriceNegotiation();
+
+  // Get the negotiation history to show previous offers
+  const negotiationHistory = (negotiation.negotiationHistory as any[]) || [];
+  const previousOffers = negotiationHistory.slice(-5); // Show last 5 offers
 
   const validate = (
     values: RespondToNegotiationRequest & { counterPrice?: number },
@@ -105,6 +111,115 @@ export const RespondToNegotiationForm: React.FC<
         Phản hồi thương lượng
       </h4>
 
+      {/* NEW: Negotiation History */}
+      {previousOffers.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg mb-6 border border-blue-200">
+          <h5 className="font-medium text-blue-900 mb-3 flex items-center">
+            <ClockIcon className="w-4 h-4 mr-2" />
+            Lịch sử thương lượng
+          </h5>
+          <div className="space-y-3">
+            {previousOffers.reverse().map((offer, index) => (
+              <div
+                key={index}
+                className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                  index === 0
+                    ? 'bg-blue-100 border-2 border-blue-300 shadow-sm'
+                    : 'bg-white border border-blue-200'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        offer.actor === 'customer'
+                          ? 'bg-green-500'
+                          : 'bg-blue-500'
+                      }`}
+                    />
+                    <UserIcon
+                      className={`w-4 h-4 ${
+                        offer.actor === 'customer'
+                          ? 'text-green-600'
+                          : 'text-blue-600'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-gray-900">
+                        {offer.actor === 'customer' ? 'Khách hàng' : 'Bạn'}
+                      </span>
+                      <Badge
+                        size="sm"
+                        variant={
+                          offer.action === 'PROPOSE'
+                            ? 'info'
+                            : offer.action === 'COUNTER'
+                            ? 'warning'
+                            : offer.action === 'ACCEPT'
+                            ? 'success'
+                            : 'danger'
+                        }
+                      >
+                        {offer.action === 'PROPOSE'
+                          ? 'Đề nghị'
+                          : offer.action === 'COUNTER'
+                          ? 'Phản hồi'
+                          : offer.action === 'ACCEPT'
+                          ? 'Chấp nhận'
+                          : 'Từ chối'}
+                      </Badge>
+                    </div>
+                    {offer.response && (
+                      <p className="text-xs text-gray-600 mt-1 max-w-xs truncate">
+                        "{offer.response}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div
+                    className={`font-semibold ${
+                      offer.actor === 'customer'
+                        ? 'text-green-600'
+                        : 'text-blue-600'
+                    }`}
+                  >
+                    {formatPrice(
+                      offer.newPrice || offer.price || offer.acceptedPrice,
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(offer.timestamp).toLocaleDateString('vi-VN', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary */}
+          <div className="mt-4 pt-3 border-t border-blue-200">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-blue-700 font-medium">
+                Tổng số lượt thương lượng: {previousOffers.length}
+              </span>
+              <span className="text-blue-700">
+                Tiết kiệm hiện tại:{' '}
+                {formatPrice(
+                  negotiation.originalPrice - negotiation.proposedPrice,
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Current Negotiation Info */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         {/* Product header with variant */}
@@ -144,13 +259,13 @@ export const RespondToNegotiationForm: React.FC<
         {/* Price grid */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-600">Giá gốc:</span>
+            <span className="text-gray-600">Giá gốc của bạn:</span>
             <p className="font-medium">
               {formatPrice(negotiation.originalPrice)}
             </p>
           </div>
           <div>
-            <span className="text-gray-600">Giá khách đề nghị:</span>
+            <span className="text-gray-600">Khách hàng đề nghị:</span>
             <p className="font-medium text-blue-600">
               {formatPrice(negotiation.proposedPrice)}
             </p>
@@ -160,28 +275,40 @@ export const RespondToNegotiationForm: React.FC<
             <p className="font-medium">{negotiation.quantity}</p>
           </div>
           <div>
-            <span className="text-gray-600">Còn lại:</span>
-            <p className="font-medium">
-              {negotiation.variant?.quantity || negotiation.product.quantity}
-              {negotiation.variant && ' (tùy chọn này)'}
-            </p>
-          </div>
-          <div>
-            <span className="text-gray-600">Tiết kiệm khách mong muốn:</span>
+            <span className="text-gray-600">Khách hàng muốn tiết kiệm:</span>
             <p className="font-medium text-green-600">
               {formatPrice(
-                negotiation.originalPrice - negotiation.proposedPrice,
+                (negotiation.originalPrice - negotiation.proposedPrice) *
+                  negotiation.quantity,
               )}
             </p>
           </div>
         </div>
 
+        {/* Customer info */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center space-x-3 mb-3">
+            <UserIcon className="w-5 h-5 text-gray-500" />
+            <div>
+              <span className="text-sm font-medium text-gray-700">
+                Khách hàng:
+              </span>
+              <p className="font-medium text-gray-900">
+                {negotiation.customer.firstName} {negotiation.customer.lastName}
+                <span className="text-gray-500 ml-2">
+                  @{negotiation.customer.username}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {negotiation.customerReason && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <span className="text-sm font-medium text-gray-700">
+          <div className="pt-4 border-t border-gray-200">
+            <span className="text-sm font-medium text-gray-700 block mb-2">
               Lý do từ khách hàng:
             </span>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 bg-white p-3 rounded border">
               {negotiation.customerReason}
             </p>
           </div>
@@ -195,7 +322,7 @@ export const RespondToNegotiationForm: React.FC<
             Phản hồi của bạn
           </label>
           <div className="space-y-3">
-            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
               <input
                 type="radio"
                 name="action"
@@ -208,12 +335,12 @@ export const RespondToNegotiationForm: React.FC<
               <div>
                 <div className="font-medium text-gray-900">Chấp nhận</div>
                 <div className="text-sm text-gray-600">
-                  Đồng ý với giá {formatPrice(negotiation.proposedPrice)}
+                  Đồng ý bán với giá {formatPrice(negotiation.proposedPrice)}
                 </div>
               </div>
             </label>
 
-            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
               <input
                 type="radio"
                 name="action"
@@ -228,12 +355,12 @@ export const RespondToNegotiationForm: React.FC<
                   Đề nghị giá khác
                 </div>
                 <div className="text-sm text-gray-600">
-                  Gửi giá phù hợp hơn cho cả hai bên
+                  Gửi mức giá phù hợp hơn cho cả hai bên
                 </div>
               </div>
             </label>
 
-            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
               <input
                 type="radio"
                 name="action"
@@ -279,10 +406,37 @@ export const RespondToNegotiationForm: React.FC<
                 </Badge>
                 <span className="text-sm text-gray-600">
                   Khách tiết kiệm:{' '}
-                  {formatPrice(negotiation.originalPrice - values.counterPrice)}
+                  {formatPrice(
+                    (negotiation.originalPrice - values.counterPrice) *
+                      negotiation.quantity,
+                  )}
                 </span>
               </div>
             )}
+
+            {/* Price comparison */}
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+              <div className="text-xs text-blue-700 space-y-1">
+                <div className="flex justify-between">
+                  <span>Khách đề nghị:</span>
+                  <span className="font-medium">
+                    {formatPrice(negotiation.proposedPrice)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Bạn đề nghị:</span>
+                  <span className="font-medium">
+                    {formatPrice(values.counterPrice || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Giá gốc:</span>
+                  <span className="font-medium">
+                    {formatPrice(negotiation.originalPrice)}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -298,7 +452,7 @@ export const RespondToNegotiationForm: React.FC<
             value={values.artisanResponse}
             onChange={handleChange}
             onBlur={handleBlur}
-            placeholder="Cảm ơn bạn đã quan tâm đến sản phẩm..."
+            placeholder="Cảm ơn bạn đã quan tâm đến sản phẩm của tôi..."
             maxLength={1000}
           />
           {touched.artisanResponse && errors.artisanResponse && (
