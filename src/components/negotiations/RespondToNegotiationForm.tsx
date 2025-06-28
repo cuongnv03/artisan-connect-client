@@ -25,7 +25,9 @@ export const RespondToNegotiationForm: React.FC<
 > = ({ negotiation, onSuccess, onCancel }) => {
   const { respondToNegotiation, loading } = usePriceNegotiation();
 
-  const validate = (values: RespondToNegotiationRequest) => {
+  const validate = (
+    values: RespondToNegotiationRequest & { counterPrice?: number },
+  ) => {
     const errors: Record<string, string> = {};
 
     if (values.action === 'COUNTER') {
@@ -55,7 +57,7 @@ export const RespondToNegotiationForm: React.FC<
     handleSubmit,
     setFieldValue,
     resetForm,
-  } = useForm<RespondToNegotiationRequest>({
+  } = useForm<RespondToNegotiationRequest & { counterPrice?: number }>({
     initialValues: {
       action: 'ACCEPT',
       counterPrice: Math.round(
@@ -65,7 +67,18 @@ export const RespondToNegotiationForm: React.FC<
     },
     validate,
     onSubmit: async (data) => {
-      await respondToNegotiation(negotiation.id, data);
+      // FIXED: Filter out counterPrice if action is not COUNTER
+      const payload: RespondToNegotiationRequest = {
+        action: data.action,
+        artisanResponse: data.artisanResponse,
+      };
+
+      // Only include counterPrice if action is COUNTER
+      if (data.action === 'COUNTER' && data.counterPrice) {
+        payload.counterPrice = data.counterPrice;
+      }
+
+      await respondToNegotiation(negotiation.id, payload);
       resetForm();
       onSuccess?.();
     },
@@ -247,7 +260,7 @@ export const RespondToNegotiationForm: React.FC<
               name="counterPrice"
               label="Giá bạn đề nghị"
               type="number"
-              value={values.counterPrice}
+              value={values.counterPrice || ''}
               onChange={handleChange}
               onBlur={handleBlur}
               error={touched.counterPrice ? errors.counterPrice : undefined}
@@ -255,7 +268,7 @@ export const RespondToNegotiationForm: React.FC<
               min={negotiation.proposedPrice + 1}
               max={negotiation.originalPrice - 1}
             />
-            {values.counterPrice > 0 && (
+            {values.counterPrice && values.counterPrice > 0 && (
               <div className="mt-2 flex items-center justify-between">
                 <Badge
                   variant={counterDiscountPercent > 0 ? 'success' : 'secondary'}
