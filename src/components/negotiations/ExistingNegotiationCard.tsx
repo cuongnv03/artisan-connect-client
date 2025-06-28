@@ -171,61 +171,119 @@ export const ExistingNegotiationCard: React.FC<
                 {negotiation.product.name}
               </h4>
 
-              {/* NEW: Variant information */}
+              {/* Enhanced Variant Information */}
               {negotiation.variant && (
-                <div className="mt-1">
-                  <div className="flex items-center gap-1 text-sm text-blue-700">
-                    <SwatchIcon className="w-3 h-3" />
+                <div className="mt-2 p-3 bg-white rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-1 text-sm font-medium text-blue-700 mb-2">
+                    <SwatchIcon className="w-4 h-4" />
                     <span>
                       Tùy chọn: {negotiation.variant.name || 'Biến thể'}
                     </span>
+                    <Badge variant="info" size="sm" className="ml-2">
+                      Đã chọn
+                    </Badge>
                   </div>
+
                   {Object.keys(negotiation.variant.attributes).length > 0 && (
-                    <div className="text-xs text-gray-600 mt-1">
-                      {Object.entries(negotiation.variant.attributes)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join(', ')}
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-blue-800">
+                        Thuộc tính:
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 text-xs text-blue-700">
+                        {Object.entries(negotiation.variant.attributes).map(
+                          ([key, value]) => (
+                            <div key={key} className="flex justify-between">
+                              <span className="capitalize">{key}:</span>
+                              <span className="font-medium">{value}</span>
+                            </div>
+                          ),
+                        )}
+                      </div>
                     </div>
                   )}
+
+                  <div className="mt-2 pt-2 border-t border-blue-100 text-xs text-blue-600">
+                    <div className="flex justify-between">
+                      <span>Giá variant:</span>
+                      <span className="font-medium">
+                        {formatPrice(
+                          negotiation.variant.discountPrice ||
+                            negotiation.variant.price,
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Còn lại:</span>
+                      <span className="font-medium">
+                        {negotiation.variant.quantity}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
+          {/* Enhanced Price Grid */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-600">Giá gốc:</span>
               <p className="font-medium">
                 {formatPrice(negotiation.originalPrice)}
               </p>
+              {negotiation.variant && (
+                <p className="text-xs text-gray-500">
+                  (Giá của tùy chọn đã chọn)
+                </p>
+              )}
             </div>
             <div>
-              <span className="text-gray-600">Giá đề nghị:</span>
-              <p className="font-medium text-primary">
-                {formatPrice(negotiation.proposedPrice)}
+              <span className="text-gray-600">
+                {negotiation.status === 'ACCEPTED'
+                  ? 'Giá thỏa thuận:'
+                  : 'Giá đề nghị:'}
+              </span>
+              <p
+                className={`font-medium ${
+                  negotiation.status === 'ACCEPTED'
+                    ? 'text-green-600'
+                    : 'text-blue-600'
+                }`}
+              >
+                {formatPrice(
+                  negotiation.finalPrice || negotiation.proposedPrice,
+                )}
               </p>
             </div>
           </div>
 
+          {/* Final price display for accepted negotiations */}
           {negotiation.finalPrice && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <span className="text-sm text-gray-600">Giá thỏa thuận:</span>
-              <p className="font-bold text-green-600 text-lg">
-                {formatPrice(negotiation.finalPrice)}
-              </p>
+            <div className="mt-4 pt-4 border-t border-gray-200 bg-green-50 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-green-800">
+                  Giá cuối cùng (x{negotiation.quantity}):
+                </span>
+                <span className="text-lg font-bold text-green-600">
+                  {formatPrice(negotiation.finalPrice * negotiation.quantity)}
+                </span>
+              </div>
+              <div className="text-xs text-green-700 mt-1">
+                Tiết kiệm:{' '}
+                {formatPrice(
+                  (negotiation.originalPrice - negotiation.finalPrice) *
+                    negotiation.quantity,
+                )}{' '}
+                (
+                {Math.round(
+                  ((negotiation.originalPrice - negotiation.finalPrice) /
+                    negotiation.originalPrice) *
+                    100,
+                )}
+                %)
+              </div>
             </div>
           )}
-
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-sm text-gray-600">
-              Số lượng: {negotiation.quantity}
-            </span>
-            {discountPercent > 0 && (
-              <Badge variant="success" size="sm">
-                -{discountPercent}%
-              </Badge>
-            )}
-          </div>
         </div>
 
         {/* Artisan response */}

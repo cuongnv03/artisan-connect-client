@@ -121,6 +121,21 @@ export const ProductDetailPage: React.FC = () => {
     }
   }, [product]);
 
+  useEffect(() => {
+    if (
+      existingNegotiation &&
+      existingNegotiation.variantId &&
+      product?.variants
+    ) {
+      const negotiatedVariant = product.variants.find(
+        (v) => v.id === existingNegotiation.variantId,
+      );
+      if (negotiatedVariant) {
+        setSelectedVariant(negotiatedVariant);
+      }
+    }
+  }, [existingNegotiation, product?.variants]);
+
   // NEW: Check if user can write review
   useEffect(() => {
     const checkReviewEligibility = async () => {
@@ -684,44 +699,226 @@ export const ProductDetailPage: React.FC = () => {
                 <h4 className="font-medium">Thương lượng giá với nghệ nhân</h4>
                 <p className="text-sm mt-1">
                   {selectedVariant
-                    ? `Thương lượng cho tùy chọn: ${
-                        selectedVariant.name || 'Biến thể đã chọn'
-                      }`
-                    : 'Bạn có thể đề xuất mức giá phù hợp cho sản phẩm này'}
+                    ? `Đang xem: ${
+                        selectedVariant.name || 'Tùy chọn'
+                      } - ${formatPrice(
+                        selectedVariant.discountPrice || selectedVariant.price,
+                      )}`
+                    : `Giá sản phẩm: ${formatPrice(
+                        product.discountPrice || product.price,
+                      )}`}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="transition-all duration-300 ease-in-out">
-            {/* UPDATED: Show loading when creating */}
-            {creatingNegotiation ? (
-              <Card className="p-6 text-center animate-pulse">
-                <LoadingSpinner size="lg" />
-                <p className="mt-4 text-gray-600">Đang tạo thương lượng...</p>
-              </Card>
-            ) : hasActiveNegotiation && existingNegotiation ? (
-              <div className="animate-fade-in">
+          {/* Show negotiation status */}
+          {creatingNegotiation ? (
+            <Card className="p-6 text-center">
+              <LoadingSpinner size="lg" />
+              <p className="mt-4 text-gray-600">Đang xử lý thương lượng...</p>
+            </Card>
+          ) : hasActiveNegotiation && existingNegotiation ? (
+            <div className="space-y-4">
+              {/* Check if negotiation is ACCEPTED */}
+              {existingNegotiation.status === NegotiationStatus.ACCEPTED ? (
+                <Card className="p-6 bg-green-50 border-green-200">
+                  <div className="flex items-center mb-4">
+                    <CheckCircleIcon className="w-6 h-6 text-green-600 mr-3" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-900">
+                        Thương lượng thành công!
+                      </h3>
+                      <p className="text-green-700 text-sm">
+                        Bạn đã thỏa thuận giá với nghệ nhân
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Product & Variant Info */}
+                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                      <div className="flex items-start space-x-3 mb-4">
+                        <img
+                          src={
+                            existingNegotiation.variant?.images[0] ||
+                            product.images[0]
+                          }
+                          alt={product.name}
+                          className="w-16 h-16 rounded-lg object-cover"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 mb-1">
+                            {product.name}
+                          </h4>
+
+                          {existingNegotiation.variant && (
+                            <div className="mb-2 p-2 bg-blue-50 rounded border border-blue-200">
+                              <div className="flex items-center mb-1">
+                                <SwatchIcon className="w-3 h-3 text-blue-600 mr-1" />
+                                <span className="text-sm font-medium text-blue-900">
+                                  {existingNegotiation.variant.name ||
+                                    'Tùy chọn'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-blue-700">
+                                {Object.entries(
+                                  existingNegotiation.variant.attributes,
+                                )
+                                  .map(([key, value]) => `${key}: ${value}`)
+                                  .join(', ')}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Giá gốc:</span>
+                          <span className="line-through text-gray-500">
+                            {formatPrice(existingNegotiation.originalPrice)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Giá thỏa thuận:</span>
+                          <span className="font-bold text-green-600">
+                            {formatPrice(existingNegotiation.finalPrice!)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Số lượng:</span>
+                          <span className="font-medium">
+                            {existingNegotiation.quantity}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2">
+                          <span className="font-medium text-gray-900">
+                            Tổng tiết kiệm:
+                          </span>
+                          <span className="font-bold text-green-600">
+                            {formatPrice(
+                              (existingNegotiation.originalPrice -
+                                existingNegotiation.finalPrice!) *
+                                existingNegotiation.quantity,
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col justify-center space-y-3">
+                      <Button
+                        onClick={async () => {
+                          try {
+                            await addNegotiatedItemToCart(
+                              existingNegotiation.id,
+                              existingNegotiation.quantity,
+                            );
+                          } catch (error) {
+                            console.error('Error adding to cart:', error);
+                          }
+                        }}
+                        loading={
+                          cartLoading[`negotiated-${existingNegotiation.id}`]
+                        }
+                        leftIcon={<ShoppingCartIcon className="w-5 h-5" />}
+                        size="lg"
+                        className="w-full"
+                      >
+                        Thêm vào giỏ hàng
+                      </Button>
+
+                      <Link to={`/negotiations/${existingNegotiation.id}`}>
+                        <Button
+                          variant="outline"
+                          leftIcon={<EyeIcon className="w-4 h-4" />}
+                          size="lg"
+                          className="w-full"
+                        >
+                          Xem chi tiết thương lượng
+                        </Button>
+                      </Link>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowNegotiationForm(true)}
+                        size="sm"
+                        className="w-full text-gray-600"
+                      >
+                        Tạo thương lượng mới
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                // Show existing negotiation card for other statuses
                 <ExistingNegotiationCard
                   negotiation={existingNegotiation}
                   onCancel={cancelNegotiation}
                   onCreateNew={() => setShowNegotiationForm(true)}
-                  onResponseSuccess={() => {
-                    // Refresh negotiation data
-                    refetchNegotiation();
-                  }}
+                  onResponseSuccess={refetchNegotiation}
                   canceling={canceling}
                 />
-              </div>
-            ) : (
+              )}
+            </div>
+          ) : (
+            // Show create negotiation form
+            <div className="space-y-4">
+              {/* Variant Selection if applicable */}
+              {product.variants && product.variants.length > 0 && (
+                <Card className="p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Chọn tùy chọn để thương lượng
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {product.variants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`p-3 border rounded-lg text-left transition-colors ${
+                          selectedVariant?.id === variant.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {variant.name || 'Tùy chọn'}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {Object.entries(variant.attributes)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join(', ')}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Còn {variant.quantity} sản phẩm
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="font-medium text-primary">
+                              {formatPrice(
+                                variant.discountPrice || variant.price,
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               <CreateNegotiationForm
                 product={product}
                 selectedVariant={selectedVariant}
                 onSuccess={handleNegotiationSuccess}
                 onCancel={() => setShowNegotiationForm(false)}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ),
     });

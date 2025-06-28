@@ -8,6 +8,7 @@ import {
 } from '../types/cart';
 import { useAuth } from './AuthContext';
 import { useToastContext } from './ToastContext';
+import { useNegotiatedCart } from '../hooks/cart/useNegotiatedCart';
 
 interface CartState {
   items: CartItem[];
@@ -357,15 +358,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         quantity,
       );
 
-      dispatch({ type: 'ITEM_ADDED', payload: cartItem });
+      // Refresh full cart to get updated totals
       await loadCart();
 
       success(`Đã thêm sản phẩm với giá thương lượng vào giỏ hàng`);
+      return cartItem;
     } catch (err: any) {
       const errorMessage =
         err.message || 'Không thể thêm sản phẩm với giá thương lượng';
       showError(errorMessage);
-      dispatch({ type: 'CART_ERROR', payload: errorMessage });
       throw err;
     }
   };
