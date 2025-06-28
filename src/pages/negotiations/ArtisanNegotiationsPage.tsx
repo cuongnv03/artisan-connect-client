@@ -21,6 +21,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
+  InboxIcon,
 } from '@heroicons/react/24/outline';
 
 export const ArtisanNegotiationsPage: React.FC = () => {
@@ -50,9 +51,10 @@ export const ArtisanNegotiationsPage: React.FC = () => {
     enabled: !!authState.user,
   });
 
+  // Get received negotiation stats
   const { stats, loading: statsLoading } = usePriceNegotiationStats({
+    type: 'received', // Get received stats on this page
     userId: authState.user?.id,
-    userRole: 'ARTISAN',
   });
 
   const statusOptions = [
@@ -65,8 +67,8 @@ export const ArtisanNegotiationsPage: React.FC = () => {
   ];
 
   const sortOptions = [
-    { label: 'Mới nhất', value: 'createdAt' },
-    { label: 'Cũ nhất', value: 'createdAt' },
+    { label: 'Mới nhất', value: 'createdAt_desc' },
+    { label: 'Cũ nhất', value: 'createdAt_asc' },
     { label: 'Trạng thái', value: 'status' },
     { label: 'Giá đề nghị', value: 'proposedPrice' },
     { label: 'Hết hạn', value: 'expiresAt' },
@@ -90,9 +92,9 @@ export const ArtisanNegotiationsPage: React.FC = () => {
       key: NegotiationStatus.PENDING,
       label: 'Chờ phản hồi',
       content: null,
-      badge: pendingCount.toString(),
+      badge: stats ? stats.pendingNegotiations.toString() : '0',
       icon:
-        pendingCount > 0 ? (
+        stats && stats.pendingNegotiations > 0 ? (
           <ExclamationTriangleIcon className="w-4 h-4 text-orange-500" />
         ) : undefined,
     },
@@ -120,6 +122,16 @@ export const ArtisanNegotiationsPage: React.FC = () => {
     navigate(`/negotiations/${negotiation.id}`);
   };
 
+  const handleSortChange = (value: string) => {
+    if (value.includes('_')) {
+      const [field, order] = value.split('_');
+      setSortBy(field);
+      setSortOrder(order as 'asc' | 'desc');
+    } else {
+      setSortBy(value);
+    }
+  };
+
   const filteredNegotiations = negotiations.filter((negotiation) => {
     const matchesSearch =
       negotiation.productName
@@ -141,90 +153,39 @@ export const ArtisanNegotiationsPage: React.FC = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Thương lượng nhận được
-          </h1>
-          <p className="text-gray-600">
-            Quản lý các yêu cầu thương lượng từ khách hàng
-          </p>
-        </div>
-      </div>
-
-      {/* Urgent Notifications */}
-      {urgentNegotiations.length > 0 && (
-        <Card className="p-4 mb-6 border-orange-200 bg-orange-50">
-          <div className="flex items-center">
-            <ExclamationTriangleIcon className="w-5 h-5 text-orange-600 mr-2" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header với gradient background */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-8 mb-8 text-white">
+          <div className="flex justify-between items-start">
             <div>
-              <h4 className="font-medium text-orange-900">
-                Yêu cầu cần phản hồi gấp
-              </h4>
-              <p className="text-sm text-orange-700">
-                {urgentNegotiations.length} thương lượng sẽ hết hạn trong 24 giờ
-                tới
+              <h1 className="text-3xl font-bold mb-2">
+                Thương lượng nhận được
+              </h1>
+              <p className="text-emerald-100 text-lg">
+                Quản lý các yêu cầu thương lượng từ khách hàng
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="ml-auto"
-              onClick={() => setStatusFilter(NegotiationStatus.PENDING)}
-            >
-              Xem ngay
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Stats Cards */}
-      {stats && !statsLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Tổng nhận được
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.totalNegotiations}
-                </p>
-              </div>
+            <div className="hidden md:block">
+              <InboxIcon className="w-16 h-16 text-white opacity-20" />
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <ClockIcon className="w-6 h-6 text-yellow-600" />
+          {/* Quick stats */}
+          {stats && !statsLoading && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-2xl font-bold">{stats.totalNegotiations}</p>
+                <p className="text-emerald-100 text-sm">Tổng nhận được</p>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Chờ phản hồi
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-2xl font-bold">
                   {stats.pendingNegotiations}
                 </p>
+                <p className="text-emerald-100 text-sm">Chờ phản hồi</p>
               </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircleIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Tỷ lệ chấp nhận
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-2xl font-bold">
                   {stats.totalNegotiations > 0
                     ? (
                         (stats.acceptedNegotiations / stats.totalNegotiations) *
@@ -233,77 +194,214 @@ export const ArtisanNegotiationsPage: React.FC = () => {
                     : 0}
                   %
                 </p>
+                <p className="text-emerald-100 text-sm">Tỷ lệ chấp nhận</p>
               </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <ChartBarIcon className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Giảm giá TB</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-2xl font-bold">
                   {stats.averageDiscount.toFixed(1)}%
                 </p>
+                <p className="text-emerald-100 text-sm">Giảm giá TB</p>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Urgent Notifications */}
+        {urgentNegotiations.length > 0 && (
+          <Card className="p-4 mb-6 border-orange-200 bg-orange-50">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="w-5 h-5 text-orange-600 mr-2" />
+              <div>
+                <h4 className="font-medium text-orange-900">
+                  Yêu cầu cần phản hồi gấp
+                </h4>
+                <p className="text-sm text-orange-700">
+                  {urgentNegotiations.length} thương lượng sẽ hết hạn trong 24
+                  giờ tới
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto"
+                onClick={() => setStatusFilter(NegotiationStatus.PENDING)}
+              >
+                Xem ngay
+              </Button>
+            </div>
           </Card>
-        </div>
-      )}
+        )}
 
-      {/* Filters */}
-      <Card className="p-6 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
-          <div className="flex-1 max-w-md">
-            <Input
-              placeholder="Tìm kiếm sản phẩm hoặc khách hàng..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={
-                <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
-              }
-            />
+        {/* Stats Cards cho desktop */}
+        {stats && !statsLoading && (
+          <div className="hidden lg:grid grid-cols-4 gap-6 mb-8">
+            <Card className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Tổng nhận được
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.totalNegotiations}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <ClockIcon className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Chờ phản hồi
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.pendingNegotiations}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Tỷ lệ chấp nhận
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.totalNegotiations > 0
+                      ? (
+                          (stats.acceptedNegotiations /
+                            stats.totalNegotiations) *
+                          100
+                        ).toFixed(1)
+                      : 0}
+                    %
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <ChartBarIcon className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">
+                    Giảm giá TB
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.averageDiscount.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            </Card>
           </div>
+        )}
 
-          <div className="flex space-x-4">
-            <Select
-              value={sortBy}
-              onChange={(value) => setSortBy(value)}
-              options={sortOptions}
-            />
-            <Button
-              variant="outline"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            >
-              {sortOrder === 'asc' ? '↑' : '↓'}
-            </Button>
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm sản phẩm hoặc khách hàng..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <select
+                value={`${sortBy}${
+                  sortBy === 'createdAt' ? `_${sortOrder}` : ''
+                }`}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                }
+                className="px-3"
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </Button>
+            </div>
           </div>
         </div>
-      </Card>
 
-      {/* Status Tabs */}
-      <Tabs
-        items={tabItems}
-        activeKey={statusFilter}
-        onChange={setStatusFilter}
-        className="mb-6"
-      />
+        {/* Status Tabs */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+          <div className="border-b border-gray-200 px-6">
+            <nav className="flex space-x-8">
+              {tabItems.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                    statusFilter === tab.key
+                      ? 'border-emerald-500 text-emerald-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                    {tab.label}
+                    {tab.badge && (
+                      <span
+                        className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                          statusFilter === tab.key
+                            ? 'bg-emerald-100 text-emerald-600'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
 
-      {/* Negotiations List */}
-      <NegotiationList
-        negotiations={filteredNegotiations}
-        userRole="ARTISAN"
-        loading={loading}
-        error={error}
-        hasMore={hasMore}
-        onLoadMore={loadMore}
-        onRetry={refetch}
-        onNegotiationClick={handleNegotiationClick}
-        emptyMessage="Chưa có yêu cầu thương lượng nào"
-        emptyDescription="Khách hàng có thể thương lượng giá trực tiếp từ trang sản phẩm của bạn"
-      />
+        {/* Negotiations List */}
+        <div className="space-y-4">
+          <NegotiationList
+            negotiations={filteredNegotiations}
+            userRole="ARTISAN"
+            loading={loading}
+            error={error}
+            hasMore={hasMore}
+            onLoadMore={loadMore}
+            onRetry={refetch}
+            onNegotiationClick={handleNegotiationClick}
+            emptyMessage="Chưa có yêu cầu thương lượng nào"
+            emptyDescription="Khách hàng có thể thương lượng giá trực tiếp từ trang sản phẩm của bạn"
+          />
+        </div>
+      </div>
     </div>
   );
 };

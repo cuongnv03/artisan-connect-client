@@ -48,12 +48,12 @@ export const usePriceNegotiationsByType = (
       setLoading(true);
       setError(null);
 
-      let response: PaginatedResponse<NegotiationSummary>;
-
       const requestQuery = {
         ...query,
         page: reset ? 1 : pagination.currentPage + 1,
       };
+
+      let response: PaginatedResponse<NegotiationSummary>;
 
       if (type === 'sent') {
         response = await priceNegotiationService.getMySentNegotiations(

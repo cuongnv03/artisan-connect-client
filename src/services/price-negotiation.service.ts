@@ -5,9 +5,8 @@ import {
   NegotiationSummary,
   CreateNegotiationRequest,
   RespondToNegotiationRequest,
-  NegotiationStats,
-  NegotiationStatus,
   CheckExistingNegotiationQuery,
+  NegotiationStatus,
 } from '../types/price-negotiation';
 import { PaginatedResponse } from '../types/common';
 
@@ -16,18 +15,11 @@ export interface GetNegotiationsQuery {
   limit?: number;
   status?: NegotiationStatus | NegotiationStatus[];
   productId?: string;
-  variantId?: string; // NEW
+  variantId?: string;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: 'createdAt' | 'updatedAt' | 'status' | 'proposedPrice' | 'expiresAt';
   sortOrder?: 'asc' | 'desc';
-}
-
-export interface GetNegotiationStatsQuery {
-  userId?: string;
-  userRole?: 'CUSTOMER' | 'ARTISAN';
-  dateFrom?: string;
-  dateTo?: string;
 }
 
 export const priceNegotiationService = {
@@ -58,36 +50,27 @@ export const priceNegotiationService = {
     );
   },
 
-  // NEW: Get negotiations sent by current user (where they are customer)
+  // Get negotiations sent by current user (customer view)
   async getMySentNegotiations(
     query: GetNegotiationsQuery = {},
   ): Promise<PaginatedResponse<NegotiationSummary>> {
     return await apiClient.get<PaginatedResponse<NegotiationSummary>>(
-      API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS,
-      { ...query, type: 'sent' },
-    );
-  },
-
-  // NEW: Get negotiations received by current user (where they are artisan)
-  async getMyReceivedNegotiations(
-    query: GetNegotiationsQuery = {},
-  ): Promise<PaginatedResponse<NegotiationSummary>> {
-    return await apiClient.get<PaginatedResponse<NegotiationSummary>>(
-      API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS,
-      { ...query, type: 'received' },
-    );
-  },
-
-  async getNegotiationStats(
-    query: GetNegotiationStatsQuery = {},
-  ): Promise<NegotiationStats> {
-    return await apiClient.get<NegotiationStats>(
-      API_ENDPOINTS.PRICE_NEGOTIATION.STATS,
+      API_ENDPOINTS.PRICE_NEGOTIATION.MY_SENT,
       query,
     );
   },
 
-  // UPDATED: Check existing negotiation with variant support
+  // Get negotiations received by current user (artisan view)
+  async getMyReceivedNegotiations(
+    query: GetNegotiationsQuery = {},
+  ): Promise<PaginatedResponse<NegotiationSummary>> {
+    return await apiClient.get<PaginatedResponse<NegotiationSummary>>(
+      API_ENDPOINTS.PRICE_NEGOTIATION.MY_RECEIVED,
+      query,
+    );
+  },
+
+  // Check existing negotiation with variant support
   async checkExistingNegotiation(
     query: CheckExistingNegotiationQuery,
   ): Promise<{
@@ -97,7 +80,7 @@ export const priceNegotiationService = {
     try {
       const response = await apiClient.get<
         PaginatedResponse<NegotiationSummary>
-      >(API_ENDPOINTS.PRICE_NEGOTIATION.MY_NEGOTIATIONS, {
+      >(API_ENDPOINTS.PRICE_NEGOTIATION.MY_SENT, {
         page: 1,
         limit: 1,
         productId: query.productId,
@@ -106,7 +89,6 @@ export const priceNegotiationService = {
       });
 
       if (response.data.length > 0) {
-        // Get full details of the negotiation
         const fullNegotiation = await this.getNegotiation(response.data[0].id);
         return {
           hasActive: true,

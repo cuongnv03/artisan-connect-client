@@ -118,11 +118,14 @@ export const API_ENDPOINTS = {
   // Price Negotiation
   PRICE_NEGOTIATION: {
     BASE: '/negotiations',
-    MY_NEGOTIATIONS: '/negotiations/my-negotiations',
-    STATS: '/negotiations/stats',
+    MY_SENT: '/negotiations/my-sent', // Customer sent negotiations
+    MY_RECEIVED: '/negotiations/my-received', // Artisan received negotiations
+    STATS_SENT: '/negotiations/stats/sent',
+    STATS_RECEIVED: '/negotiations/stats/received',
     BY_ID: (id: string) => `/negotiations/${id}`,
     RESPOND: (id: string) => `/negotiations/${id}/respond`,
     CANCEL: (id: string) => `/negotiations/${id}/cancel`,
+    CHECK: (productId: string) => `/negotiations/check/${productId}`,
   },
 
   // Custom Order

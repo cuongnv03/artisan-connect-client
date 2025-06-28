@@ -49,20 +49,14 @@ export const CustomerNegotiationsPage: React.FC = () => {
     enabled: !!authState.user,
   });
 
+  // Get sent negotiation stats
   const { stats, loading: statsLoading } = usePriceNegotiationStats({
+    type: 'sent', // Always get sent stats on this page
     userId: authState.user?.id,
-    userRole: 'CUSTOMER',
   });
 
-  const pageTitle =
-    authState.user?.role === 'ARTISAN'
-      ? 'Thương lượng đã gửi'
-      : 'Thương lượng giá';
-
-  const pageDescription =
-    authState.user?.role === 'ARTISAN'
-      ? 'Quản lý các yêu cầu thương lượng bạn đã gửi cho nghệ nhân khác'
-      : 'Quản lý các yêu cầu thương lượng của bạn';
+  const pageTitle = 'Thương lượng đã gửi';
+  const pageDescription = 'Quản lý các yêu cầu thương lượng bạn đã gửi';
 
   const statusOptions = [
     { label: 'Tất cả', value: 'ALL' },
@@ -119,7 +113,6 @@ export const CustomerNegotiationsPage: React.FC = () => {
       setSortOrder(order as 'asc' | 'desc');
     } else {
       setSortBy(value);
-      // Keep current sort order for other fields
     }
   };
 
@@ -147,7 +140,7 @@ export const CustomerNegotiationsPage: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                 <p className="text-2xl font-bold">{stats.totalNegotiations}</p>
-                <p className="text-blue-100 text-sm">Tổng thương lượng</p>
+                <p className="text-blue-100 text-sm">Tổng đã gửi</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
                 <p className="text-2xl font-bold">
@@ -229,7 +222,6 @@ export const CustomerNegotiationsPage: React.FC = () => {
                   }`}
                 >
                   <div className="flex items-center">
-                    {tab.icon && <span className="mr-2">{tab.icon}</span>}
                     {tab.label}
                     {tab.badge && (
                       <span

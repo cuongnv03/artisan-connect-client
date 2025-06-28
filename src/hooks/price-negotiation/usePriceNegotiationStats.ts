@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
-import {
-  priceNegotiationService,
-  GetNegotiationStatsQuery,
-} from '../../services/price-negotiation.service';
+import { apiClient } from '../../utils/api';
+import { API_ENDPOINTS } from '../../constants/api';
 import { NegotiationStats } from '../../types/price-negotiation';
+
+export interface UsePriceNegotiationStatsQuery {
+  type: 'sent' | 'received';
+  userId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
 
 export interface UsePriceNegotiationStatsReturn {
   stats: NegotiationStats | null;
@@ -13,7 +18,7 @@ export interface UsePriceNegotiationStatsReturn {
 }
 
 export const usePriceNegotiationStats = (
-  query: GetNegotiationStatsQuery = {},
+  query: UsePriceNegotiationStatsQuery,
 ): UsePriceNegotiationStatsReturn => {
   const [stats, setStats] = useState<NegotiationStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,10 +28,31 @@ export const usePriceNegotiationStats = (
     try {
       setLoading(true);
       setError(null);
-      const result = await priceNegotiationService.getNegotiationStats(query);
+
+      // Determine which endpoint to call based on type
+      const endpoint =
+        query.type === 'sent'
+          ? API_ENDPOINTS.PRICE_NEGOTIATION.STATS_SENT
+          : API_ENDPOINTS.PRICE_NEGOTIATION.STATS_RECEIVED;
+
+      // Prepare query params (exclude type as it's determined by endpoint)
+      const queryParams = {
+        ...(query.userId && { userId: query.userId }),
+        ...(query.dateFrom && { dateFrom: query.dateFrom }),
+        ...(query.dateTo && { dateTo: query.dateTo }),
+      };
+
+      const result = await apiClient.get<NegotiationStats>(
+        endpoint,
+        queryParams,
+      );
       setStats(result);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải thống kê thương lượng');
+      const errorMessage =
+        query.type === 'sent'
+          ? 'Không thể tải thống kê thương lượng đã gửi'
+          : 'Không thể tải thống kê thương lượng đã nhận';
+      setError(err.message || errorMessage);
     } finally {
       setLoading(false);
     }
@@ -34,7 +60,7 @@ export const usePriceNegotiationStats = (
 
   useEffect(() => {
     fetchStats();
-  }, [JSON.stringify(query)]);
+  }, [query.type, query.userId, query.dateFrom, query.dateTo]);
 
   return {
     stats,
