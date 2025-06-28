@@ -118,7 +118,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
 
         if (result && result.id) {
           resetForm();
-          onSuccess?.(result); // UPDATED: Pass the negotiation data
+          onSuccess?.(result); // UPDATED: Chỉ gọi callback, không navigate
         }
       } catch (error: any) {
         if (

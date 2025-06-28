@@ -222,8 +222,8 @@ export const ExistingNegotiationCard: React.FC<
         {/* Actions */}
         <div className="flex space-x-3">
           <Button
-            onClick={() =>
-              window.open(`/negotiations/${negotiation.id}`, '_blank')
+            onClick={
+              () => window.open(`/negotiations/${negotiation.id}`, '_blank') // Open in new tab
             }
             leftIcon={<EyeIcon className="w-4 h-4" />}
             variant="outline"

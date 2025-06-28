@@ -52,6 +52,7 @@ export const ProductDetailPage: React.FC = () => {
   const location = useLocation();
   const { state: authState } = useAuth();
   const { success, error: showError } = useToastContext();
+  const [creatingNegotiation, setCreatingNegotiation] = useState(false);
 
   // Determine if this is management view based on URL
   const isManagementView = location.pathname.startsWith('/products/');
@@ -298,13 +299,12 @@ export const ProductDetailPage: React.FC = () => {
     negotiation?: PriceNegotiationWithDetails,
   ) => {
     setShowNegotiationForm(false);
-    // Refresh existing negotiation check
-    refetchNegotiation();
+    setCreatingNegotiation(true); // Show loading
 
-    if (negotiation) {
-      // Optionally navigate to negotiation detail
-      navigate(`/negotiations/${negotiation.id}`);
-    }
+    // Refresh existing negotiation check
+    refetchNegotiation().finally(() => {
+      setCreatingNegotiation(false); // Hide loading
+    });
   };
 
   // NEW: Handle review submission
@@ -693,21 +693,31 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {hasActiveNegotiation && existingNegotiation ? (
-            <ExistingNegotiationCard
-              negotiation={existingNegotiation}
-              onCancel={cancelNegotiation}
-              onCreateNew={() => setShowNegotiationForm(true)}
-              canceling={canceling}
-            />
-          ) : (
-            <CreateNegotiationForm
-              product={product}
-              selectedVariant={selectedVariant} // NEW: Pass selected variant
-              onSuccess={handleNegotiationSuccess}
-              onCancel={() => setShowNegotiationForm(false)}
-            />
-          )}
+          <div className="transition-all duration-300 ease-in-out">
+            {/* UPDATED: Show loading when creating */}
+            {creatingNegotiation ? (
+              <Card className="p-6 text-center animate-pulse">
+                <LoadingSpinner size="lg" />
+                <p className="mt-4 text-gray-600">Đang tạo thương lượng...</p>
+              </Card>
+            ) : hasActiveNegotiation && existingNegotiation ? (
+              <div className="animate-fade-in">
+                <ExistingNegotiationCard
+                  negotiation={existingNegotiation}
+                  onCancel={cancelNegotiation}
+                  onCreateNew={() => setShowNegotiationForm(true)}
+                  canceling={canceling}
+                />
+              </div>
+            ) : (
+              <CreateNegotiationForm
+                product={product}
+                selectedVariant={selectedVariant}
+                onSuccess={handleNegotiationSuccess}
+                onCancel={() => setShowNegotiationForm(false)}
+              />
+            )}
+          </div>
         </div>
       ),
     });
