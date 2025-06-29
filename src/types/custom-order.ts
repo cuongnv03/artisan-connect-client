@@ -14,6 +14,9 @@ export enum CustomOrderAction {
   ACCEPT = 'ACCEPT',
   REJECT = 'REJECT',
   COUNTER_OFFER = 'COUNTER_OFFER',
+  CUSTOMER_COUNTER_OFFER = 'CUSTOMER_COUNTER_OFFER', // NEW
+  CUSTOMER_ACCEPT = 'CUSTOMER_ACCEPT', // NEW
+  CUSTOMER_REJECT = 'CUSTOMER_REJECT', // NEW
   ACCEPT_COUNTER = 'ACCEPT_COUNTER',
   UPDATE = 'UPDATE',
   MESSAGE = 'MESSAGE',
@@ -34,8 +37,26 @@ export interface CustomOrderRequest extends BaseEntity {
   status: QuoteStatus;
   artisanResponse?: any; // Json
   finalPrice?: number; // Decimal -> number
-  negotiationHistory?: any; // Json
+  negotiationHistory?: NegotiationHistoryEntry[]; // NEW: Typed history
   expiresAt?: Date;
+}
+
+// NEW: Typed negotiation history entry
+export interface NegotiationHistoryEntry {
+  action: CustomOrderAction;
+  actor: 'customer' | 'artisan';
+  timestamp: string;
+  data: {
+    title?: string;
+    description?: string;
+    estimatedPrice?: number;
+    customerBudget?: number;
+    timeline?: string;
+    finalPrice?: number;
+    message?: string;
+    reason?: string;
+    response?: any;
+  };
 }
 
 export interface CustomOrderWithDetails extends CustomOrderRequest {
@@ -113,6 +134,40 @@ export interface UpdateCustomOrderRequest {
   estimatedPrice?: number;
   customerBudget?: number;
   timeline?: string;
+}
+
+// NEW: Customer bidirectional negotiation DTOs
+export interface CounterOfferRequest {
+  action: 'COUNTER_OFFER';
+  finalPrice: number;
+  timeline?: string;
+  message?: string;
+  response?: any;
+  expiresInDays?: number;
+}
+
+export interface AcceptOfferRequest {
+  action: 'ACCEPT';
+  message?: string;
+}
+
+export interface RejectOfferRequest {
+  action: 'REJECT';
+  reason?: string;
+  message?: string;
+}
+
+// NEW: Chat integration DTO
+export interface CustomOrderChatData {
+  title: string;
+  description: string;
+  estimatedPrice?: number;
+  customerBudget?: number;
+  timeline?: string;
+  specifications?: any;
+  attachments?: string[];
+  referenceProductId?: string;
+  expiresInDays?: number;
 }
 
 export interface CustomOrderQueryOptions {

@@ -136,8 +136,19 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/customs/${id}`,
     RESPOND: (id: string) => `/customs/${id}/respond`,
     HISTORY: (id: string) => `/customs/${id}/history`,
+
+    // NEW: Bidirectional negotiation endpoints
+    COUNTER_OFFER: (id: string) => `/customs/${id}/counter-offer`,
+    ACCEPT_OFFER: (id: string) => `/customs/${id}/accept`,
+    REJECT_OFFER: (id: string) => `/customs/${id}/reject`,
+
+    // Legacy (keep for backward compatibility)
     ACCEPT_COUNTER: (id: string) => `/customs/${id}/accept-counter`,
     CANCEL: (id: string) => `/customs/${id}/cancel`,
+
+    // Validation
+    VALIDATE_ACCESS: (id: string) => `/customs/${id}/validate-access`,
+    EXPORT: '/customs/export',
   },
 
   // Cart

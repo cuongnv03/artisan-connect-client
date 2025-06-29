@@ -76,25 +76,53 @@ export interface SendMessageRequest {
   productMentions?: Record<string, any>; // Đổi từ metadata
 }
 
+// ENHANCED: Complete custom order flow in chat
 export interface SendCustomOrderRequest {
-  type: 'create_custom_order' | 'respond_custom_order' | 'quote_discussion';
+  type:
+    | 'create_custom_order'
+    | 'respond_custom_order'
+    | 'customer_counter_offer'
+    | 'customer_accept_offer'
+    | 'customer_reject_offer'
+    | 'quote_discussion';
   receiverId: string;
   content: string;
+
+  // For create_custom_order
   customOrderData?: {
-    title?: string;
-    description?: string;
+    title: string;
+    description: string;
     estimatedPrice?: number;
     customerBudget?: number;
     timeline?: string;
     specifications?: any;
     attachments?: string[];
     referenceProductId?: string;
+    expiresInDays?: number;
   };
+
+  // For respond_custom_order & other quote actions
   quoteRequestId?: string;
+
+  // For respond_custom_order
   response?: {
     action: 'ACCEPT' | 'REJECT' | 'COUNTER_OFFER';
     finalPrice?: number;
     data?: any;
+    expiresInDays?: number;
+  };
+
+  // For customer_counter_offer
+  counterOffer?: {
+    finalPrice: number;
+    timeline?: string;
+    data?: any;
+    expiresInDays?: number;
+  };
+
+  // For customer_reject_offer
+  rejectOffer?: {
+    reason?: string;
   };
 }
 
