@@ -14,7 +14,7 @@ import { useCart } from '../../contexts/CartContext';
 import { cartService } from '../../services/cart.service';
 import { orderService } from '../../services/order.service';
 import { userService } from '../../services/user.service';
-import { CartSummary } from '../../types/cart';
+import { CartSummary, CartItem } from '../../types/cart';
 import {
   PaymentMethodType,
   CreateOrderFromCartRequest,
@@ -40,6 +40,67 @@ interface PaymentData {
   cvv: string;
   cardHolder: string;
 }
+
+// ===== NEW: Constants and helper functions =====
+const TAX_RATE = 0.08; // 8% tax rate
+
+// Helper function to get the correct price for an item
+const getItemPrice = (item: CartItem): number => {
+  // Priority: negotiated price > variant price > product price
+  if (item.negotiationId && item.negotiation?.finalPrice) {
+    return item.negotiation.finalPrice;
+  }
+
+  if (item.variant) {
+    return item.variant.discountPrice || item.variant.price;
+  }
+
+  return item.product?.discountPrice || item.product?.price || item.price;
+};
+
+// Helper function to get item display info
+const getItemDisplayInfo = (item: CartItem) => {
+  const price = getItemPrice(item);
+  const isNegotiated = !!(item.negotiationId && item.negotiation?.finalPrice);
+  const isVariant = !!item.variant;
+
+  return {
+    price,
+    isNegotiated,
+    isVariant,
+    displayName: item.product?.name || 'Unknown Product',
+    variantInfo: isVariant
+      ? {
+          name: item.variant?.name,
+        }
+      : null,
+  };
+};
+
+// Helper function to calculate order totals
+const calculateOrderTotals = (summary: CartSummary) => {
+  // Calculate subtotal using correct item prices
+  const subtotal = summary.items.reduce((total, item) => {
+    const itemPrice = getItemPrice(item);
+    return total + itemPrice * item.quantity;
+  }, 0);
+
+  // Calculate tax
+  const taxAmount = subtotal * TAX_RATE;
+
+  // Calculate shipping (free for now, but can be customized)
+  const shippingCost = 0;
+
+  // Calculate total
+  const total = subtotal + taxAmount + shippingCost;
+
+  return {
+    subtotal,
+    taxAmount,
+    shippingCost,
+    total,
+  };
+};
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -416,6 +477,9 @@ export const CheckoutPage: React.FC = () => {
 
   const { summary } = cartState;
 
+  // ===== UPDATED: Calculate correct totals =====
+  const orderTotals = calculateOrderTotals(summary);
+
   return (
     <div className="max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-8">Thanh toán</h1>
@@ -596,7 +660,7 @@ export const CheckoutPage: React.FC = () => {
                 Tóm tắt đơn hàng
               </h2>
 
-              {/* Order items by seller */}
+              {/* ===== UPDATED: Order items with correct pricing ===== */}
               <div className="space-y-4 mb-6">
                 {summary.groupedBySeller.map((sellerGroup) => (
                   <div
@@ -607,51 +671,94 @@ export const CheckoutPage: React.FC = () => {
                       {sellerGroup.sellerInfo.shopName ||
                         sellerGroup.sellerInfo.name}
                     </h4>
-                    {sellerGroup.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center space-x-3 mb-2"
-                      >
-                        <img
-                          src={
-                            item.product?.images?.[0] ||
-                            'https://via.placeholder.com/60'
-                          }
-                          alt={item.product?.name || 'Product'}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {item.product?.name || 'Unknown Product'}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            SL: {item.quantity} x{' '}
-                            {formatPrice(
-                              item.product?.discountPrice ||
-                                item.product?.price ||
-                                item.price,
+                    {sellerGroup.items.map((item) => {
+                      const displayInfo = getItemDisplayInfo(item);
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-start space-x-3 mb-3"
+                        >
+                          <img
+                            src={
+                              // ===== UPDATED: Prioritize variant images =====
+                              item.variant?.images?.[0] ||
+                              item.product?.images?.[0] ||
+                              'https://via.placeholder.com/60'
+                            }
+                            alt={displayInfo.displayName}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {displayInfo.displayName}
+                            </p>
+
+                            {/* ===== NEW: Display variant info ===== */}
+                            {displayInfo.variantInfo && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {displayInfo.variantInfo.name && (
+                                  <span className="inline-block bg-gray-100 px-2 py-1 rounded mr-1">
+                                    {displayInfo.variantInfo.name}
+                                  </span>
+                                )}
+                                {displayInfo.variantInfo.attributes &&
+                                  Object.entries(
+                                    displayInfo.variantInfo.attributes,
+                                  ).map(([key, value]) => (
+                                    <span key={key} className="mr-2">
+                                      {key}: {String(value)}
+                                    </span>
+                                  ))}
+                              </div>
                             )}
-                          </p>
+
+                            {/* ===== NEW: Negotiated price indicator ===== */}
+                            {displayInfo.isNegotiated && (
+                              <div className="flex items-center text-xs text-blue-600 mt-1">
+                                <span className="mr-1">💰</span>
+                                <span>Giá thương lượng</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-sm text-gray-500">
+                                SL: {item.quantity} x{' '}
+                                {formatPrice(displayInfo.price)}
+                              </p>
+                              <p className="text-sm font-medium text-gray-900">
+                                {formatPrice(displayInfo.price * item.quantity)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ))}
               </div>
 
+              {/* ===== UPDATED: Order totals with tax ===== */}
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tạm tính</span>
                   <span className="font-medium">
-                    {formatPrice(summary.subtotal)}
+                    {formatPrice(orderTotals.subtotal)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Thuế (8%)</span>
+                  <span className="font-medium">
+                    {formatPrice(orderTotals.taxAmount)}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển</span>
                   <span className="font-medium">
-                    {summary.total > summary.subtotal
-                      ? formatPrice(summary.total - summary.subtotal)
+                    {orderTotals.shippingCost > 0
+                      ? formatPrice(orderTotals.shippingCost)
                       : 'Miễn phí'}
                   </span>
                 </div>
@@ -661,10 +768,20 @@ export const CheckoutPage: React.FC = () => {
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Tổng cộng</span>
                   <span className="text-primary">
-                    {formatPrice(summary.total)}
+                    {formatPrice(orderTotals.total)}
                   </span>
                 </div>
               </div>
+
+              {/* ===== NEW: Special pricing notices ===== */}
+              {summary.hasNegotiatedItems && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center text-sm text-blue-800">
+                    <span className="mr-2">💰</span>
+                    <span>Đơn hàng có sản phẩm với giá đã thương lượng</span>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit}>
                 <Button
@@ -675,8 +792,8 @@ export const CheckoutPage: React.FC = () => {
                   leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
                 >
                   {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
-                    ? 'Đặt hàng'
-                    : 'Thanh toán'}
+                    ? `Đặt hàng • ${formatPrice(orderTotals.total)}`
+                    : `Thanh toán • ${formatPrice(orderTotals.total)}`}
                 </Button>
               </form>
 
@@ -693,7 +810,7 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* ===== UPDATED: Payment Modal with correct total ===== */}
       <Modal
         isOpen={showPaymentModal}
         onClose={() => !processing && setShowPaymentModal(false)}
@@ -800,7 +917,7 @@ export const CheckoutPage: React.FC = () => {
               Hủy
             </Button>
             <Button type="submit" loading={processing} className="flex-1">
-              Thanh toán {formatPrice(summary.total)}
+              Thanh toán {formatPrice(orderTotals.total)}
             </Button>
           </div>
         </form>

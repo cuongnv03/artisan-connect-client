@@ -40,6 +40,17 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
 
   // ===== UPDATED: Get current price (variant price or product price) =====
   const getCurrentPrice = () => {
+    // If item has negotiation, use the negotiated price stored in item.price
+    if (item.negotiationId && item.negotiation) {
+      return item.negotiation.finalPrice;
+    }
+
+    // If item has negotiationId but no negotiation details, use item.price (which should be negotiated price)
+    if (item.negotiationId) {
+      return item.price;
+    }
+
+    // Otherwise, use variant or product price
     if (item.variant) {
       return item.variant.discountPrice || item.variant.price;
     }
@@ -47,6 +58,12 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
   };
 
   const getOriginalPrice = () => {
+    // If item has negotiation, show original price for comparison
+    if (item.negotiationId && item.negotiation) {
+      return item.negotiation.originalPrice;
+    }
+
+    // Otherwise, show regular price hierarchy
     if (item.variant) {
       return item.variant.price;
     }
@@ -55,7 +72,14 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
 
   const currentPrice = getCurrentPrice();
   const originalPrice = getOriginalPrice();
-  const hasDiscount = currentPrice < originalPrice;
+  const hasDiscount = (() => {
+    if (item.negotiationId) {
+      // For negotiated items, there's always a "discount" compared to original price
+      return originalPrice > currentPrice;
+    }
+    // For regular items, check if discountPrice exists
+    return currentPrice < originalPrice;
+  })();
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -142,7 +166,30 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
 
             {/* ===== UPDATED: Price info using current prices ===== */}
             <div className="text-sm text-gray-600 mt-2">
-              {hasDiscount ? (
+              {item.negotiationId ? (
+                // Negotiated price display
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600 font-bold">
+                      {formatPrice(currentPrice)}
+                    </span>
+                    <Badge variant="success" size="sm">
+                      Giá thương lượng
+                    </Badge>
+                  </div>
+                  {hasDiscount && (
+                    <div className="text-xs text-gray-500">
+                      <span className="line-through">
+                        Giá gốc: {formatPrice(originalPrice)}
+                      </span>
+                      <span className="ml-2 text-green-600">
+                        Tiết kiệm: {formatPrice(originalPrice - currentPrice)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : hasDiscount ? (
+                // Regular discount display
                 <>
                   <span className="text-primary font-medium">
                     {formatPrice(currentPrice)}
@@ -152,6 +199,7 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
                   </span>
                 </>
               ) : (
+                // Regular price display
                 <span className="text-gray-900 font-medium">
                   {formatPrice(currentPrice)}
                 </span>
@@ -240,6 +288,14 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
             {item.quantity > 1 && (
               <div className="text-sm text-gray-500">
                 {formatPrice(currentPrice)} x {item.quantity}
+              </div>
+            )}
+
+            {/* Show savings for negotiated items */}
+            {item.negotiationId && hasDiscount && (
+              <div className="text-xs text-green-600 mt-1">
+                Tiết kiệm:{' '}
+                {formatPrice((originalPrice - currentPrice) * item.quantity)}
               </div>
             )}
           </div>
