@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   XMarkIcon,
   WrenchScrewdriverIcon,
@@ -18,9 +18,11 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { FileUpload } from '../common/FileUpload';
-import { useForm } from '../../hooks/common/useForm';
-import { uploadService } from '../../services/upload.service';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { useToastContext } from '../../contexts/ToastContext';
+import { uploadService } from '../../services/upload.service';
+import { productService } from '../../services/product.service';
+import { Product, ProductStatus } from '../../types/product';
 
 interface CustomOrderFormProps {
   isOpen: boolean;
@@ -42,28 +44,6 @@ interface CreateCustomOrderFormData {
   customerBudget?: number;
   timeline?: string;
   expiresInDays?: number;
-}
-
-interface FormData {
-  title: string;
-  description: string;
-  estimatedPrice: string;
-  customerBudget: string;
-  timeline: string;
-  expiresInDays: string;
-  // Detailed specifications như form sản phẩm
-  specifications: {
-    materials: string;
-    dimensions: string;
-    colors: string;
-    style: string;
-    features: string;
-    notes: string;
-    technique: string; // Kỹ thuật chế tác
-    inspiration: string; // Nguồn cảm hứng
-    usage: string; // Công dụng
-    occasion: string; // Dịp sử dụng
-  };
 }
 
 const MATERIAL_SUGGESTIONS = [
@@ -119,26 +99,252 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
   referenceProductId,
 }) => {
   const { success: showSuccess, error: showError } = useToastContext();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    estimatedPrice: '',
+    customerBudget: '',
+    timeline: '',
+    expiresInDays: '7',
+    referenceProductId: referenceProductId || '',
+    specifications: {
+      materials: '',
+      dimensions: '',
+      colors: '',
+      style: '',
+      features: '',
+      notes: '',
+      technique: '',
+      inspiration: '',
+      usage: '',
+      occasion: '',
+    },
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [artisanProducts, setArtisanProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [selectedReferenceProduct, setSelectedReferenceProduct] =
+    useState<Product | null>(null);
+
   const totalSteps = 4;
 
-  const {
-    values,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetForm,
-    setFieldValue,
-  } = useForm<FormData>({
-    initialValues: {
+  // Helper function for formatting price
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(price);
+  };
+
+  // Handle form field changes
+  const handleInputChange = useCallback(
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
+      const { name, value } = e.target;
+      console.log('Input change:', name, value); // Debug log
+
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+
+      // Clear error when user starts typing
+      if (errors[name]) {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: '',
+        }));
+      }
+    },
+    [errors],
+  );
+
+  // Handle specification changes
+  const handleSpecificationChange = useCallback(
+    (field: string, value: string) => {
+      console.log('Spec change:', field, value); // Debug log
+      setFormData((prev) => ({
+        ...prev,
+        specifications: {
+          ...prev.specifications,
+          [field]: value,
+        },
+      }));
+    },
+    [],
+  );
+
+  // Add suggestion to specification field
+  const addSuggestion = useCallback((field: string, suggestion: string) => {
+    setFormData((prev) => {
+      const currentValue = prev.specifications[field];
+      const newValue = currentValue
+        ? `${currentValue}, ${suggestion}`
+        : suggestion;
+
+      return {
+        ...prev,
+        specifications: {
+          ...prev.specifications,
+          [field]: newValue,
+        },
+      };
+    });
+  }, []);
+
+  // Reference product handlers
+  const handleReferenceProductChange = useCallback(
+    (productId: string) => {
+      const product = artisanProducts.find((p) => p.id === productId);
+      setSelectedReferenceProduct(product || null);
+      setFormData((prev) => ({
+        ...prev,
+        referenceProductId: productId,
+      }));
+    },
+    [artisanProducts],
+  );
+
+  const clearReferenceProduct = useCallback(() => {
+    setSelectedReferenceProduct(null);
+    setFormData((prev) => ({
+      ...prev,
+      referenceProductId: '',
+    }));
+  }, []);
+
+  // Validation - FIXED
+  const validateForm = useCallback(() => {
+    console.log('Validating form with data:', formData); // Debug log
+    const newErrors: Record<string, string> = {};
+
+    // Title validation
+    if (!formData.title.trim()) {
+      newErrors.title = 'Tiêu đề là bắt buộc';
+    } else if (formData.title.trim().length < 10) {
+      newErrors.title = 'Tiêu đề phải có ít nhất 10 ký tự để rõ ràng';
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      newErrors.description = 'Mô tả là bắt buộc';
+    } else if (formData.description.trim().length < 50) {
+      newErrors.description =
+        'Mô tả phải có ít nhất 50 ký tự để nghệ nhân hiểu rõ';
+    }
+
+    // Price validation (optional fields)
+    if (formData.estimatedPrice && formData.estimatedPrice.trim()) {
+      const price = Number(formData.estimatedPrice);
+      if (isNaN(price) || price <= 0) {
+        newErrors.estimatedPrice = 'Giá ước tính phải là số dương';
+      }
+    }
+
+    if (formData.customerBudget && formData.customerBudget.trim()) {
+      const budget = Number(formData.customerBudget);
+      if (isNaN(budget) || budget <= 0) {
+        newErrors.customerBudget = 'Ngân sách phải là số dương';
+      }
+    }
+
+    console.log('Validation errors:', newErrors); // Debug log
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  // Handle form submission - FIXED
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      console.log('Form submitted!'); // Debug log
+
+      if (!validateForm()) {
+        console.log('Validation failed'); // Debug log
+        return;
+      }
+
+      if (!artisanId) {
+        showError('Không tìm thấy thông tin nghệ nhân');
+        return;
+      }
+
+      try {
+        console.log('Starting form submission process...'); // Debug log
+        let attachmentUrls: string[] = [];
+
+        if (attachmentFiles.length > 0) {
+          setUploadingFiles(true);
+          const uploadPromises = attachmentFiles.map((file) =>
+            uploadService.uploadImage(file, { folder: 'custom-orders' }),
+          );
+          const uploadResults = await Promise.all(uploadPromises);
+          attachmentUrls = uploadResults.map((result) => result.url);
+        }
+
+        // Build specifications object
+        const specifications = Object.entries(formData.specifications)
+          .filter(([, value]) => value && value.trim())
+          .reduce((acc, [key, value]) => {
+            acc[key] = value.trim();
+            return acc;
+          }, {} as Record<string, string>);
+
+        const submitData: CreateCustomOrderFormData = {
+          artisanId,
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          referenceProductId: formData.referenceProductId || undefined,
+          specifications:
+            Object.keys(specifications).length > 0 ? specifications : undefined,
+          attachmentUrls:
+            attachmentUrls.length > 0 ? attachmentUrls : undefined,
+          estimatedPrice: formData.estimatedPrice
+            ? Number(formData.estimatedPrice)
+            : undefined,
+          customerBudget: formData.customerBudget
+            ? Number(formData.customerBudget)
+            : undefined,
+          timeline: formData.timeline.trim() || undefined,
+          expiresInDays: formData.expiresInDays
+            ? Number(formData.expiresInDays)
+            : undefined,
+        };
+
+        console.log('Submitting data:', submitData); // Debug log
+        await onSubmit(submitData);
+
+        // Reset form after successful submission
+        resetForm();
+      } catch (error: any) {
+        console.error('Form submission error:', error); // Debug log
+        showError(error.message || 'Có lỗi xảy ra khi tải file');
+      } finally {
+        setUploadingFiles(false);
+      }
+    },
+    [formData, attachmentFiles, artisanId, onSubmit, validateForm, showError],
+  );
+
+  // Reset form function
+  const resetForm = useCallback(() => {
+    setFormData({
       title: '',
       description: '',
       estimatedPrice: '',
       customerBudget: '',
       timeline: '',
       expiresInDays: '7',
+      referenceProductId: '',
       specifications: {
         materials: '',
         dimensions: '',
@@ -151,143 +357,88 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
         usage: '',
         occasion: '',
       },
-    },
-    validate: (values) => {
-      const errors: Record<string, string> = {};
-
-      if (!values.title.trim()) {
-        errors.title = 'Tiêu đề là bắt buộc';
-      } else if (values.title.length < 10) {
-        errors.title = 'Tiêu đề phải có ít nhất 10 ký tự để rõ ràng';
-      }
-
-      if (!values.description.trim()) {
-        errors.description = 'Mô tả là bắt buộc';
-      } else if (values.description.length < 50) {
-        errors.description =
-          'Mô tả phải có ít nhất 50 ký tự để nghệ nhân hiểu rõ';
-      }
-
-      if (
-        values.estimatedPrice &&
-        (isNaN(Number(values.estimatedPrice)) ||
-          Number(values.estimatedPrice) <= 0)
-      ) {
-        errors.estimatedPrice = 'Giá ước tính phải là số dương';
-      }
-
-      if (
-        values.customerBudget &&
-        (isNaN(Number(values.customerBudget)) ||
-          Number(values.customerBudget) <= 0)
-      ) {
-        errors.customerBudget = 'Ngân sách phải là số dương';
-      }
-
-      return errors;
-    },
-    onSubmit: async (data) => {
-      await handleFormSubmit(data);
-    },
-  });
-
-  const handleFormSubmit = async (data: FormData) => {
-    if (!artisanId) {
-      showError('Không tìm thấy thông tin nghệ nhân');
-      return;
-    }
-
-    try {
-      let attachmentUrls: string[] = [];
-
-      if (attachmentFiles.length > 0) {
-        setUploadingFiles(true);
-        const uploadPromises = attachmentFiles.map((file) =>
-          uploadService.uploadImage(file, { folder: 'custom-orders' }),
-        );
-        const uploadResults = await Promise.all(uploadPromises);
-        attachmentUrls = uploadResults.map((result) => result.url);
-      }
-
-      // Build comprehensive specifications
-      const specifications = Object.entries(data.specifications)
-        .filter(([, value]) => value.trim())
-        .reduce((acc, [key, value]) => {
-          acc[key] = value.trim();
-          return acc;
-        }, {} as Record<string, string>);
-
-      const submitData: CreateCustomOrderFormData = {
-        artisanId,
-        title: data.title.trim(),
-        description: data.description.trim(),
-        referenceProductId,
-        specifications:
-          Object.keys(specifications).length > 0 ? specifications : undefined,
-        attachmentUrls: attachmentUrls.length > 0 ? attachmentUrls : undefined,
-        estimatedPrice: data.estimatedPrice
-          ? Number(data.estimatedPrice)
-          : undefined,
-        customerBudget: data.customerBudget
-          ? Number(data.customerBudget)
-          : undefined,
-        timeline: data.timeline.trim() || undefined,
-        expiresInDays: data.expiresInDays
-          ? Number(data.expiresInDays)
-          : undefined,
-      };
-
-      onSubmit(submitData);
-      resetForm();
-      setAttachmentFiles([]);
-      setCurrentStep(1);
-    } catch (error: any) {
-      showError(error.message || 'Có lỗi xảy ra khi tải file');
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
-
-  const handleClose = () => {
-    resetForm();
+    });
     setAttachmentFiles([]);
     setCurrentStep(1);
+    setSelectedReferenceProduct(null);
+    setErrors({});
+  }, []);
+
+  // Handle close
+  const handleClose = useCallback(() => {
+    resetForm();
     onClose();
-  };
+  }, [resetForm, onClose]);
 
-  const handleSpecificationChange = (
-    field: keyof FormData['specifications'],
-    value: string,
-  ) => {
-    setFieldValue('specifications', {
-      ...values.specifications,
-      [field]: value,
-    });
-  };
-
-  const nextStep = () => {
+  // Navigation
+  const nextStep = useCallback(() => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
-  };
+  }, [currentStep, totalSteps]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
 
-  const addSuggestion = (
-    field: keyof FormData['specifications'],
-    suggestion: string,
-  ) => {
-    const currentValue = values.specifications[field];
-    const newValue = currentValue
-      ? `${currentValue}, ${suggestion}`
-      : suggestion;
-    handleSpecificationChange(field, newValue);
-  };
+  // Handle button click for debugging
+  const handleButtonClick = useCallback(() => {
+    console.log('Submit button clicked!'); // Debug log
+    console.log('Current form data:', formData); // Debug log
+    console.log('Current step:', currentStep); // Debug log
+    console.log('Loading state:', loading, uploadingFiles); // Debug log
+  }, [formData, currentStep, loading, uploadingFiles]);
 
+  // Load artisan products
+  useEffect(() => {
+    const loadArtisanProducts = async () => {
+      if (!artisanId || !isOpen) return;
+
+      setLoadingProducts(true);
+      try {
+        const response = await productService.getProducts({
+          sellerId: artisanId,
+          status: ProductStatus.PUBLISHED,
+          limit: 50,
+        });
+        setArtisanProducts(response.data);
+
+        if (referenceProductId) {
+          const refProduct = response.data.find(
+            (p) => p.id === referenceProductId,
+          );
+          if (refProduct) {
+            setSelectedReferenceProduct(refProduct);
+            setFormData((prev) => ({
+              ...prev,
+              referenceProductId: referenceProductId,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading artisan products:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    loadArtisanProducts();
+  }, [artisanId, isOpen, referenceProductId]);
+
+  // Check if form can be submitted
+  const canSubmit =
+    formData.title.trim().length >= 10 &&
+    formData.description.trim().length >= 50;
+  console.log('Can submit:', canSubmit, {
+    titleLength: formData.title.trim().length,
+    descriptionLength: formData.description.trim().length,
+    loading,
+    uploadingFiles,
+  }); // Debug log
+
+  // Step indicator component
   const StepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
       {[1, 2, 3, 4].map((step) => (
@@ -315,7 +466,8 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
     </div>
   );
 
-  const StepContent = () => {
+  // Step content
+  const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
@@ -333,16 +485,26 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
             </div>
 
             <div className="space-y-4">
-              <Input
-                name="title"
-                label="Tiêu đề sản phẩm mong muốn"
-                value={values.title}
-                onChange={handleChange}
-                error={errors.title}
-                placeholder="VD: Bình gốm sứ phong cách Nhật Bản với họa tiết hoa anh đào"
-                className="text-lg"
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tiêu đề sản phẩm mong muốn{' '}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="VD: Bình gốm sứ phong cách Nhật Bản với họa tiết hoa anh đào"
+                  className="w-full text-lg border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-200"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.title.length} ký tự (tối thiểu 10 ký tự)
+                </p>
+                {errors.title && (
+                  <p className="text-sm text-red-600 mt-1">{errors.title}</p>
+                )}
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,8 +513,8 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 <textarea
                   name="description"
                   rows={6}
-                  value={values.description}
-                  onChange={handleChange}
+                  value={formData.description}
+                  onChange={handleInputChange}
                   placeholder="Hãy mô tả chi tiết về sản phẩm bạn mong muốn: 
 - Công dụng và cách sử dụng
 - Kích thước tổng quan
@@ -367,7 +529,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  {values.description.length}/2000 ký tự (tối thiểu 50 ký tự)
+                  {formData.description.length}/2000 ký tự (tối thiểu 50 ký tự)
                 </p>
               </div>
             </div>
@@ -389,6 +551,75 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
               </p>
             </div>
 
+            {/* Reference Product Selection */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                <SparklesIcon className="w-5 h-5 mr-2" />
+                Sản phẩm tham khảo (tùy chọn)
+              </h3>
+
+              {loadingProducts ? (
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2 text-gray-500">
+                    Đang tải sản phẩm...
+                  </span>
+                </div>
+              ) : artisanProducts.length > 0 ? (
+                <div className="space-y-3">
+                  <select
+                    value={formData.referenceProductId}
+                    onChange={(e) =>
+                      handleReferenceProductChange(e.target.value)
+                    }
+                    className="w-full border border-blue-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">Chọn sản phẩm tham khảo...</option>
+                    {artisanProducts.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name} - {formatPrice(product.price)}
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedReferenceProduct && (
+                    <div className="p-4 bg-white rounded-lg border border-blue-200">
+                      <div className="flex items-start space-x-4">
+                        <img
+                          src={selectedReferenceProduct.images[0]}
+                          alt={selectedReferenceProduct.name}
+                          className="w-20 h-20 object-cover rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-blue-900">
+                            {selectedReferenceProduct.name}
+                          </h4>
+                          <p className="text-blue-700 font-medium">
+                            {formatPrice(selectedReferenceProduct.price)}
+                          </p>
+                          <p className="text-sm text-blue-600 mt-1 line-clamp-2">
+                            {selectedReferenceProduct.description}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearReferenceProduct}
+                          className="text-blue-400 hover:text-blue-600"
+                        >
+                          <XMarkIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <span>Nghệ nhân này chưa có sản phẩm nào</span>
+                </div>
+              )}
+            </div>
+
+            {/* Specifications */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Materials */}
               <div>
@@ -397,7 +628,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={values.specifications.materials}
+                  value={formData.specifications.materials}
                   onChange={(e) =>
                     handleSpecificationChange('materials', e.target.value)
                   }
@@ -425,7 +656,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={values.specifications.colors}
+                  value={formData.specifications.colors}
                   onChange={(e) =>
                     handleSpecificationChange('colors', e.target.value)
                   }
@@ -446,14 +677,14 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </div>
               </div>
 
-              {/* Dimensions */}
+              {/* Other specification fields... */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Kích thước & tỷ lệ
                 </label>
                 <textarea
                   rows={3}
-                  value={values.specifications.dimensions}
+                  value={formData.specifications.dimensions}
                   onChange={(e) =>
                     handleSpecificationChange('dimensions', e.target.value)
                   }
@@ -462,14 +693,13 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 />
               </div>
 
-              {/* Style */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phong cách & cảm nhận
                 </label>
                 <textarea
                   rows={3}
-                  value={values.specifications.style}
+                  value={formData.specifications.style}
                   onChange={(e) =>
                     handleSpecificationChange('style', e.target.value)
                   }
@@ -489,37 +719,41 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                   ))}
                 </div>
               </div>
+            </div>
 
-              {/* Technique */}
+            {/* Additional specification fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Kỹ thuật chế tác mong muốn
                 </label>
-                <Input
-                  value={values.specifications.technique}
+                <input
+                  type="text"
+                  value={formData.specifications.technique}
                   onChange={(e) =>
                     handleSpecificationChange('technique', e.target.value)
                   }
                   placeholder="VD: Khắc thủ công, inlay gỗ, men rạn..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                 />
               </div>
 
-              {/* Usage */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Công dụng & cách sử dụng
                 </label>
-                <Input
-                  value={values.specifications.usage}
+                <input
+                  type="text"
+                  value={formData.specifications.usage}
                   onChange={(e) =>
                     handleSpecificationChange('usage', e.target.value)
                   }
                   placeholder="VD: Trang trí phòng khách, cắm hoa, quà tặng..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                 />
               </div>
             </div>
 
-            {/* Features & Occasion */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -527,7 +761,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={values.specifications.features}
+                  value={formData.specifications.features}
                   onChange={(e) =>
                     handleSpecificationChange('features', e.target.value)
                   }
@@ -540,24 +774,25 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Dịp sử dụng
                 </label>
-                <Input
-                  value={values.specifications.occasion}
+                <input
+                  type="text"
+                  value={formData.specifications.occasion}
                   onChange={(e) =>
                     handleSpecificationChange('occasion', e.target.value)
                   }
                   placeholder="VD: Cưới hỏi, khai trương, hàng ngày..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
                 />
               </div>
             </div>
 
-            {/* Inspiration & Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nguồn cảm hứng & ghi chú thêm
               </label>
               <textarea
                 rows={4}
-                value={values.specifications.inspiration}
+                value={formData.specifications.inspiration}
                 onChange={(e) =>
                   handleSpecificationChange('inspiration', e.target.value)
                 }
@@ -642,15 +877,19 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Giá ước tính (VNĐ)
                 </label>
-                <Input
-                  name="estimatedPrice"
+                <input
                   type="number"
-                  value={values.estimatedPrice}
-                  onChange={handleChange}
-                  error={errors.estimatedPrice}
+                  name="estimatedPrice"
+                  value={formData.estimatedPrice}
+                  onChange={handleInputChange}
                   placeholder="500000"
-                  className="text-lg"
+                  className="w-full text-lg border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
+                {errors.estimatedPrice && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.estimatedPrice}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   Giá bạn dự kiến cho sản phẩm này
                 </p>
@@ -660,15 +899,19 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Ngân sách tối đa (VNĐ)
                 </label>
-                <Input
-                  name="customerBudget"
+                <input
                   type="number"
-                  value={values.customerBudget}
-                  onChange={handleChange}
-                  error={errors.customerBudget}
+                  name="customerBudget"
+                  value={formData.customerBudget}
+                  onChange={handleInputChange}
                   placeholder="1000000"
-                  className="text-lg"
+                  className="w-full text-lg border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
+                {errors.customerBudget && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.customerBudget}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   Ngân sách tối đa bạn có thể chi trả
                 </p>
@@ -680,8 +923,8 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </label>
                 <select
                   name="timeline"
-                  value={values.timeline}
-                  onChange={handleChange}
+                  value={formData.timeline}
+                  onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
                   <option value="">Chọn thời gian</option>
@@ -699,8 +942,8 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 </label>
                 <select
                   name="expiresInDays"
-                  value={values.expiresInDays}
-                  onChange={handleChange}
+                  value={formData.expiresInDays}
+                  onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
                   <option value="3">3 ngày</option>
@@ -743,7 +986,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
       closeOnEscape={!loading && !uploadingFiles}
     >
       <div className="relative max-h-[90vh] overflow-hidden">
-        {/* Artistic Header */}
+        {/* Header */}
         <div className="relative bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 p-6 border-b border-gray-200">
           <div className="absolute top-0 left-0 w-full h-full opacity-10">
             <div className="absolute top-4 left-4 w-8 h-8 bg-orange-300 rounded-full"></div>
@@ -779,7 +1022,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
           <form onSubmit={handleSubmit} className="space-y-8">
             <StepIndicator />
-            <StepContent />
+            {renderStepContent()}
 
             {/* Navigation */}
             <div className="flex justify-between items-center pt-6 border-t border-gray-200">
@@ -804,8 +1047,9 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 ) : (
                   <Button
                     type="submit"
+                    onClick={handleButtonClick} // Debug click
                     loading={loading || uploadingFiles}
-                    disabled={loading || uploadingFiles}
+                    disabled={!canSubmit || loading || uploadingFiles}
                     className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     <WrenchScrewdriverIcon className="w-5 h-5 mr-2" />
@@ -816,6 +1060,16 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
             </div>
           </form>
         </div>
+
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs">
+            <div>Can Submit: {canSubmit ? 'YES' : 'NO'}</div>
+            <div>Title: {formData.title.length} chars</div>
+            <div>Desc: {formData.description.length} chars</div>
+            <div>Step: {currentStep}</div>
+          </div>
+        )}
 
         {/* Loading Overlay */}
         {(loading || uploadingFiles) && (
