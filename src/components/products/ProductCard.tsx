@@ -108,15 +108,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }).format(price);
   };
 
-  const getStatusBadge = (status: string) => {
-    const configs = {
-      PUBLISHED: { variant: 'success' as const, label: 'Đang bán' },
-      DRAFT: { variant: 'secondary' as const, label: 'Nháp' },
-      OUT_OF_STOCK: { variant: 'warning' as const, label: 'Hết hàng' },
-      DELETED: { variant: 'danger' as const, label: 'Đã xóa' },
-    };
-    return configs[status as keyof typeof configs] || configs.DRAFT;
-  };
+  // const getStatusBadge = (status: string) => {
+  //   const configs = {
+  //     PUBLISHED: { variant: 'success' as const, label: 'Đang bán' },
+  //     DRAFT: { variant: 'secondary' as const, label: 'Nháp' },
+  //     OUT_OF_STOCK: { variant: 'warning' as const, label: 'Hết hàng' },
+  //     DELETED: { variant: 'danger' as const, label: 'Đã xóa' },
+  //   };
+  //   return configs[status as keyof typeof configs] || configs.DRAFT;
+  // };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -185,7 +185,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     product.status === 'PUBLISHED' &&
     displayStock > 0;
 
-  const statusConfig = getStatusBadge(product.status);
+  // const statusConfig = getStatusBadge(product.status);
 
   const cardSizeClasses = {
     sm: 'h-80',
@@ -215,9 +215,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Badges Overlay */}
           <div className="absolute top-3 left-3 flex flex-col gap-1">
-            <Badge variant={statusConfig.variant} size="sm">
+            {/* <Badge variant={statusConfig.variant} size="sm">
               {statusConfig.label}
-            </Badge>
+            </Badge> */}
             {hasDiscount && (
               <Badge variant="danger" size="sm">
                 -{discountPercent}%
