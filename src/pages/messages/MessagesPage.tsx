@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
   ChatBubbleLeftRightIcon,
@@ -7,16 +8,18 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocketContext } from '../../contexts/SocketContext';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { EmptyState } from '../../components/common/EmptyState';
 import { SearchBox } from '../../components/common/SearchBox';
 import { ConversationItem } from '../../components/messages/ConversationItem';
+import { ConversationView } from '../../components/messages/ConversationView';
 import { useConversations } from '../../hooks/messages/useConversations';
 
 export const MessagesPage: React.FC = () => {
+  const { userId } = useParams<{ userId?: string }>();
+  const navigate = useNavigate();
   const { state } = useAuth();
   const { onlineUsers } = useSocketContext();
+
   const {
     conversations,
     loading,
@@ -30,9 +33,40 @@ export const MessagesPage: React.FC = () => {
     refreshConversations,
   } = useConversations();
 
+  const selectedUserId = userId || null;
+
   const isUserOnline = (userId: string) => {
     return onlineUsers.has(userId);
   };
+
+  const handleConversationSelect = (targetUserId: string) => {
+    // Update URL
+    navigate(`/messages/${targetUserId}`);
+
+    // Auto mark as read when conversation is selected
+    const conversation = conversations.find(
+      (conv) => conv.participantId === targetUserId,
+    );
+    if (conversation && conversation.unreadCount > 0) {
+      handleMarkAsRead(targetUserId);
+    }
+  };
+
+  const handleCloseConversation = () => {
+    navigate('/messages');
+  };
+
+  // Validate that selected user exists in conversations
+  const selectedConversation = selectedUserId
+    ? conversations.find((conv) => conv.participantId === selectedUserId)
+    : null;
+
+  // If we have a userId in URL but no matching conversation, redirect to messages
+  useEffect(() => {
+    if (selectedUserId && conversations.length > 0 && !selectedConversation) {
+      navigate('/messages');
+    }
+  }, [selectedUserId, conversations, selectedConversation, navigate]);
 
   if (loading) {
     return (
@@ -47,7 +81,7 @@ export const MessagesPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Header - Fixed */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tin nhắn</h1>
@@ -73,66 +107,92 @@ export const MessagesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <Card className="p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <SearchBox
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onSubmit={() => {}}
-              placeholder="Tìm kiếm cuộc trò chuyện..."
-            />
+      {/* Main Content Container - Fixed height with scroll */}
+      <div className="h-[calc(100vh-12rem)] flex bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {/* Left Sidebar - Conversations List (1/3) */}
+        <div className="w-1/3 border-r border-gray-200 flex flex-col">
+          {/* Search and Filters - Fixed */}
+          <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-gray-50">
+            <div className="space-y-3">
+              <SearchBox
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onSubmit={() => {}}
+                placeholder="Tìm kiếm cuộc trò chuyện..."
+                className="w-full"
+              />
+
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="w-full rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-primary"
+              >
+                <option value="all">Tất cả ({conversations.length})</option>
+                <option value="unread">Chưa đọc ({totalUnread})</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex space-x-3">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-primary"
-            >
-              <option value="all">Tất cả ({conversations.length})</option>
-              <option value="unread">Chưa đọc ({totalUnread})</option>
-            </select>
+          {/* Conversations List - Scrollable */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {conversations.length === 0 ? (
+              <div className="p-6 text-center">
+                <ChatBubbleLeftRightIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">
+                  {searchQuery
+                    ? 'Không tìm thấy cuộc trò chuyện'
+                    : 'Chưa có tin nhắn nào'}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {conversations.map((conversation) => (
+                  <div
+                    key={conversation.participantId}
+                    onClick={() =>
+                      handleConversationSelect(conversation.participantId)
+                    }
+                    className={`cursor-pointer transition-colors duration-200 hover:bg-gray-50 ${
+                      selectedUserId === conversation.participantId
+                        ? 'bg-primary/5 border-r-2 border-r-primary'
+                        : ''
+                    }`}
+                  >
+                    <ConversationItem
+                      conversation={conversation}
+                      isOnline={isUserOnline(conversation.participantId)}
+                      onMarkAsRead={handleMarkAsRead}
+                      isSelected={selectedUserId === conversation.participantId}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </Card>
 
-      {/* Conversations List */}
-      {conversations.length === 0 ? (
-        <EmptyState
-          icon={<ChatBubbleLeftRightIcon className="w-16 h-16" />}
-          title={
-            searchQuery
-              ? 'Không tìm thấy cuộc trò chuyện'
-              : 'Chưa có tin nhắn nào'
-          }
-          description={
-            searchQuery
-              ? 'Thử tìm kiếm với từ khóa khác'
-              : 'Bắt đầu trò chuyện với nghệ nhân hoặc khách hàng'
-          }
-          action={
-            !searchQuery
-              ? {
-                  label: 'Khám phá nghệ nhân',
-                  onClick: () => (window.location.href = '/discover'),
-                }
-              : undefined
-          }
-        />
-      ) : (
-        <div className="space-y-2">
-          {conversations.map((conversation) => (
-            <ConversationItem
-              key={conversation.participantId}
-              conversation={conversation}
-              isOnline={isUserOnline(conversation.participantId)}
-              onMarkAsRead={handleMarkAsRead}
+        {/* Right Content - Conversation View (2/3) */}
+        <div className="flex-1 flex flex-col">
+          {selectedUserId && selectedConversation ? (
+            <ConversationView
+              userId={selectedUserId}
+              onClose={handleCloseConversation}
             />
-          ))}
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <ChatBubbleLeftRightIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Chọn một cuộc trò chuyện
+                </h3>
+                <p className="text-gray-500">
+                  Chọn cuộc trò chuyện từ danh sách bên trái để bắt đầu nhắn tin
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

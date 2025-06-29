@@ -6,7 +6,7 @@ interface DropdownItem {
   value: string;
   icon?: React.ReactNode;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void; // Changed to accept optional event parameter
 }
 
 interface DropdownProps {
@@ -72,9 +72,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     : 'text-gray-700'
                 }`}
                 disabled={item.disabled}
-                onClick={() => {
+                onClick={(e) => {
+                  // Pass the event to the onClick handler
                   if (!item.disabled) {
-                    item.onClick?.();
+                    item.onClick?.(e);
                     setIsOpen(false);
                   }
                 }}

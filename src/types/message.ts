@@ -111,13 +111,16 @@ export interface MessageQueryOptions {
 
 // Custom Order types for messaging
 export interface CustomOrderProposal {
-  productName: string;
+  artisanId: string;
+  title: string;
   description: string;
-  estimatedPrice: number;
-  timeline: string;
+  referenceProductId?: string;
   specifications?: Record<string, any>;
-  attachments?: string[];
-  deadline?: Date;
+  attachmentUrls?: string[];
+  estimatedPrice?: number;
+  customerBudget?: number;
+  timeline?: string;
+  expiresInDays?: number;
 }
 
 export interface CustomOrderResponse {

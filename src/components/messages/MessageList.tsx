@@ -25,6 +25,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onLoadMore,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -36,8 +37,8 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center py-12">
+      <div className="h-full flex items-center justify-center bg-gray-50 p-8">
+        <div className="text-center">
           <div className="text-gray-400 mb-4">
             <Avatar
               src={participant.avatarUrl}
@@ -57,61 +58,69 @@ export const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-      {hasMore && (
-        <div className="text-center mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLoadMore}
-            loading={loadingMore}
-            disabled={loadingMore}
-          >
-            {loadingMore ? 'Đang tải...' : 'Tải tin nhắn cũ hơn'}
-          </Button>
-        </div>
-      )}
-
-      <div>
-        {messages.map((message, index) => (
-          <MessageItem
-            key={message.id}
-            message={message}
-            isOwn={message.senderId === currentUserId}
-            participant={participant}
-            previousMessage={messages[index - 1]}
-            nextMessage={messages[index + 1]}
-          />
-        ))}
-
-        {/* Typing indicator */}
-        {participantTyping && (
-          <div className="flex justify-start mb-4">
-            <div className="mr-3">
-              <Avatar
-                src={participant.avatarUrl}
-                alt={`${participant.firstName} ${participant.lastName}`}
-                size="sm"
-              />
-            </div>
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.1s' }}
-                ></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
-              </div>
-            </div>
+    <div
+      ref={messagesContainerRef}
+      className="h-full overflow-y-auto bg-gray-50 message-scroll"
+    >
+      <div className="p-4 min-h-full flex flex-col">
+        {hasMore && (
+          <div className="text-center mb-4 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLoadMore}
+              loading={loadingMore}
+              disabled={loadingMore}
+              className="bg-white shadow-sm hover:shadow-md transition-shadow"
+            >
+              {loadingMore ? 'Đang tải...' : 'Tải tin nhắn cũ hơn'}
+            </Button>
           </div>
         )}
-      </div>
 
-      <div ref={messagesEndRef} />
+        {/* Messages container - grows to fill space */}
+        <div className="flex-1 space-y-2">
+          {messages.map((message, index) => (
+            <MessageItem
+              key={message.id}
+              message={message}
+              isOwn={message.senderId === currentUserId}
+              participant={participant}
+              previousMessage={messages[index - 1]}
+              nextMessage={messages[index + 1]}
+            />
+          ))}
+
+          {/* Typing indicator */}
+          {participantTyping && (
+            <div className="flex justify-start">
+              <div className="mr-3">
+                <Avatar
+                  src={participant.avatarUrl}
+                  alt={`${participant.firstName} ${participant.lastName}`}
+                  size="sm"
+                />
+              </div>
+              <div className="bg-white rounded-lg px-4 py-2 shadow-sm border">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.1s' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.2s' }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} className="h-1 flex-shrink-0" />
+      </div>
     </div>
   );
 };

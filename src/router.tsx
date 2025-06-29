@@ -507,7 +507,7 @@ export const router = createBrowserRouter(
               path: ':userId',
               element: (
                 <ProtectedRoute>
-                  <ConversationPage />
+                  <MessagesPage />
                 </ProtectedRoute>
               ),
             },

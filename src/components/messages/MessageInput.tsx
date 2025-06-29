@@ -2,12 +2,9 @@ import React, { useState, useRef } from 'react';
 import {
   PaperAirplaneIcon,
   PhotoIcon,
-  PlusIcon,
   WrenchScrewdriverIcon,
-  DocumentIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '../ui/Button';
-import { Dropdown } from '../ui/Dropdown';
 import { useForm } from '../../hooks/common/useForm';
 
 interface MessageInputProps {
@@ -32,7 +29,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   uploadingMedia = false,
 }) => {
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { values, handleChange, handleSubmit, resetForm } =
     useForm<MessageFormData>({
@@ -67,35 +63,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (file) {
       onSendMedia(file, 'image');
     }
-    e.target.value = ''; // Reset input
+    e.target.value = '';
   };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onSendMedia(file, 'file');
-    }
-    e.target.value = ''; // Reset input
-  };
-
-  const attachmentOptions = [
-    {
-      label: 'Hình ảnh',
-      value: 'image',
-      icon: <PhotoIcon className="w-4 h-4" />,
-      onClick: () => imageInputRef.current?.click(),
-    },
-    {
-      label: 'Tài liệu',
-      value: 'file',
-      icon: <DocumentIcon className="w-4 h-4" />,
-      onClick: () => fileInputRef.current?.click(),
-    },
-  ];
 
   return (
     <div className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
       <form onSubmit={handleSubmit} className="flex items-end space-x-3">
+        {/* Action Buttons */}
         <div className="flex space-x-2">
           {/* Photo Upload */}
           <Button
@@ -105,6 +79,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onClick={() => imageInputRef.current?.click()}
             disabled={uploadingMedia}
             title="Gửi hình ảnh"
+            className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
           >
             <PhotoIcon className="w-5 h-5" />
           </Button>
@@ -117,40 +92,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onClick={onShowCustomOrderForm}
             disabled={uploadingMedia}
             title="Tạo đề xuất custom order"
+            className="p-2 text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-full transition-colors"
           >
             <WrenchScrewdriverIcon className="w-5 h-5" />
           </Button>
-
-          {/* More Attachments */}
-          <Dropdown
-            trigger={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={uploadingMedia}
-                title="Thêm tệp đính kèm"
-              >
-                <PlusIcon className="w-5 h-5" />
-              </Button>
-            }
-            items={attachmentOptions}
-            placement="top-start"
-          />
         </div>
 
-        <div className="flex-1">
+        {/* Message Input */}
+        <div className="flex-1 relative">
           <textarea
             name="content"
             rows={1}
-            className="block w-full rounded-lg border-gray-300 resize-none focus:border-primary focus:ring-primary"
+            className="block w-full rounded-lg border-gray-300 resize-none focus:border-primary focus:ring-primary placeholder-gray-400"
             placeholder="Nhập tin nhắn..."
             value={values.content}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             disabled={uploadingMedia}
             style={{
-              minHeight: '40px',
+              minHeight: '44px',
               maxHeight: '120px',
               resize: 'none',
             }}
@@ -162,16 +122,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           />
         </div>
 
+        {/* Send Button */}
         <Button
           type="submit"
           disabled={!values.content.trim() || sending || uploadingMedia}
           loading={sending}
-          leftIcon={<PaperAirplaneIcon className="w-4 h-4" />}
+          className="rounded-full p-3 bg-primary hover:bg-primary-dark disabled:opacity-50"
+          title="Gửi tin nhắn"
         >
-          {uploadingMedia ? 'Đang tải...' : 'Gửi'}
+          <PaperAirplaneIcon className="w-5 h-5 text-white" />
         </Button>
 
-        {/* Hidden file inputs */}
+        {/* Hidden file input */}
         <input
           ref={imageInputRef}
           type="file"
@@ -179,14 +141,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleImageUpload}
           className="hidden"
         />
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
       </form>
+
+      {uploadingMedia && (
+        <div className="mt-2 text-sm text-gray-500 flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+          Đang tải ảnh...
+        </div>
+      )}
     </div>
   );
 };
