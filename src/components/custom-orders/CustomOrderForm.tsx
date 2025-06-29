@@ -150,7 +150,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
       >,
     ) => {
       const { name, value } = e.target;
-      console.log('Input change:', name, value); // Debug log
+      // console.log('Input change:', name, value); // Debug log
 
       setFormData((prev) => ({
         ...prev,
@@ -171,7 +171,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
   // Handle specification changes
   const handleSpecificationChange = useCallback(
     (field: string, value: string) => {
-      console.log('Spec change:', field, value); // Debug log
+      // console.log('Spec change:', field, value); // Debug log
       setFormData((prev) => ({
         ...prev,
         specifications: {
@@ -224,7 +224,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
 
   // Validation - FIXED
   const validateForm = useCallback(() => {
-    console.log('Validating form with data:', formData); // Debug log
+    // console.log('Validating form with data:', formData); // Debug log
     const newErrors: Record<string, string> = {};
 
     // Title validation
@@ -257,7 +257,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
       }
     }
 
-    console.log('Validation errors:', newErrors); // Debug log
+    // console.log('Validation errors:', newErrors); // Debug log
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);
@@ -431,12 +431,12 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
   const canSubmit =
     formData.title.trim().length >= 10 &&
     formData.description.trim().length >= 50;
-  console.log('Can submit:', canSubmit, {
-    titleLength: formData.title.trim().length,
-    descriptionLength: formData.description.trim().length,
-    loading,
-    uploadingFiles,
-  }); // Debug log
+  // console.log('Can submit:', canSubmit, {
+  //   titleLength: formData.title.trim().length,
+  //   descriptionLength: formData.description.trim().length,
+  //   loading,
+  //   uploadingFiles
+  // }); // Debug log
 
   // Step indicator component
   const StepIndicator = () => (
@@ -1062,14 +1062,14 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
         </div>
 
         {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
+        {/* {process.env.NODE_ENV === 'development' && (
           <div className="fixed bottom-4 right-4 bg-black text-white p-2 rounded text-xs">
             <div>Can Submit: {canSubmit ? 'YES' : 'NO'}</div>
             <div>Title: {formData.title.length} chars</div>
             <div>Desc: {formData.description.length} chars</div>
             <div>Step: {currentStep}</div>
           </div>
-        )}
+        )} */}
 
         {/* Loading Overlay */}
         {(loading || uploadingFiles) && (
