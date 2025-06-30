@@ -16,6 +16,7 @@ export const ROUTE_PATHS = {
   // MAIN APP ROUTES (Customer + Artisan based on permissions)
   // ============================================================================
   APP: {
+    ROOT: '/',
     // === HOME & DISCOVERY ===
     HOME: '/home', // Feed posts - API: /posts/feed/followed
     DISCOVER: '/discover', // Discovery page with artisans/products

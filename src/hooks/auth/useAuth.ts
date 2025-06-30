@@ -19,7 +19,7 @@ export const useAuthForm = () => {
   const handleLogin = async (data: LoginRequest) => {
     try {
       await login(data.emailOrUsername, data.password, data.rememberMe);
-      const from = location.state?.from?.pathname || ROUTE_PATHS.APP.HOME;
+      const from = location.state?.from?.pathname || ROUTE_PATHS.APP.ROOT;
       success('Đăng nhập thành công!');
       navigate(from, { replace: true });
     } catch (err: any) {

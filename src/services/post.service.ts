@@ -94,6 +94,29 @@ export const postService = {
     };
   },
 
+  // Admin methods
+  async getAdminPosts(
+    query: GetPostsQuery = {},
+  ): Promise<PostPaginationResult> {
+    const response = await apiClient.get<PaginatedResponse<Post>>(
+      '/admin/posts',
+      query,
+    );
+
+    return {
+      data: response.data,
+      meta: response.meta,
+    };
+  },
+
+  async updatePostStatus(id: string, status: string): Promise<Post> {
+    return await apiClient.patch<Post>(`/admin/posts/${id}/status`, { status });
+  },
+
+  async adminDeletePost(id: string): Promise<void> {
+    await apiClient.delete(`/admin/posts/${id}`);
+  },
+
   // === UTILITY METHODS ===
   async getPostStatusCounts(): Promise<Record<string, number>> {
     // Sử dụng getMyPosts với limit nhỏ để lấy statusCounts
