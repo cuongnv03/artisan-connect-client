@@ -5,6 +5,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline';
 import { UpgradeRequestStatus as StatusEnum } from '../../../types/artisan';
 import { Card } from '../../ui/Card';
@@ -20,10 +21,12 @@ interface UpgradeRequestStatusProps {
     adminNotes?: string;
     reviewedAt?: Date;
   };
+  onCreateNewRequest?: () => void; // Thêm prop này
 }
 
 export const UpgradeRequestStatus: React.FC<UpgradeRequestStatusProps> = ({
   request,
+  onCreateNewRequest,
 }) => {
   const getStatusBadge = (status: StatusEnum) => {
     const statusConfig = {
@@ -115,6 +118,25 @@ export const UpgradeRequestStatus: React.FC<UpgradeRequestStatusProps> = ({
             🎉 Chúc mừng! Tài khoản của bạn đã được nâng cấp thành nghệ nhân.
             Bạn có thể bắt đầu tạo sản phẩm và tùy chỉnh trang cá nhân.
           </p>
+        </div>
+      )}
+
+      {/* Thêm phần cho trường hợp bị từ chối */}
+      {request.status === StatusEnum.REJECTED && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-800 text-sm mb-4">
+            ❌ Yêu cầu nâng cấp của bạn đã bị từ chối. Bạn có thể xem lý do bên
+            dưới và gửi yêu cầu mới.
+          </p>
+          {onCreateNewRequest && (
+            <Button
+              onClick={onCreateNewRequest}
+              leftIcon={<PlusIcon className="w-4 h-4" />}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Gửi yêu cầu mới
+            </Button>
+          )}
         </div>
       )}
 

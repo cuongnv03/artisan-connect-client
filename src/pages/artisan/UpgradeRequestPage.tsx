@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StarIcon } from '@heroicons/react/24/outline';
 import { useUpgradeRequest } from '../../hooks/artisan/useUpgradeRequest';
@@ -7,12 +7,16 @@ import { UpgradeRequestForm } from '../../components/artisan/upgrade/UpgradeRequ
 import { UpgradeRequestStatus } from '../../components/artisan/upgrade/UpgradeRequestStatus';
 import { BenefitsSection } from '../../components/artisan/upgrade/BenefitsSection';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
+import { UpgradeRequestStatus as StatusEnum } from '../../types/artisan';
 
 export const UpgradeRequestPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useToastContext();
   const { requestStatus, loading, submitting, submitRequest } =
     useUpgradeRequest();
+
+  // State đơn giản để ẩn/hiện form
+  const [showNewForm, setShowNewForm] = useState(false);
 
   const handleSubmit = async (data: any) => {
     try {
@@ -24,6 +28,10 @@ export const UpgradeRequestPage: React.FC = () => {
     }
   };
 
+  const handleCreateNewRequest = () => {
+    setShowNewForm(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -31,6 +39,11 @@ export const UpgradeRequestPage: React.FC = () => {
       </div>
     );
   }
+
+  // Hiển thị form mới nếu:
+  // 1. Chưa có request nào
+  // 2. Hoặc đã click "Gửi yêu cầu mới"
+  const shouldShowForm = !requestStatus?.hasRequest || showNewForm;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -47,10 +60,13 @@ export const UpgradeRequestPage: React.FC = () => {
 
       <BenefitsSection />
 
-      {requestStatus?.hasRequest ? (
-        <UpgradeRequestStatus request={requestStatus} />
-      ) : (
+      {shouldShowForm ? (
         <UpgradeRequestForm onSubmit={handleSubmit} loading={submitting} />
+      ) : (
+        <UpgradeRequestStatus
+          request={requestStatus}
+          onCreateNewRequest={handleCreateNewRequest}
+        />
       )}
     </div>
   );
