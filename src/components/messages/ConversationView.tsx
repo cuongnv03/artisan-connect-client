@@ -10,10 +10,7 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { CustomOrderForm } from '../custom-orders/CustomOrderForm';
 import { useConversation } from '../../hooks/messages/useConversation';
-import { useCustomOrderChat } from '../../hooks/custom-orders/useCustomOrderChat';
 import { useToastContext } from '../../contexts/ToastContext';
-import { uploadService } from '../../services/upload.service';
-import { messageService } from '../../services/message.service';
 
 interface ConversationViewProps {
   userId: string;
@@ -26,21 +23,23 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
 }) => {
   const { state } = useAuth();
   const { onlineUsers } = useSocketContext();
-  const { success: showSuccess, error: showError } = useToastContext();
-  const { createCustomOrderInChat } = useCustomOrderChat();
+  const { error: showError } = useToastContext();
+
   const [showCustomOrderForm, setShowCustomOrderForm] = useState(false);
   const [customOrderLoading, setCustomOrderLoading] = useState(false);
-  const [uploadingMedia, setUploadingMedia] = useState(false);
 
   const {
     messages,
     participant,
     loading,
     sending,
+    uploadingMedia,
     hasMore,
     loadingMore,
     participantTyping,
-    sendMessage,
+    sendTextMessage,
+    sendMediaMessage,
+    sendCustomOrderMessage,
     loadMoreMessages,
     handleTyping,
   } = useConversation(userId);
@@ -49,77 +48,46 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     return onlineUsers.has(userId);
   };
 
+  // ENHANCED: Handle text message sending
   const handleSendMessage = async (content: string) => {
-    await sendMessage(content);
-  };
-
-  const handleSendMedia = async (file: File, type: 'image' | 'file') => {
-    setUploadingMedia(true);
     try {
-      // Validate file
-      if (type === 'image') {
-        const validation = uploadService.validateImageFile(file);
-        if (!validation.valid) {
-          showError(validation.error || 'File không hợp lệ');
-          return;
-        }
-      }
-
-      // Upload file
-      const uploadResult = await uploadService.uploadImage(file, {
-        folder: 'messages',
-      });
-
-      // Send message with attachment
-      const messageData = {
-        receiverId: userId,
-        content:
-          type === 'image'
-            ? '📷 Đã gửi hình ảnh'
-            : `📄 Đã gửi tài liệu: ${file.name}`,
-        type: type === 'image' ? MessageType.IMAGE : MessageType.FILE,
-        attachments: [uploadResult.url],
-        productMentions: {
-          originalFileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        },
-      };
-
-      await messageService.sendMessage(messageData);
-      showSuccess(`${type === 'image' ? 'Hình ảnh' : 'Tài liệu'} đã được gửi`);
-    } catch (error: any) {
-      showError(
-        error.message ||
-          `Không thể gửi ${type === 'image' ? 'hình ảnh' : 'tài liệu'}`,
-      );
-    } finally {
-      setUploadingMedia(false);
+      await sendTextMessage(content);
+    } catch (error) {
+      // Error already handled in hook
     }
   };
 
+  // ENHANCED: Handle media sending with progress
+  const handleSendMedia = async (file: File, type: 'image' | 'file') => {
+    try {
+      await sendMediaMessage(file, type, (progress) => {
+        // Optional: Show upload progress
+        console.log(`Upload progress: ${progress}%`);
+      });
+    } catch (error) {
+      // Error already handled in hook
+    }
+  };
+
+  // ENHANCED: Handle custom order sending
   const handleSendCustomOrder = async (data: any) => {
     setCustomOrderLoading(true);
     try {
-      await createCustomOrderInChat({
-        receiverId: userId,
-        content: `🛠️ Tôi có một đề xuất custom order: "${data.title}"`,
-        customOrderData: {
-          title: data.title,
-          description: data.description,
-          estimatedPrice: data.estimatedPrice,
-          customerBudget: data.customerBudget,
-          timeline: data.timeline,
-          specifications: data.specifications,
-          attachments: data.attachmentUrls || [],
-          referenceProductId: data.referenceProductId,
-          expiresInDays: data.expiresInDays,
-        },
+      await sendCustomOrderMessage({
+        title: data.title,
+        description: data.description,
+        estimatedPrice: data.estimatedPrice,
+        customerBudget: data.customerBudget,
+        timeline: data.timeline,
+        specifications: data.specifications,
+        attachments: data.attachmentUrls || [],
+        referenceProductId: data.referenceProductId,
+        expiresInDays: data.expiresInDays,
       });
 
       setShowCustomOrderForm(false);
-    } catch (error: any) {
-      showError(error.message || 'Không thể gửi đề xuất custom order');
+    } catch (error) {
+      // Error already handled in hook
     } finally {
       setCustomOrderLoading(false);
     }
@@ -204,8 +172,8 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         onClose={() => setShowCustomOrderForm(false)}
         onSubmit={handleSendCustomOrder}
         loading={customOrderLoading}
-        artisanId={userId} // Pass artisanId
-        referenceProductId={undefined} // Can add logic to choose reference product
+        artisanId={userId}
+        referenceProductId={undefined}
       />
     </div>
   );

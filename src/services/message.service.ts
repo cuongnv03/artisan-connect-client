@@ -303,4 +303,53 @@ export const messageService = {
       context,
     };
   },
+
+  // File validation helpers
+  validateImageFile(file: File): { valid: boolean; error?: string } {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: 'Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, GIF)',
+      };
+    }
+
+    if (file.size > maxSize) {
+      return { valid: false, error: 'File không được vượt quá 10MB' };
+    }
+
+    return { valid: true };
+  },
+
+  validateFileUpload(file: File): { valid: boolean; error?: string } {
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'application/rtf',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: 'Chỉ chấp nhận file: PDF, DOC, DOCX, TXT, RTF',
+      };
+    }
+
+    if (file.size > maxSize) {
+      return { valid: false, error: 'File không được vượt quá 10MB' };
+    }
+
+    return { valid: true };
+  },
 };

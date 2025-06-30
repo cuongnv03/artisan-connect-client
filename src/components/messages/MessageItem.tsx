@@ -12,6 +12,7 @@ import { Avatar } from '../ui/Avatar';
 import { CustomOrderCard } from '../custom-orders/CustomOrderCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCustomOrderChat } from '../../hooks/custom-orders/useCustomOrderChat';
+import { LoadingSpinner } from '../ui';
 
 interface MessageItemProps {
   message: MessageWithUsers;
@@ -194,6 +195,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const renderMessageContent = () => {
     const { content, type, productMentions } = message;
+
+    // Show loading state for uploading messages
+    if (productMentions?.uploading || productMentions?.creating) {
+      return (
+        <div className="flex items-center space-x-2">
+          <LoadingSpinner size="sm" />
+          <span className="text-gray-500">{content}</span>
+        </div>
+      );
+    }
 
     switch (type) {
       case MessageType.IMAGE:
