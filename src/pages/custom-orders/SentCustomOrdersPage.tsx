@@ -39,6 +39,10 @@ export const SentCustomOrdersPage: React.FC = () => {
     { label: 'Đã từ chối', value: QuoteStatus.REJECTED },
     { label: 'Đề xuất ngược', value: QuoteStatus.COUNTER_OFFERED },
     { label: 'Đã hết hạn', value: QuoteStatus.EXPIRED },
+    {
+      label: 'Đã hoàn thành',
+      value: QuoteStatus.COMPLETED,
+    },
   ];
 
   const handleStatusFilter = (status: string) => {
@@ -84,7 +88,7 @@ export const SentCustomOrdersPage: React.FC = () => {
           <p className="text-gray-600">{pageInfo.description}</p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             onClick={handleExport}
@@ -100,7 +104,7 @@ export const SentCustomOrdersPage: React.FC = () => {
           >
             Tạo yêu cầu mới
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Filters */}

@@ -37,6 +37,10 @@ export const ReceivedCustomOrdersPage: React.FC = () => {
     { label: 'Đã từ chối', value: QuoteStatus.REJECTED },
     { label: 'Đề xuất ngược', value: QuoteStatus.COUNTER_OFFERED },
     { label: 'Đã hết hạn', value: QuoteStatus.EXPIRED },
+    {
+      label: 'Đã hoàn thành',
+      value: QuoteStatus.COMPLETED,
+    },
   ];
 
   const handleStatusFilter = (status: string) => {
@@ -67,7 +71,7 @@ export const ReceivedCustomOrdersPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        {/* <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             onClick={() => navigate('/custom-orders/stats')}
@@ -84,11 +88,11 @@ export const ReceivedCustomOrdersPage: React.FC = () => {
           >
             Xuất Excel
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary">{totalItems}</p>
@@ -106,9 +110,23 @@ export const ReceivedCustomOrdersPage: React.FC = () => {
         <Card className="p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">
-              {orders.filter((o) => o.status === QuoteStatus.ACCEPTED).length}
+              {
+                orders.filter(
+                  (o) =>
+                    o.status === QuoteStatus.ACCEPTED ||
+                    o.status === QuoteStatus.COMPLETED,
+                ).length
+              }
             </p>
             <p className="text-sm text-gray-600">Đã chấp nhận</p>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-purple-600">
+              {orders.filter((o) => o.status === QuoteStatus.COMPLETED).length}
+            </p>
+            <p className="text-sm text-gray-600">Đã hoàn thành</p>
           </div>
         </Card>
         <Card className="p-4">

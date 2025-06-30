@@ -793,7 +793,7 @@ export const CustomOrderDetailPage: React.FC = () => {
                   placeholder="Nhập giá đề xuất"
                   required
                   min="1"
-                  step="1000"
+                  step="1"
                 />
               </div>
               <div>
@@ -883,7 +883,7 @@ export const CustomOrderDetailPage: React.FC = () => {
                 name="finalPrice"
                 required
                 min="1"
-                step="1000"
+                step="1"
                 defaultValue={order?.finalPrice || order?.estimatedPrice || ''}
                 className="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                 placeholder="Nhập giá đề xuất"

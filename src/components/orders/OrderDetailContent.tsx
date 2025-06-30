@@ -38,9 +38,12 @@ export const OrderDetailContent: React.FC<OrderDetailContentProps> = ({
               <div className="flex-1">
                 {item.isCustomOrder ? (
                   <div>
-                    <h3 className="font-medium text-gray-900">
+                    <Link
+                      to={`/custom-orders/${item.customOrder?.id}`}
+                      className="font-medium text-gray-900 hover:text-primary"
+                    >
                       {item.customTitle || 'Đơn hàng tùy chỉnh'}
-                    </h3>
+                    </Link>
                     {item.customDescription && (
                       <p className="text-sm text-gray-600 mt-1">
                         {item.customDescription}

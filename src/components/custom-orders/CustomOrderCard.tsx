@@ -197,12 +197,13 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
     proposal.attachmentUrls && proposal.attachmentUrls.length > 0;
 
   // ADDED: Check if this user should see interactive actions
-  const showActions = !!(
-    permissions.canAccept ||
-    permissions.canReject ||
-    permissions.canCounterOffer ||
-    permissions.canProceedToPayment
-  );
+  const showActions =
+    !!(
+      permissions.canAccept ||
+      permissions.canReject ||
+      permissions.canCounterOffer ||
+      permissions.canProceedToPayment
+    ) && mockOrder.status !== 'COMPLETED';
 
   return (
     <>
@@ -328,7 +329,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         </div>
 
         {/* ENHANCED: Actions - Show different actions based on permissions */}
-        {showActions && (
+        {showActions && status !== 'COMPLETED' && (
           <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
             {/* Accept Button */}
             {permissions.canAccept && (
@@ -385,6 +386,16 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
                 Thanh toán • {formatPrice(displayPrice || 0)}
               </Button>
             )}
+          </div>
+        )}
+
+        {/* Status message for completed orders */}
+        {status === 'COMPLETED' && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-800 flex items-center">
+              <CheckIcon className="w-4 h-4 mr-2" />
+              Custom order đã hoàn thành và được chuyển thành đơn hàng
+            </p>
           </div>
         )}
 
@@ -614,7 +625,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
                 min="1"
-                step="1000"
+                step="1"
               />
               {counterErrors.finalPrice && (
                 <p className="text-sm text-red-600 mt-1">

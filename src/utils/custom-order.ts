@@ -132,6 +132,8 @@ export const getCustomOrderActions = (
         message: 'Custom order đã hoàn thành và chuyển thành đơn hàng',
         completed: true,
         readonly: true,
+        canView: true, // Vẫn có thể xem
+        canMessage: true, // Vẫn có thể nhắn tin
       };
 
     default:
