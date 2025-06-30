@@ -19,6 +19,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { useCustomOrderDetail } from '../../hooks/custom-orders/useCustomOrderDetail';
+import { useCustomOrderPayment } from '../../hooks/custom-orders/useCustomOrderPayment';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Button } from '../../components/ui/Button';
@@ -45,6 +46,7 @@ export const CustomOrderDetailPage: React.FC = () => {
   const [showCustomerRejectModal, setShowCustomerRejectModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showNegotiationHistory, setShowNegotiationHistory] = useState(false);
+  const { proceedToPayment, loading: paymentLoading } = useCustomOrderPayment();
 
   const {
     order,
@@ -122,6 +124,11 @@ export const CustomOrderDetailPage: React.FC = () => {
       action: 'ACCEPT',
       message: 'Tôi chấp nhận đề xuất này!',
     });
+  };
+
+  const handleProceedToPayment = async () => {
+    if (!order) return;
+    await proceedToPayment(order);
   };
 
   // Loading state
@@ -648,15 +655,13 @@ export const CustomOrderDetailPage: React.FC = () => {
               {canProceedToPayment && (
                 <Button
                   fullWidth
-                  onClick={() =>
-                    navigate('/checkout', {
-                      state: { customOrderId: order.id },
-                    })
-                  }
+                  onClick={handleProceedToPayment}
+                  loading={paymentLoading}
                   className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg"
                   leftIcon={<CreditCardIcon className="w-4 h-4" />}
                 >
-                  Tiến hành thanh toán
+                  Tiến hành thanh toán •{' '}
+                  {formatPrice(order.finalPrice || order.estimatedPrice || 0)}
                 </Button>
               )}
 

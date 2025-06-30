@@ -23,6 +23,7 @@ import {
   GetReturnsQuery,
 } from '../types/order';
 import { PaginatedResponse } from '../types/common';
+import { customOrderService } from './custom-order.service';
 
 export const orderService = {
   // === ORDER CREATION ===
@@ -38,10 +39,37 @@ export const orderService = {
   async createOrderFromQuote(
     data: CreateOrderFromQuoteRequest,
   ): Promise<OrderWithDetails> {
-    return await apiClient.post<OrderWithDetails>(
-      API_ENDPOINTS.ORDERS.FROM_QUOTE,
-      data,
-    );
+    try {
+      // Validate quote request exists and is accepted
+      const quote = await customOrderService.getCustomOrder(
+        data.quoteRequestId,
+      );
+
+      if (!quote) {
+        throw new Error('Custom order không tồn tại');
+      }
+
+      if (quote.status !== 'ACCEPTED') {
+        throw new Error(
+          'Chỉ có thể tạo đơn hàng từ custom order đã được chấp nhận',
+        );
+      }
+
+      if (!quote.finalPrice) {
+        throw new Error('Custom order chưa có giá cuối');
+      }
+
+      // Create order from quote
+      const order = await apiClient.post<OrderWithDetails>(
+        API_ENDPOINTS.ORDERS.FROM_QUOTE,
+        data,
+      );
+
+      return order;
+    } catch (error: any) {
+      console.error('Error creating order from quote:', error);
+      throw error;
+    }
   },
 
   // === ORDER RETRIEVAL ===

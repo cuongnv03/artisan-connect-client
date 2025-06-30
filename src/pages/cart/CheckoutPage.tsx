@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CreditCardIcon,
   TruckIcon,
@@ -8,6 +8,9 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   PlusIcon,
+  WrenchScrewdriverIcon,
+  UserIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { useToastContext } from '../../contexts/ToastContext';
 import { useCart } from '../../contexts/CartContext';
@@ -32,6 +35,31 @@ interface CheckoutFormData {
   addressId: string;
   paymentMethod: PaymentMethodType;
   notes: string;
+}
+
+interface CustomOrderCheckoutData {
+  type: 'custom_order';
+  customOrderId: string;
+  artisanId: string;
+  customerId: string;
+  title: string;
+  description: string;
+  finalPrice?: number;
+  estimatedPrice?: number;
+  timeline?: string;
+  specifications?: any;
+  attachmentUrls?: string[];
+  referenceProduct?: {
+    id: string;
+    name: string;
+    images: string[];
+    price: number;
+  };
+  artisanInfo: {
+    name: string;
+    shopName?: string;
+    isVerified?: boolean;
+  };
 }
 
 interface PaymentData {
@@ -104,6 +132,7 @@ const calculateOrderTotals = (summary: CartSummary) => {
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { success, error } = useToastContext();
   const { state: cartState, clearCart } = useCart();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -113,6 +142,9 @@ export const CheckoutPage: React.FC = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [orderData, setOrderData] = useState<CheckoutFormData | null>(null);
   const [customOrderData, setCustomOrderData] = useState<any>(null);
+
+  // Check if this is custom order checkout
+  const isCustomOrderCheckout = searchParams.get('type') === 'custom-order';
 
   const { values, handleChange, handleSubmit, setFieldValue, errors } =
     useForm<CheckoutFormData>({
@@ -174,48 +206,62 @@ export const CheckoutPage: React.FC = () => {
     onSubmit: handlePayment,
   });
 
+  // Load checkout data on mount
   useEffect(() => {
-    // Check for custom order data
-    const savedCustomOrder = sessionStorage.getItem('customOrderData');
-    if (savedCustomOrder) {
-      try {
-        const data = JSON.parse(savedCustomOrder);
-        setCustomOrderData(data);
-        // Clear from session storage
-        sessionStorage.removeItem('customOrderData');
-      } catch (err) {
-        console.error('Error parsing custom order data:', err);
-      }
-    }
-
-    if (!customOrderData) {
-      loadCheckoutData();
+    if (isCustomOrderCheckout) {
+      loadCustomOrderCheckoutData();
     } else {
-      loadCheckoutDataForCustomOrder();
+      loadCartCheckoutData();
     }
-  }, [customOrderData]);
+  }, [isCustomOrderCheckout]);
 
-  const loadCheckoutDataForCustomOrder = async () => {
+  // Load custom order checkout data
+  const loadCustomOrderCheckoutData = async () => {
     try {
-      // Load addresses for custom order
+      // Get custom order data from session storage
+      const savedData = sessionStorage.getItem('checkoutData');
+      if (!savedData) {
+        error('Không tìm thấy thông tin custom order');
+        navigate('/custom-orders');
+        return;
+      }
+
+      const checkoutData: CustomOrderCheckoutData = JSON.parse(savedData);
+
+      // Validate custom order data
+      if (!checkoutData.customOrderId || !checkoutData.finalPrice) {
+        error('Thông tin custom order không hợp lệ');
+        navigate('/custom-orders');
+        return;
+      }
+
+      setCustomOrderData(checkoutData);
+
+      // Load addresses
       const addressList = await userService.getAddresses();
       setAddresses(addressList);
 
+      // Set default address
       const defaultAddress = addressList.find((addr) => addr.isDefault);
       if (defaultAddress) {
         setFieldValue('addressId', defaultAddress.id);
       } else if (addressList.length > 0) {
         setFieldValue('addressId', addressList[0].id);
       }
+
+      // Clear session storage after loading
+      sessionStorage.removeItem('checkoutData');
     } catch (err: any) {
-      console.error('Error loading checkout data for custom order:', err);
-      error('Có lỗi xảy ra khi tải dữ liệu');
+      console.error('Error loading custom order checkout data:', err);
+      error('Có lỗi xảy ra khi tải thông tin checkout');
+      navigate('/custom-orders');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadCheckoutData = async () => {
+  // Load cart checkout data (existing logic)
+  const loadCartCheckoutData = async () => {
     try {
       // Check if cart has items
       if (!cartState.summary || cartState.summary.totalItems === 0) {
@@ -249,7 +295,7 @@ export const CheckoutPage: React.FC = () => {
         });
       }
     } catch (err: any) {
-      console.error('Error loading checkout data:', err);
+      console.error('Error loading cart checkout data:', err);
       error('Có lỗi xảy ra khi tải dữ liệu');
       navigate('/cart');
     } finally {
@@ -274,7 +320,7 @@ export const CheckoutPage: React.FC = () => {
       success('Địa chỉ đã được thêm thành công');
     } catch (err: any) {
       error(err.message || 'Không thể thêm địa chỉ');
-      throw err; // Re-throw to prevent form from closing
+      throw err;
     }
   };
 
@@ -284,15 +330,16 @@ export const CheckoutPage: React.FC = () => {
       let order;
 
       if (customOrderData) {
-        // Create order from custom order
+        // Create order from custom order (quote)
         order = await orderService.createOrderFromQuote({
-          quoteRequestId: customOrderData.negotiationId, // Might need to adjust this
+          quoteRequestId: customOrderData.customOrderId,
           addressId: data.addressId,
           paymentMethod: data.paymentMethod,
-          notes:
-            data.notes ||
-            `Custom order: ${customOrderData.proposal.productName}`,
+          notes: data.notes || `Custom order: ${customOrderData.title}`,
         });
+
+        // Clear custom order data
+        setCustomOrderData(null);
       } else {
         // Regular cart order
         if (data.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY) {
@@ -301,16 +348,16 @@ export const CheckoutPage: React.FC = () => {
             paymentMethod: data.paymentMethod,
             notes: data.notes,
           });
+
+          // Clear cart after successful order
+          await clearCart();
         } else {
+          // Show payment modal for card payment
           setOrderData(data);
           setShowPaymentModal(true);
           setProcessing(false);
           return;
         }
-      }
-
-      if (!customOrderData) {
-        await clearCart();
       }
 
       success('Đặt hàng thành công!');
@@ -327,21 +374,39 @@ export const CheckoutPage: React.FC = () => {
 
     setProcessing(true);
     try {
-      // Create order first
-      const order = await orderService.createOrderFromCart({
-        addressId: orderData.addressId,
-        paymentMethod: orderData.paymentMethod,
-        notes: orderData.notes,
-      });
+      let order;
 
-      // Process payment (mock implementation)
-      await orderService.processPayment(order.id, {
-        paymentReference: `CARD_${Date.now()}`,
-        externalReference: paymentData.cardNumber.slice(-4),
-      });
+      if (customOrderData) {
+        // Create order from custom order with payment
+        order = await orderService.createOrderFromQuote({
+          quoteRequestId: customOrderData.customOrderId,
+          addressId: orderData.addressId,
+          paymentMethod: orderData.paymentMethod,
+          notes: orderData.notes || `Custom order: ${customOrderData.title}`,
+        });
 
-      // Clear cart after successful order
-      await clearCart();
+        // Process payment
+        await orderService.processPayment(order.id, {
+          paymentReference: `CARD_${Date.now()}`,
+          externalReference: paymentData.cardNumber.slice(-4),
+        });
+      } else {
+        // Create order from cart with payment
+        order = await orderService.createOrderFromCart({
+          addressId: orderData.addressId,
+          paymentMethod: orderData.paymentMethod,
+          notes: orderData.notes,
+        });
+
+        // Process payment
+        await orderService.processPayment(order.id, {
+          paymentReference: `CARD_${Date.now()}`,
+          externalReference: paymentData.cardNumber.slice(-4),
+        });
+
+        // Clear cart after successful order
+        await clearCart();
+      }
 
       success('Thanh toán thành công!');
       setShowPaymentModal(false);
@@ -353,6 +418,7 @@ export const CheckoutPage: React.FC = () => {
     }
   }
 
+  // Utility functions
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -363,9 +429,6 @@ export const CheckoutPage: React.FC = () => {
   const getPaymentMethodText = (method: PaymentMethodType) => {
     const methods = {
       [PaymentMethodType.CREDIT_CARD]: 'Thẻ tín dụng',
-      // [PaymentMethodType.DEBIT_CARD]: 'Thẻ ghi nợ',
-      // [PaymentMethodType.BANK_TRANSFER]: 'Chuyển khoản ngân hàng',
-      // [PaymentMethodType.DIGITAL_WALLET]: 'Ví điện tử',
       [PaymentMethodType.CASH_ON_DELIVERY]: 'Thanh toán khi nhận hàng',
     };
     return methods[method];
@@ -375,80 +438,136 @@ export const CheckoutPage: React.FC = () => {
     (addr) => addr.id === values.addressId,
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Đang tải thông tin đặt hàng...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!cartState.summary || cartState.summary.totalItems === 0) {
-    return (
-      <div className="text-center py-12">
-        <ShoppingBagIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Giỏ hàng trống
-        </h3>
-        <p className="text-gray-500 mb-6">
-          Bạn cần thêm sản phẩm vào giỏ hàng trước khi thanh toán
-        </p>
-        <Button onClick={() => navigate('/products')}>Tiếp tục mua sắm</Button>
-      </div>
-    );
-  }
-
-  // Render custom order summary if available
+  // Render custom order summary
   const renderCustomOrderSummary = () => {
     if (!customOrderData) return null;
 
-    const { proposal } = customOrderData;
+    const finalPrice =
+      customOrderData.finalPrice || customOrderData.estimatedPrice || 0;
+    const taxAmount = finalPrice * 0.08; // 8% tax
+    const shippingCost = 0; // Free shipping for custom orders
+    const totalAmount = finalPrice + taxAmount + shippingCost;
 
     return (
       <Card className="p-6 sticky top-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Custom Order Summary
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <WrenchScrewdriverIcon className="w-5 h-5 mr-2 text-orange-500" />
+          Tóm tắt Custom Order
         </h2>
 
+        {/* Custom Order Details */}
         <div className="space-y-4 mb-6">
           <div className="border-b pb-4">
             <h4 className="font-medium text-gray-900 mb-2">
-              {proposal.productName}
+              {customOrderData.title}
             </h4>
-            <p className="text-sm text-gray-600 mb-3">{proposal.description}</p>
+            <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+              {customOrderData.description}
+            </p>
 
-            <div className="flex items-center space-x-4 text-sm">
-              <span>Thời gian: {proposal.estimatedDuration}</span>
+            {/* Artisan Info */}
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <UserIcon className="w-4 h-4" />
+              <span>Nghệ nhân: {customOrderData.artisanInfo.name}</span>
+              {customOrderData.artisanInfo.isVerified && (
+                <Badge variant="success" size="sm">
+                  ✓
+                </Badge>
+              )}
             </div>
+
+            {customOrderData.artisanInfo.shopName && (
+              <p className="text-sm text-gray-500 mt-1">
+                Shop: {customOrderData.artisanInfo.shopName}
+              </p>
+            )}
+
+            {/* Timeline */}
+            {customOrderData.timeline && (
+              <div className="flex items-center space-x-2 text-sm text-gray-600 mt-2">
+                <ClockIcon className="w-4 h-4" />
+                <span>Thời gian: {customOrderData.timeline}</span>
+              </div>
+            )}
           </div>
+
+          {/* Reference Product */}
+          {customOrderData.referenceProduct && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <h5 className="text-sm font-medium text-blue-900 mb-2">
+                Sản phẩm tham khảo:
+              </h5>
+              <div className="flex items-center space-x-3">
+                <img
+                  src={customOrderData.referenceProduct.images[0]}
+                  alt={customOrderData.referenceProduct.name}
+                  className="w-12 h-12 object-cover rounded"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900">
+                    {customOrderData.referenceProduct.name}
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    {formatPrice(customOrderData.referenceProduct.price)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Specifications Preview */}
+          {customOrderData.specifications &&
+            Object.keys(customOrderData.specifications).length > 0 && (
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <h5 className="text-sm font-medium text-purple-900 mb-2">
+                  Thông số kỹ thuật:
+                </h5>
+                <div className="text-sm text-purple-800">
+                  {Object.keys(customOrderData.specifications).length} thông số
+                </div>
+              </div>
+            )}
+
+          {/* Attachments */}
+          {customOrderData.attachmentUrls &&
+            customOrderData.attachmentUrls.length > 0 && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <h5 className="text-sm font-medium text-green-900 mb-2">
+                  Hình ảnh tham khảo:
+                </h5>
+                <div className="text-sm text-green-800">
+                  {customOrderData.attachmentUrls.length} hình ảnh
+                </div>
+              </div>
+            )}
         </div>
 
+        {/* Price Breakdown */}
         <div className="space-y-3 mb-6">
           <div className="flex justify-between">
-            <span className="text-gray-600">Giá sản phẩm</span>
-            <span className="font-medium">
-              {formatPrice(proposal.estimatedPrice)}
-            </span>
+            <span className="text-gray-600">Giá custom order:</span>
+            <span className="font-medium">{formatPrice(finalPrice)}</span>
           </div>
 
           <div className="flex justify-between">
-            <span className="text-gray-600">Phí vận chuyển</span>
-            <span className="font-medium">Miễn phí</span>
+            <span className="text-gray-600">Thuế (8%):</span>
+            <span className="font-medium">{formatPrice(taxAmount)}</span>
+          </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-600">Phí vận chuyển:</span>
+            <span className="font-medium text-green-600">Miễn phí</span>
           </div>
 
           <hr />
 
           <div className="flex justify-between text-lg font-semibold">
-            <span>Tổng cộng</span>
-            <span className="text-primary">
-              {formatPrice(proposal.estimatedPrice)}
-            </span>
+            <span>Tổng cộng:</span>
+            <span className="text-primary">{formatPrice(totalAmount)}</span>
           </div>
         </div>
 
+        {/* Place Order Button */}
         <form onSubmit={handleSubmit}>
           <Button
             type="submit"
@@ -456,13 +575,15 @@ export const CheckoutPage: React.FC = () => {
             loading={processing}
             disabled={addresses.length === 0 && !showAddressForm}
             leftIcon={<ShoppingBagIcon className="w-4 h-4" />}
+            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
           >
             {values.paymentMethod === PaymentMethodType.CASH_ON_DELIVERY
-              ? 'Đặt hàng Custom'
-              : 'Thanh toán Custom Order'}
+              ? `Đặt Custom Order • ${formatPrice(totalAmount)}`
+              : `Thanh toán Custom Order • ${formatPrice(totalAmount)}`}
           </Button>
         </form>
 
+        {/* Delivery Info */}
         {selectedAddress && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center text-sm text-gray-600">
@@ -475,6 +596,59 @@ export const CheckoutPage: React.FC = () => {
     );
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-gray-600">
+            {isCustomOrderCheckout
+              ? 'Đang tải thông tin custom order...'
+              : 'Đang tải thông tin đặt hàng...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state for custom order
+  if (isCustomOrderCheckout && !customOrderData) {
+    return (
+      <div className="text-center py-12">
+        <WrenchScrewdriverIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Không tìm thấy thông tin custom order
+        </h3>
+        <p className="text-gray-500 mb-6">
+          Vui lòng thử lại từ trang chi tiết custom order
+        </p>
+        <Button onClick={() => navigate('/custom-orders/requests')}>
+          Về trang Custom Orders
+        </Button>
+      </div>
+    );
+  }
+
+  // Empty cart state
+  if (
+    !isCustomOrderCheckout &&
+    (!cartState.summary || cartState.summary.totalItems === 0)
+  ) {
+    return (
+      <div className="text-center py-12">
+        <ShoppingBagIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Giỏ hàng trống
+        </h3>
+        <p className="text-gray-500 mb-6">
+          Bạn cần thêm sản phẩm vào giỏ hàng trước khi thanh toán
+        </p>
+        <Button onClick={() => navigate('/shop')}>Tiếp tục mua sắm</Button>
+      </div>
+    );
+  }
+
   const { summary } = cartState;
 
   // ===== UPDATED: Calculate correct totals =====
@@ -482,7 +656,9 @@ export const CheckoutPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Thanh toán</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+        {isCustomOrderCheckout ? 'Thanh toán Custom Order' : 'Thanh toán'}
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -643,7 +819,11 @@ export const CheckoutPage: React.FC = () => {
               name="notes"
               rows={3}
               className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-              placeholder="Ghi chú cho người bán (tùy chọn)"
+              placeholder={
+                isCustomOrderCheckout
+                  ? 'Ghi chú cho nghệ nhân (tùy chọn)'
+                  : 'Ghi chú cho người bán (tùy chọn)'
+              }
               value={values.notes}
               onChange={handleChange}
             />
@@ -652,7 +832,7 @@ export const CheckoutPage: React.FC = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          {customOrderData ? (
+          {isCustomOrderCheckout ? (
             renderCustomOrderSummary()
           ) : (
             <Card className="p-6 sticky top-6">
@@ -810,11 +990,11 @@ export const CheckoutPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ===== UPDATED: Payment Modal with correct total ===== */}
+      {/* Payment Modal */}
       <Modal
         isOpen={showPaymentModal}
         onClose={() => !processing && setShowPaymentModal(false)}
-        title="Thanh toán"
+        title={`Thanh toán ${isCustomOrderCheckout ? 'Custom Order' : ''}`}
         size="md"
         closeOnEscape={false}
         closeOnOverlayClick={false}
@@ -917,7 +1097,10 @@ export const CheckoutPage: React.FC = () => {
               Hủy
             </Button>
             <Button type="submit" loading={processing} className="flex-1">
-              Thanh toán {formatPrice(orderTotals.total)}
+              Thanh toán{' '}
+              {customOrderData
+                ? formatPrice((customOrderData.finalPrice || 0) * 1.08)
+                : ''}
             </Button>
           </div>
         </form>

@@ -152,6 +152,46 @@ export const customOrderService = {
     }
   },
 
+  // Validate custom order can proceed to payment
+  async validateForPayment(id: string): Promise<{
+    isValid: boolean;
+    errors: string[];
+    order?: CustomOrderWithDetails;
+  }> {
+    try {
+      const order = await this.getCustomOrder(id);
+      const errors: string[] = [];
+
+      if (!order) {
+        errors.push('Custom order không tồn tại');
+        return { isValid: false, errors };
+      }
+
+      if (order.status !== 'ACCEPTED') {
+        errors.push('Custom order chưa được chấp nhận');
+      }
+
+      if (!order.finalPrice) {
+        errors.push('Custom order chưa có giá cuối');
+      }
+
+      if (order.expiresAt && new Date(order.expiresAt) < new Date()) {
+        errors.push('Custom order đã hết hạn');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        order: errors.length === 0 ? order : undefined,
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: ['Có lỗi xảy ra khi kiểm tra custom order'],
+      };
+    }
+  },
+
   async exportCustomOrders(query: GetCustomOrdersQuery = {}): Promise<Blob> {
     return await apiClient.get(API_ENDPOINTS.CUSTOM_ORDER.EXPORT, {
       ...query,
