@@ -335,6 +335,111 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
     [formData, attachmentFiles, artisanId, onSubmit, validateForm, showError],
   );
 
+  // FIX: Separate handle for final submission
+  const handleFinalSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) {
+        e.preventDefault();
+      }
+
+      console.log('Final form submission!'); // Debug log
+
+      if (!validateForm()) {
+        console.log('Validation failed'); // Debug log
+        showError('Vui lòng điền đầy đủ thông tin bắt buộc');
+        return;
+      }
+
+      if (!artisanId) {
+        showError('Không tìm thấy thông tin nghệ nhân');
+        return;
+      }
+
+      try {
+        console.log('Starting form submission process...'); // Debug log
+        let attachmentUrls: string[] = [];
+
+        if (attachmentFiles.length > 0) {
+          setUploadingFiles(true);
+          const uploadPromises = attachmentFiles.map((file) =>
+            uploadService.uploadImage(file, { folder: 'custom-orders' }),
+          );
+          const uploadResults = await Promise.all(uploadPromises);
+          attachmentUrls = uploadResults.map((result) => result.url);
+        }
+
+        // Build specifications object
+        const specifications = Object.entries(formData.specifications)
+          .filter(([, value]) => value && value.trim())
+          .reduce((acc, [key, value]) => {
+            acc[key] = value.trim();
+            return acc;
+          }, {} as Record<string, string>);
+
+        const submitData: CreateCustomOrderFormData = {
+          artisanId,
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          referenceProductId: formData.referenceProductId || undefined,
+          specifications:
+            Object.keys(specifications).length > 0 ? specifications : undefined,
+          attachmentUrls:
+            attachmentUrls.length > 0 ? attachmentUrls : undefined,
+          estimatedPrice: formData.estimatedPrice
+            ? Number(formData.estimatedPrice)
+            : undefined,
+          customerBudget: formData.customerBudget
+            ? Number(formData.customerBudget)
+            : undefined,
+          timeline: formData.timeline.trim() || undefined,
+          expiresInDays: formData.expiresInDays
+            ? Number(formData.expiresInDays)
+            : undefined,
+        };
+
+        console.log('Submitting data:', submitData); // Debug log
+        await onSubmit(submitData);
+
+        // Reset form after successful submission
+        resetForm();
+      } catch (error: any) {
+        console.error('Form submission error:', error); // Debug log
+        showError(error.message || 'Có lỗi xảy ra khi tải file');
+      } finally {
+        setUploadingFiles(false);
+      }
+    },
+    [formData, attachmentFiles, artisanId, onSubmit, validateForm, showError],
+  );
+
+  // FIX: Updated navigation handlers
+  const handleNextStep = useCallback(() => {
+    // Validate current step before proceeding
+    if (currentStep === 1) {
+      if (!formData.title.trim() || formData.title.trim().length < 10) {
+        showError('Vui lòng nhập tiêu đề ít nhất 10 ký tự');
+        return;
+      }
+      if (
+        !formData.description.trim() ||
+        formData.description.trim().length < 50
+      ) {
+        showError('Vui lòng nhập mô tả ít nhất 50 ký tự');
+        return;
+      }
+    }
+
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  }, [
+    currentStep,
+    totalSteps,
+    formData.title,
+    formData.description,
+    showError,
+  ]);
+
   // Reset form function
   const resetForm = useCallback(() => {
     setFormData({
@@ -1020,7 +1125,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
 
         {/* Form Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-12rem)]">
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form className="space-y-8">
             <StepIndicator />
             {renderStepContent()}
 
@@ -1039,15 +1144,15 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                 {currentStep < totalSteps ? (
                   <Button
                     type="button"
-                    onClick={nextStep}
+                    onClick={handleNextStep}
                     className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
                   >
                     Tiếp tục
                   </Button>
                 ) : (
                   <Button
-                    type="submit"
-                    onClick={handleButtonClick} // Debug click
+                    type="button"
+                    onClick={handleFinalSubmit} // Debug click
                     loading={loading || uploadingFiles}
                     disabled={!canSubmit || loading || uploadingFiles}
                     className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 shadow-lg hover:shadow-xl transition-all duration-200"
