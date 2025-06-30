@@ -6,7 +6,7 @@ export enum MessageType {
   IMAGE = 'IMAGE',
   FILE = 'FILE',
   CUSTOM_ORDER = 'CUSTOM_ORDER',
-  QUOTE_DISCUSSION = 'QUOTE_DISCUSSION',
+  // QUOTE_DISCUSSION = 'QUOTE_DISCUSSION',
 }
 
 // Base Message interface (khớp với Prisma schema)
@@ -83,8 +83,8 @@ export interface SendCustomOrderRequest {
     | 'respond_custom_order'
     | 'customer_counter_offer'
     | 'customer_accept_offer'
-    | 'customer_reject_offer'
-    | 'quote_discussion';
+    | 'customer_reject_offer';
+  // | 'quote_discussion';
   receiverId: string;
   content: string;
 

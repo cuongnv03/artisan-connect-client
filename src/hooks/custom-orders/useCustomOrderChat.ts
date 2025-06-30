@@ -28,7 +28,10 @@ export const useCustomOrderChat = () => {
 
     setSending(true);
     try {
-      const message = await messageService.createCustomOrderInChat(data);
+      const message = await messageService.createCustomOrderInChat({
+        ...data,
+        content: '🛠️ Custom Order Request',
+      });
       success('Đã gửi yêu cầu custom order');
       return message;
     } catch (err: any) {
@@ -58,7 +61,10 @@ export const useCustomOrderChat = () => {
 
     setSending(true);
     try {
-      const message = await messageService.respondToCustomOrderInChat(data);
+      const message = await messageService.respondToCustomOrderInChat({
+        ...data,
+        content: '🛠️ Custom Order Response', // SỬA: Content đơn giản
+      });
 
       const actionMessages = {
         ACCEPT: 'Đã chấp nhận yêu cầu custom order',
@@ -90,7 +96,11 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      const message = await messageService.customerCounterOfferInChat(data);
+      const message = await messageService.customerCounterOfferInChat({
+        ...data,
+        content: '🛠️ Custom Order Response', // SỬA: Content đơn giản
+      });
+
       success('Đã gửi đề xuất ngược');
       return message;
     } catch (err: any) {
@@ -109,7 +119,11 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      const message = await messageService.customerAcceptOfferInChat(data);
+      const message = await messageService.customerAcceptOfferInChat({
+        ...data,
+        content: '🛠️ Custom Order Response', // SỬA: Content đơn giản
+      });
+
       success('Đã chấp nhận đề xuất');
       return message;
     } catch (err: any) {
@@ -131,7 +145,11 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      const message = await messageService.customerRejectOfferInChat(data);
+      const message = await messageService.customerRejectOfferInChat({
+        ...data,
+        content: '🛠️ Custom Order Response', // SỬA: Content đơn giản
+      });
+
       success('Đã từ chối đề xuất');
       return message;
     } catch (err: any) {
@@ -142,23 +160,23 @@ export const useCustomOrderChat = () => {
     }
   };
 
-  // Continue quote discussion
-  const sendQuoteDiscussionMessage = async (data: {
-    receiverId: string;
-    content: string;
-    quoteRequestId: string;
-  }): Promise<MessageWithUsers | null> => {
-    setSending(true);
-    try {
-      const message = await messageService.sendQuoteDiscussionMessage(data);
-      return message;
-    } catch (err: any) {
-      error(err.message || 'Không thể gửi tin nhắn');
-      return null;
-    } finally {
-      setSending(false);
-    }
-  };
+  // // Continue quote discussion
+  // const sendQuoteDiscussionMessage = async (data: {
+  //   receiverId: string;
+  //   content: string;
+  //   quoteRequestId: string;
+  // }): Promise<MessageWithUsers | null> => {
+  //   setSending(true);
+  //   try {
+  //     const message = await messageService.sendQuoteDiscussionMessage(data);
+  //     return message;
+  //   } catch (err: any) {
+  //     error(err.message || 'Không thể gửi tin nhắn');
+  //     return null;
+  //   } finally {
+  //     setSending(false);
+  //   }
+  // };
 
   return {
     sending,
@@ -167,6 +185,5 @@ export const useCustomOrderChat = () => {
     customerCounterOfferInChat,
     customerAcceptOfferInChat,
     customerRejectOfferInChat,
-    sendQuoteDiscussionMessage,
   };
 };

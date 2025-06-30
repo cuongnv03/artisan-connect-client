@@ -177,19 +177,19 @@ export const messageService = {
     });
   },
 
-  // Continue quote discussion
-  async sendQuoteDiscussionMessage(data: {
-    receiverId: string;
-    content: string;
-    quoteRequestId: string;
-  }): Promise<MessageWithUsers> {
-    return await this.sendCustomOrderMessage({
-      type: 'quote_discussion',
-      receiverId: data.receiverId,
-      content: data.content,
-      quoteRequestId: data.quoteRequestId,
-    });
-  },
+  // // Continue quote discussion
+  // async sendQuoteDiscussionMessage(data: {
+  //   receiverId: string;
+  //   content: string;
+  //   quoteRequestId: string;
+  // }): Promise<MessageWithUsers> {
+  //   return await this.sendCustomOrderMessage({
+  //     type: 'quote_discussion',
+  //     receiverId: data.receiverId,
+  //     content: data.content,
+  //     quoteRequestId: data.quoteRequestId,
+  //   });
+  // },
 
   // ===== MEDIA MESSAGING =====
 
@@ -219,7 +219,7 @@ export const messageService = {
 
   // Check if message is custom order related
   isCustomOrderMessage(message: MessageWithUsers): boolean {
-    return ['CUSTOM_ORDER', 'QUOTE_DISCUSSION'].includes(message.type);
+    return message.type === 'CUSTOM_ORDER';
   },
 
   // Get custom order context from message

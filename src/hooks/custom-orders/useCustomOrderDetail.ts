@@ -59,7 +59,8 @@ export const useCustomOrderDetail = (orderId: string) => {
         ? updatedOrder.artisan.id
         : updatedOrder.customer.id;
 
-      let content = '';
+      let content = '🛠️ Custom Order';
+
       let productMentions: any = {
         type: 'custom_order_response',
         negotiationId: updatedOrder.id,
@@ -78,37 +79,45 @@ export const useCustomOrderDetail = (orderId: string) => {
         },
       };
 
-      switch (action) {
-        case 'ACCEPT':
-          content = `✅ Tôi đã chấp nhận custom order "${updatedOrder.title}"`;
-          break;
-        case 'REJECT':
-          content = `❌ Tôi đã từ chối custom order "${updatedOrder.title}"`;
-          if (data?.reason) {
-            content += `: ${data.reason}`;
-          }
-          break;
-        case 'COUNTER_OFFER':
-          content = `💰 Tôi đã gửi đề xuất ngược cho custom order "${
-            updatedOrder.title
-          }" với giá ${formatPrice(data.finalPrice)}`;
-          productMentions.finalPrice = data.finalPrice;
-          productMentions.status = 'counter_offered';
-          break;
-        case 'CUSTOMER_COUNTER_OFFER':
-          content = `💰 Tôi đã gửi đề xuất ngược với giá ${formatPrice(
-            data.finalPrice,
-          )}`;
-          productMentions.finalPrice = data.finalPrice;
-          productMentions.status = 'counter_offered';
-          break;
-        case 'CUSTOMER_ACCEPT':
-          content = `✅ Tôi đã chấp nhận đề xuất cho custom order "${updatedOrder.title}"`;
-          break;
-        case 'CUSTOMER_REJECT':
-          content = `❌ Tôi đã từ chối đề xuất cho custom order "${updatedOrder.title}"`;
-          break;
+      if (data?.finalPrice) {
+        productMentions.finalPrice = data.finalPrice;
       }
+
+      if (action.includes('COUNTER')) {
+        productMentions.status = 'counter_offered';
+      }
+
+      // switch (action) {
+      //   case 'ACCEPT':
+      //     content = `✅ Tôi đã chấp nhận custom order "${updatedOrder.title}"`;
+      //     break;
+      //   case 'REJECT':
+      //     content = `❌ Tôi đã từ chối custom order "${updatedOrder.title}"`;
+      //     if (data?.reason) {
+      //       content += `: ${data.reason}`;
+      //     }
+      //     break;
+      //   case 'COUNTER_OFFER':
+      //     content = `💰 Tôi đã gửi đề xuất ngược cho custom order "${
+      //       updatedOrder.title
+      //     }" với giá ${formatPrice(data.finalPrice)}`;
+      //     productMentions.finalPrice = data.finalPrice;
+      //     productMentions.status = 'counter_offered';
+      //     break;
+      //   case 'CUSTOMER_COUNTER_OFFER':
+      //     content = `💰 Tôi đã gửi đề xuất ngược với giá ${formatPrice(
+      //       data.finalPrice,
+      //     )}`;
+      //     productMentions.finalPrice = data.finalPrice;
+      //     productMentions.status = 'counter_offered';
+      //     break;
+      //   case 'CUSTOMER_ACCEPT':
+      //     content = `✅ Tôi đã chấp nhận đề xuất cho custom order "${updatedOrder.title}"`;
+      //     break;
+      //   case 'CUSTOMER_REJECT':
+      //     content = `❌ Tôi đã từ chối đề xuất cho custom order "${updatedOrder.title}"`;
+      //     break;
+      // }
 
       await messageService.sendMessage({
         receiverId,

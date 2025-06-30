@@ -56,8 +56,8 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         return `${prefix}📷 Hình ảnh`;
       case MessageType.CUSTOM_ORDER:
         return `${prefix}🛠️ Custom order`;
-      case MessageType.QUOTE_DISCUSSION:
-        return `${prefix}💬 Thảo luận`;
+      // case MessageType.QUOTE_DISCUSSION:
+      //   return `${prefix}💬 Thảo luận`;
       default:
         return `${prefix}${content}`;
     }

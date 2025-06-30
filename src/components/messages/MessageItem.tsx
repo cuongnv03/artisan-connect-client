@@ -281,18 +281,18 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           </div>
         );
 
-      case MessageType.QUOTE_DISCUSSION:
-        return (
-          <div>
-            <div className="flex items-center mb-2">
-              <InformationCircleIcon className="w-4 h-4 mr-2 text-blue-500" />
-              <span className="font-medium text-blue-700">
-                Thảo luận báo giá
-              </span>
-            </div>
-            <p className="whitespace-pre-wrap">{content}</p>
-          </div>
-        );
+      // case MessageType.QUOTE_DISCUSSION:
+      //   return (
+      //     <div>
+      //       <div className="flex items-center mb-2">
+      //         <InformationCircleIcon className="w-4 h-4 mr-2 text-blue-500" />
+      //         <span className="font-medium text-blue-700">
+      //           Thảo luận báo giá
+      //         </span>
+      //       </div>
+      //       <p className="whitespace-pre-wrap">{content}</p>
+      //     </div>
+      //   );
 
       case MessageType.CUSTOM_ORDER:
         return renderCustomOrderContent();
@@ -453,13 +453,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       );
     };
 
-    return (
-      <div>
-        {messageContent}
-        {renderCustomOrderCard()}
-        {renderStatusUpdate()}
-      </div>
-    );
+    return <div>{renderCustomOrderCard()}</div>;
   };
 
   // Custom Order messages don't need background wrapper for the card
