@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocketContext } from '../../contexts/SocketContext';
-import { MessageType, CustomOrderProposal } from '../../types/message';
+import { MessageType } from '../../types/message';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
 import { ConversationHeader } from './ConversationHeader';
@@ -10,10 +10,10 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { CustomOrderForm } from '../custom-orders/CustomOrderForm';
 import { useConversation } from '../../hooks/messages/useConversation';
+import { useCustomOrderChat } from '../../hooks/custom-orders/useCustomOrderChat';
 import { useToastContext } from '../../contexts/ToastContext';
 import { uploadService } from '../../services/upload.service';
 import { messageService } from '../../services/message.service';
-import { customOrderService } from '../../services/custom-order.service';
 
 interface ConversationViewProps {
   userId: string;
@@ -27,6 +27,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const { state } = useAuth();
   const { onlineUsers } = useSocketContext();
   const { success: showSuccess, error: showError } = useToastContext();
+  const { createCustomOrderInChat } = useCustomOrderChat();
   const [showCustomOrderForm, setShowCustomOrderForm] = useState(false);
   const [customOrderLoading, setCustomOrderLoading] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -100,32 +101,22 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   const handleSendCustomOrder = async (data: any) => {
     setCustomOrderLoading(true);
     try {
-      // Gọi service để tạo custom order thực sự
-      const customOrder = await customOrderService.createCustomOrder({
-        artisanId: userId,
-        title: data.title,
-        description: data.description,
-        estimatedPrice: data.estimatedPrice,
-        customerBudget: data.customerBudget,
-        timeline: data.timeline,
-        specifications: data.specifications,
-        attachmentUrls: data.attachmentUrls || [],
-        referenceProductId: data.referenceProductId,
-        expiresInDays: data.expiresInDays,
+      await createCustomOrderInChat({
+        receiverId: userId,
+        content: `🛠️ Tôi có một đề xuất custom order: "${data.title}"`,
+        customOrderData: {
+          title: data.title,
+          description: data.description,
+          estimatedPrice: data.estimatedPrice,
+          customerBudget: data.customerBudget,
+          timeline: data.timeline,
+          specifications: data.specifications,
+          attachments: data.attachmentUrls || [],
+          referenceProductId: data.referenceProductId,
+          expiresInDays: data.expiresInDays,
+        },
       });
 
-      // Sau đó gửi message thông báo với customOrderId thực
-      await sendMessage(
-        `🛠️ Tôi đã gửi một đề xuất custom order: "${customOrder.title}"`,
-        MessageType.CUSTOM_ORDER,
-        {
-          type: 'custom_order_created',
-          customOrderId: customOrder.id,
-          timestamp: new Date().toISOString(),
-        },
-      );
-
-      showSuccess('Đề xuất custom order đã được gửi');
       setShowCustomOrderForm(false);
     } catch (error: any) {
       showError(error.message || 'Không thể gửi đề xuất custom order');
@@ -182,7 +173,7 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         </div>
       </div>
 
-      {/* Messages - Scrollable với height cố định */}
+      {/* Messages - Scrollable with fixed height */}
       <div className="flex-1 min-h-0">
         <MessageList
           messages={messages}
@@ -213,8 +204,8 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
         onClose={() => setShowCustomOrderForm(false)}
         onSubmit={handleSendCustomOrder}
         loading={customOrderLoading}
-        artisanId={userId} // Truyền artisanId
-        referenceProductId={undefined} // Có thể thêm logic để chọn reference product
+        artisanId={userId} // Pass artisanId
+        referenceProductId={undefined} // Can add logic to choose reference product
       />
     </div>
   );

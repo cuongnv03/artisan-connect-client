@@ -5,17 +5,17 @@ import {
   ClockIcon,
   CheckIcon,
   XMarkIcon,
-  ChatBubbleLeftRightIcon,
   ArrowPathIcon,
   CreditCardIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import { CustomOrderProposal } from '../../types/message';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
-import { Input } from '../ui/Input';
 import { useForm } from '../../hooks/common/useForm';
 import { formatPrice } from '../../utils/format';
+import { getCustomOrderActions } from '../../utils/custom-order';
 
 interface CustomOrderCardProps {
   proposal: CustomOrderProposal;
@@ -24,9 +24,8 @@ interface CustomOrderCardProps {
   customerId: string;
   artisanId: string;
   currentUserId: string;
-  // Thêm thông tin về ai là người thao tác cuối
   lastActor?: 'customer' | 'artisan';
-  finalPrice?: number; // Giá cuối cùng nếu có counter offer
+  finalPrice?: number;
   onAccept?: (negotiationId: string, proposal: CustomOrderProposal) => void;
   onDecline?: (negotiationId: string, reason?: string) => void;
   onCounterOffer?: (
@@ -57,87 +56,31 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState(false);
 
-  // Xác định vai trò của user hiện tại
-  const isCustomer = currentUserId === customerId;
-  const isArtisan = currentUserId === artisanId;
-  const isOwn = isCustomer; // Người tạo custom order ban đầu
+  // Create mock order for permissions calculation
+  const mockOrder = {
+    customer: { id: customerId },
+    artisan: { id: artisanId },
+    status: status as any,
+    negotiationHistory: lastActor
+      ? [
+          {
+            actor: lastActor,
+            timestamp: new Date().toISOString(),
+            action: 'COUNTER_OFFER',
+            data: {},
+          },
+        ]
+      : [],
+    expiresAt: null,
+  } as any;
 
-  // Logic xác định ai có thể thao tác
-  const getActionPermissions = () => {
-    switch (status) {
-      case 'pending':
-        // Custom order mới - chỉ artisan mới được phản hồi
-        return {
-          canAccept: isArtisan,
-          canDecline: isArtisan,
-          canCounter: isArtisan,
-          message: isArtisan
-            ? 'Bạn có thể phản hồi yêu cầu'
-            : 'Đang chờ nghệ nhân phản hồi',
-        };
-
-      case 'counter_offered':
-        // Có counter offer - ai nhận counter offer thì được phản hồi
-        // Logic: nếu lastActor là artisan thì customer phản hồi, và ngược lại
-        const canCustomerRespond = lastActor === 'artisan';
-        const canArtisanRespond = lastActor === 'customer';
-
-        return {
-          canAccept:
-            (isCustomer && canCustomerRespond) ||
-            (isArtisan && canArtisanRespond),
-          canDecline:
-            (isCustomer && canCustomerRespond) ||
-            (isArtisan && canArtisanRespond),
-          canCounter:
-            (isCustomer && canCustomerRespond) ||
-            (isArtisan && canArtisanRespond),
-          message:
-            isCustomer && canCustomerRespond
-              ? 'Nghệ nhân đã gửi đề xuất ngược'
-              : isArtisan && canArtisanRespond
-              ? 'Khách hàng đã gửi đề xuất ngược'
-              : 'Đang chờ phản hồi từ đối phương',
-        };
-
-      case 'accepted':
-        return {
-          canPayment: isCustomer,
-          message: 'Đã chấp nhận - có thể thanh toán',
-        };
-
-      case 'rejected':
-        return {
-          message: 'Đã bị từ chối',
-        };
-
-      default:
-        return {
-          message: 'Trạng thái không xác định',
-        };
-    }
-  };
-
-  const permissions = getActionPermissions();
-
-  const {
-    values: declineValues,
-    handleChange: handleDeclineChange,
-    handleSubmit: handleDeclineSubmit,
-  } = useForm({
-    initialValues: { reason: '' },
-    onSubmit: async (data) => {
-      onDecline?.(negotiationId, data.reason);
-      setShowDeclineModal(false);
-    },
-  });
+  const permissions = getCustomOrderActions(mockOrder, currentUserId);
 
   const {
     values: counterValues,
     handleChange: handleCounterChange,
     handleSubmit: handleCounterSubmit,
     errors: counterErrors,
-    setFieldValue,
   } = useForm({
     initialValues: {
       finalPrice: (finalPrice || proposal.estimatedPrice || 0).toString(),
@@ -186,6 +129,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
   };
 
   const displayPrice = finalPrice || proposal.estimatedPrice;
+  const isCustomer = currentUserId === customerId;
 
   return (
     <>
@@ -242,7 +186,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
             )}
           </div>
 
-          {/* Specifications */}
+          {/* Specifications Preview */}
           {proposal.specifications &&
             Object.keys(proposal.specifications).length > 0 && (
               <div>
@@ -252,11 +196,15 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
                 <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded max-h-20 overflow-y-auto">
                   {Object.entries(proposal.specifications)
                     .filter(([_, value]) => value)
+                    .slice(0, 2) // Show only first 2 specs
                     .map(([key, value]) => (
                       <div key={key} className="mb-1">
                         <span className="font-medium">{key}:</span> {value}
                       </div>
                     ))}
+                  {Object.keys(proposal.specifications).length > 2 && (
+                    <div className="text-gray-500">...</div>
+                  )}
                 </div>
               </div>
             )}
@@ -270,64 +218,76 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         </div>
 
         {/* Actions */}
-        {(permissions.canAccept ||
-          permissions.canDecline ||
-          permissions.canCounter ||
-          permissions.canPayment) && (
-          <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
-            {permissions.canAccept && (
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => onAccept?.(negotiationId, proposal)}
-                disabled={loading}
-                leftIcon={<CheckIcon className="w-4 h-4" />}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Chấp nhận
-              </Button>
-            )}
+        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
+          {/* Accept Button */}
+          {permissions.canAccept && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => onAccept?.(negotiationId, proposal)}
+              disabled={loading}
+              leftIcon={<CheckIcon className="w-4 h-4" />}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Chấp nhận
+            </Button>
+          )}
 
-            {permissions.canCounter && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowCounterModal(true)}
-                disabled={loading}
-                leftIcon={<ArrowPathIcon className="w-4 h-4" />}
-              >
-                Đề xuất lại
-              </Button>
-            )}
+          {/* Counter Offer Button */}
+          {permissions.canCounterOffer && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCounterModal(true)}
+              disabled={loading}
+              leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+            >
+              Đề xuất lại
+            </Button>
+          )}
 
-            {permissions.canDecline && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setShowDeclineModal(true)}
-                disabled={loading}
-                leftIcon={<XMarkIcon className="w-4 h-4" />}
-                className="text-red-600 hover:bg-red-50"
-              >
-                Từ chối
-              </Button>
-            )}
+          {/* Decline Button */}
+          {permissions.canReject && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowDeclineModal(true)}
+              disabled={loading}
+              leftIcon={<XMarkIcon className="w-4 h-4" />}
+              className="text-red-600 hover:bg-red-50"
+            >
+              Từ chối
+            </Button>
+          )}
 
-            {permissions.canPayment && (
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => {
-                  window.location.href = `/checkout?customOrderId=${negotiationId}`;
-                }}
-                leftIcon={<CreditCardIcon className="w-4 h-4" />}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Thanh toán
-              </Button>
-            )}
-          </div>
-        )}
+          {/* Payment Button - Only for customer when accepted */}
+          {permissions.canProceedToPayment && (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                window.location.href = `/checkout?customOrderId=${negotiationId}`;
+              }}
+              leftIcon={<CreditCardIcon className="w-4 h-4" />}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Thanh toán
+            </Button>
+          )}
+
+          {/* View Details Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              window.open(`/custom-orders/${negotiationId}`, '_blank');
+            }}
+            leftIcon={<EyeIcon className="w-4 h-4" />}
+            className="text-gray-600 hover:bg-gray-50"
+          >
+            Chi tiết
+          </Button>
+        </div>
       </div>
 
       {/* Decline Modal */}
@@ -337,7 +297,14 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         title="Từ chối đề xuất"
         size="md"
       >
-        <form onSubmit={handleDeclineSubmit}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            onDecline?.(negotiationId, formData.get('reason') as string);
+            setShowDeclineModal(false);
+          }}
+        >
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Lý do từ chối (tùy chọn)
@@ -347,8 +314,6 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               placeholder="Nhập lý do từ chối để giúp đối phương hiểu rõ hơn..."
-              value={declineValues.reason}
-              onChange={handleDeclineChange}
             />
           </div>
           <div className="flex justify-end space-x-3">
@@ -392,29 +357,35 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Giá đề xuất mới (VNĐ) *
               </label>
-              <Input
+              <input
                 type="number"
                 name="finalPrice"
                 value={counterValues.finalPrice}
                 onChange={handleCounterChange}
                 placeholder="Nhập giá đề xuất"
-                error={counterErrors.finalPrice}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
                 min="1"
                 step="1000"
               />
+              {counterErrors.finalPrice && (
+                <p className="text-sm text-red-600 mt-1">
+                  {counterErrors.finalPrice}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Thời gian thực hiện
               </label>
-              <Input
+              <input
                 type="text"
                 name="timeline"
                 value={counterValues.timeline}
                 onChange={handleCounterChange}
                 placeholder="VD: 2-3 tuần, 1 tháng..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
 
@@ -425,10 +396,10 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               <textarea
                 name="message"
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="Giải thích lý do thay đổi giá hoặc điều kiện..."
                 value={counterValues.message}
                 onChange={handleCounterChange}
+                placeholder="Giải thích lý do thay đổi giá hoặc điều kiện..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
               {counterErrors.message && (
