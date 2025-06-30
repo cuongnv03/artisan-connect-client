@@ -45,7 +45,8 @@ export const useCustomOrderDetail = (orderId: string) => {
   };
 
   /**
-   * Auto-send custom order card to chat after any action
+   * IMPROVED: Auto-send custom order card to chat after any action
+   * Uses the new simplified approach
    */
   const sendCustomOrderCardToChat = async (
     updatedOrder: CustomOrderWithDetails,
@@ -57,28 +58,6 @@ export const useCustomOrderDetail = (orderId: string) => {
       const receiverId = isCustomer
         ? updatedOrder.artisan.id
         : updatedOrder.customer.id;
-
-      // Prepare card data
-      const proposal = {
-        title: updatedOrder.title,
-        description: updatedOrder.description,
-        estimatedPrice: updatedOrder.estimatedPrice,
-        timeline: updatedOrder.timeline,
-        specifications: updatedOrder.specifications,
-      };
-
-      const productMentions = {
-        type: 'custom_order_response',
-        negotiationId: updatedOrder.id,
-        customerId: updatedOrder.customer.id,
-        artisanId: updatedOrder.artisan.id,
-        action,
-        status: updatedOrder.status,
-        lastActor: isCustomer ? 'customer' : 'artisan',
-        timestamp: new Date().toISOString(),
-        proposal,
-        finalPrice: data?.finalPrice || updatedOrder.finalPrice,
-      };
 
       // Auto message content based on action
       let content = '🛠️ Cập nhật Custom Order';
@@ -100,11 +79,11 @@ export const useCustomOrderDetail = (orderId: string) => {
           break;
       }
 
-      await messageService.sendMessage({
+      // FIXED: Use the new simplified message service method
+      await messageService.sendExistingCustomOrderCard({
         receiverId,
         content,
-        type: MessageType.CUSTOM_ORDER,
-        productMentions,
+        customOrderId: updatedOrder.id,
       });
     } catch (error) {
       console.error('Error sending custom order card to chat:', error);

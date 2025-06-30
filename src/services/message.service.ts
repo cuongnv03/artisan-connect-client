@@ -66,7 +66,7 @@ export const messageService = {
     await apiClient.delete(`${API_ENDPOINTS.MESSAGES.BASE}/${id}`);
   },
 
-  // ===== ENHANCED: CUSTOM ORDER INTEGRATION =====
+  // ===== FIXED: CUSTOM ORDER INTEGRATION =====
 
   async sendCustomOrderMessage(
     data: SendCustomOrderRequest,
@@ -77,7 +77,7 @@ export const messageService = {
     );
   },
 
-  // ===== NEW: CUSTOM ORDER FLOW METHODS =====
+  // ===== NEW: SIMPLIFIED CUSTOM ORDER FLOW METHODS =====
 
   // Customer creates custom order via chat
   async createCustomOrderInChat(data: {
@@ -100,6 +100,20 @@ export const messageService = {
       receiverId: data.receiverId,
       content: data.content,
       customOrderData: data.customOrderData,
+    });
+  },
+
+  // Send existing custom order card to chat
+  async sendExistingCustomOrderCard(data: {
+    receiverId: string;
+    content: string;
+    customOrderId: string;
+  }): Promise<MessageWithUsers> {
+    return await this.sendCustomOrderMessage({
+      type: 'send_existing_custom_order',
+      receiverId: data.receiverId,
+      content: data.content,
+      quoteRequestId: data.customOrderId,
     });
   },
 
@@ -177,19 +191,19 @@ export const messageService = {
     });
   },
 
-  // // Continue quote discussion
-  // async sendQuoteDiscussionMessage(data: {
-  //   receiverId: string;
-  //   content: string;
-  //   quoteRequestId: string;
-  // }): Promise<MessageWithUsers> {
-  //   return await this.sendCustomOrderMessage({
-  //     type: 'quote_discussion',
-  //     receiverId: data.receiverId,
-  //     content: data.content,
-  //     quoteRequestId: data.quoteRequestId,
-  //   });
-  // },
+  // Continue quote discussion
+  async sendQuoteDiscussionMessage(data: {
+    receiverId: string;
+    content: string;
+    quoteRequestId: string;
+  }): Promise<MessageWithUsers> {
+    return await this.sendCustomOrderMessage({
+      type: 'quote_discussion',
+      receiverId: data.receiverId,
+      content: data.content,
+      quoteRequestId: data.quoteRequestId,
+    });
+  },
 
   // ===== MEDIA MESSAGING =====
 
@@ -235,6 +249,10 @@ export const messageService = {
       action: message.productMentions.action,
       finalPrice: message.productMentions.finalPrice,
       customOrderData: message.productMentions.customOrderData,
+      negotiationId: message.productMentions.negotiationId,
+      status: message.productMentions.status,
+      lastActor: message.productMentions.lastActor,
+      proposal: message.productMentions.proposal,
     };
   },
 
@@ -274,7 +292,7 @@ export const messageService = {
         actionText =
           context.type === 'custom_order_creation'
             ? '📋 Yêu cầu custom order mới'
-            : '';
+            : '🔄 Cập nhật custom order';
     }
 
     return {

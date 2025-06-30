@@ -117,10 +117,21 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
       rejected: { variant: 'danger' as const, text: 'Đã từ chối' },
       counter_offered: { variant: 'info' as const, text: 'Đang thương lượng' },
       expired: { variant: 'default' as const, text: 'Đã hết hạn' },
+      // Add more mappings for different status values
+      PENDING: { variant: 'warning' as const, text: 'Chờ phản hồi' },
+      ACCEPTED: { variant: 'success' as const, text: 'Đã chấp nhận' },
+      REJECTED: { variant: 'danger' as const, text: 'Đã từ chối' },
+      COUNTER_OFFERED: { variant: 'info' as const, text: 'Đang thương lượng' },
+      EXPIRED: { variant: 'default' as const, text: 'Đã hết hạn' },
     };
 
+    // Normalize status to lowercase for lookup
+    const normalizedStatus = status?.toLowerCase();
     const config =
-      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.pending;
+
     return (
       <Badge variant={config.variant} size="sm">
         {config.text}

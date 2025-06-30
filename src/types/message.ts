@@ -6,10 +6,9 @@ export enum MessageType {
   IMAGE = 'IMAGE',
   FILE = 'FILE',
   CUSTOM_ORDER = 'CUSTOM_ORDER',
-  // QUOTE_DISCUSSION = 'QUOTE_DISCUSSION',
 }
 
-// Base Message interface (khớp với Prisma schema)
+// Base Message interface (matches Prisma schema)
 export interface Message extends BaseEntity {
   senderId: string;
   receiverId: string;
@@ -17,7 +16,7 @@ export interface Message extends BaseEntity {
   type: MessageType;
   attachments: string[];
   quoteRequestId?: string;
-  productMentions?: Record<string, any>; // Đổi từ metadata thành productMentions
+  productMentions?: Record<string, any>;
   isRead: boolean;
   readAt?: Date;
   isEdited: boolean;
@@ -73,7 +72,7 @@ export interface SendMessageRequest {
   type?: MessageType;
   attachments?: string[];
   quoteRequestId?: string;
-  productMentions?: Record<string, any>; // Đổi từ metadata
+  productMentions?: Record<string, any>;
 }
 
 // ENHANCED: Complete custom order flow in chat
@@ -83,8 +82,9 @@ export interface SendCustomOrderRequest {
     | 'respond_custom_order'
     | 'customer_counter_offer'
     | 'customer_accept_offer'
-    | 'customer_reject_offer';
-  // | 'quote_discussion';
+    | 'customer_reject_offer'
+    | 'quote_discussion'
+    | 'send_existing_custom_order'; // ADDED
   receiverId: string;
   content: string;
 

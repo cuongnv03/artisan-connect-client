@@ -17,7 +17,8 @@ export const useCustomOrderChat = () => {
   const [sending, setSending] = useState(false);
 
   /**
-   * Create custom order via chat
+   * FIXED: Create custom order via chat (NEW APPROACH)
+   * Only calls the message service which handles both creation and messaging
    */
   const createCustomOrderInChat = async (data: {
     receiverId: string;
@@ -31,45 +32,50 @@ export const useCustomOrderChat = () => {
 
     setSending(true);
     try {
-      // First create the actual custom order
-      const customOrder = await customOrderService.createCustomOrder({
-        artisanId: data.receiverId,
-        title: data.customOrderData.title,
-        description: data.customOrderData.description,
-        estimatedPrice: data.customOrderData.estimatedPrice,
-        customerBudget: data.customOrderData.customerBudget,
-        timeline: data.customOrderData.timeline,
-        specifications: data.customOrderData.specifications,
-        attachmentUrls: data.customOrderData.attachments || [],
-        referenceProductId: data.customOrderData.referenceProductId,
-        expiresInDays: data.customOrderData.expiresInDays,
-      });
-
-      // Then send the custom order card to chat
+      // FIXED: Use the new unified approach - single API call
       const message = await messageService.sendCustomOrderMessage({
         type: 'create_custom_order',
         receiverId: data.receiverId,
-        content: `🛠️ Tôi có một đề xuất custom order: "${customOrder.title}"`,
-        customOrderData: {
-          negotiationId: customOrder.id,
-          customerId: state.user.id,
-          artisanId: data.receiverId,
-          status: 'pending',
-          proposal: {
-            title: customOrder.title,
-            description: customOrder.description,
-            estimatedPrice: customOrder.estimatedPrice,
-            timeline: customOrder.timeline,
-            specifications: customOrder.specifications,
-          },
-          timestamp: new Date().toISOString(),
-        },
+        content: data.content,
+        customOrderData: data.customOrderData,
       });
 
       success('Đã gửi yêu cầu custom order');
       return message;
     } catch (err: any) {
       error(err.message || 'Không thể gửi yêu cầu custom order');
+      return null;
+    } finally {
+      setSending(false);
+    }
+  };
+
+  /**
+   * Send existing custom order card to chat
+   */
+  const sendExistingCustomOrderCard = async (data: {
+    receiverId: string;
+    content: string;
+    customOrderId: string;
+  }): Promise<MessageWithUsers | null> => {
+    if (!state.user) {
+      error('Bạn cần đăng nhập để thực hiện hành động này');
+      return null;
+    }
+
+    setSending(true);
+    try {
+      const message = await messageService.sendCustomOrderMessage({
+        type: 'send_existing_custom_order',
+        receiverId: data.receiverId,
+        content: data.content,
+        quoteRequestId: data.customOrderId,
+      });
+
+      success('Đã gửi thông tin custom order');
+      return message;
+    } catch (err: any) {
+      error(err.message || 'Không thể gửi thông tin custom order');
       return null;
     } finally {
       setSending(false);
@@ -92,18 +98,6 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      // First update the custom order in database
-      const updatedOrder = await customOrderService.respondToCustomOrder(
-        data.quoteRequestId,
-        {
-          action: data.response.action,
-          finalPrice: data.response.finalPrice,
-          response: data.response.data,
-          expiresInDays: data.response.expiresInDays,
-        },
-      );
-
-      // Then send the response card to chat
       const message = await messageService.sendCustomOrderMessage({
         type: 'respond_custom_order',
         receiverId: data.receiverId,
@@ -144,20 +138,6 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      // First update the custom order in database
-      const updatedOrder = await customOrderService.customerCounterOffer(
-        data.quoteRequestId,
-        {
-          action: 'COUNTER_OFFER',
-          finalPrice: data.counterOffer.finalPrice,
-          timeline: data.counterOffer.timeline,
-          message: data.counterOffer.data?.message,
-          response: data.counterOffer.data,
-          expiresInDays: data.counterOffer.expiresInDays,
-        },
-      );
-
-      // Then send the counter offer card to chat
       const message = await messageService.sendCustomOrderMessage({
         type: 'customer_counter_offer',
         receiverId: data.receiverId,
@@ -186,16 +166,6 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      // First update the custom order in database
-      const updatedOrder = await customOrderService.customerAcceptOffer(
-        data.quoteRequestId,
-        {
-          action: 'ACCEPT',
-          message: 'Chấp nhận đề xuất',
-        },
-      );
-
-      // Then send the accept card to chat
       const message = await messageService.sendCustomOrderMessage({
         type: 'customer_accept_offer',
         receiverId: data.receiverId,
@@ -226,17 +196,6 @@ export const useCustomOrderChat = () => {
   }): Promise<MessageWithUsers | null> => {
     setSending(true);
     try {
-      // First update the custom order in database
-      const updatedOrder = await customOrderService.customerRejectOffer(
-        data.quoteRequestId,
-        {
-          action: 'REJECT',
-          reason: data.rejectOffer?.reason,
-          message: data.rejectOffer?.reason || 'Từ chối đề xuất',
-        },
-      );
-
-      // Then send the reject card to chat
       const message = await messageService.sendCustomOrderMessage({
         type: 'customer_reject_offer',
         receiverId: data.receiverId,
@@ -255,12 +214,40 @@ export const useCustomOrderChat = () => {
     }
   };
 
+  /**
+   * Continue discussion about quote
+   */
+  const sendQuoteDiscussionMessage = async (data: {
+    receiverId: string;
+    content: string;
+    quoteRequestId: string;
+  }): Promise<MessageWithUsers | null> => {
+    setSending(true);
+    try {
+      const message = await messageService.sendCustomOrderMessage({
+        type: 'quote_discussion',
+        receiverId: data.receiverId,
+        content: data.content,
+        quoteRequestId: data.quoteRequestId,
+      });
+
+      return message;
+    } catch (err: any) {
+      error(err.message || 'Không thể gửi tin nhắn');
+      return null;
+    } finally {
+      setSending(false);
+    }
+  };
+
   return {
     sending,
     createCustomOrderInChat,
+    sendExistingCustomOrderCard,
     respondToCustomOrderInChat,
     customerCounterOfferInChat,
     customerAcceptOfferInChat,
     customerRejectOfferInChat,
+    sendQuoteDiscussionMessage,
   };
 };
