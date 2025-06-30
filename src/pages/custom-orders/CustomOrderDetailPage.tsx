@@ -197,6 +197,11 @@ export const CustomOrderDetailPage: React.FC = () => {
         text: 'Đã hết hạn',
         bg: 'from-gray-400 to-gray-500',
       },
+      [QuoteStatus.COMPLETED]: {
+        variant: 'success' as const,
+        text: 'Đã hoàn thành',
+        bg: 'from-green-400 to-emerald-400',
+      },
     };
 
     const config = statusConfig[status];

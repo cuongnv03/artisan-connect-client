@@ -24,6 +24,8 @@ import {
   getCustomOrderActions,
   getStatusDisplayInfo,
 } from '../../utils/custom-order';
+// ADD: Import the payment hook
+import { useCustomOrderPayment } from '../../hooks/custom-orders/useCustomOrderPayment';
 
 interface CustomOrderCardProps {
   proposal: CustomOrderProposal;
@@ -65,6 +67,9 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
   const [showCounterModal, setShowCounterModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  // ADD: Initialize payment hook
+  const { proceedToPayment, loading: paymentLoading } = useCustomOrderPayment();
+
   // Create mock order for permissions calculation
   const mockOrder = {
     customer: { id: customerId },
@@ -85,6 +90,45 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
 
   const permissions = getCustomOrderActions(mockOrder, currentUserId);
   const statusInfo = getStatusDisplayInfo(status as any);
+
+  // ADD: Payment handler similar to detail page
+  const handleProceedToPayment = async () => {
+    try {
+      // Create a complete order object for payment
+      const orderForPayment = {
+        id: negotiationId,
+        customerId,
+        artisanId,
+        title: proposal.title,
+        description: proposal.description,
+        estimatedPrice: proposal.estimatedPrice,
+        customerBudget: proposal.customerBudget,
+        finalPrice: finalPrice || proposal.estimatedPrice,
+        timeline: proposal.timeline,
+        specifications: proposal.specifications,
+        attachmentUrls: proposal.attachmentUrls || [],
+        status: status as any,
+        customer: { id: customerId },
+        artisan: {
+          id: artisanId,
+          firstName: '',
+          lastName: '',
+          username: '',
+          artisanProfile: { shopName: '', isVerified: false },
+        },
+        referenceProduct: null,
+        messages: [],
+        negotiationHistory: [],
+        expiresAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await proceedToPayment(orderForPayment);
+    } catch (error) {
+      console.error('Error proceeding to payment:', error);
+    }
+  };
 
   const {
     values: counterValues,
@@ -328,18 +372,17 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               </Button>
             )}
 
-            {/* Payment Button - Only for customer when accepted */}
+            {/* UPDATED: Payment Button with proper logic */}
             {permissions.canProceedToPayment && (
               <Button
                 size="sm"
                 variant="primary"
-                onClick={() => {
-                  window.location.href = `/checkout?customOrderId=${negotiationId}`;
-                }}
+                onClick={handleProceedToPayment}
+                loading={paymentLoading}
                 leftIcon={<CreditCardIcon className="w-4 h-4" />}
-                className="bg-orange-600 hover:bg-orange-700 flex-1"
+                className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 flex-1 shadow-lg"
               >
-                Thanh toán
+                Thanh toán • {formatPrice(displayPrice || 0)}
               </Button>
             )}
           </div>

@@ -26,6 +26,7 @@ export const CustomOrderListItem: React.FC<CustomOrderListItemProps> = ({
       REJECTED: { variant: 'danger' as const, text: 'Đã từ chối' },
       COUNTER_OFFERED: { variant: 'info' as const, text: 'Đề xuất ngược' },
       EXPIRED: { variant: 'default' as const, text: 'Đã hết hạn' },
+      COMPLETED: { variant: 'success' as const, text: 'Đã hoàn thành' },
     };
 
     const config = statusConfig[status];

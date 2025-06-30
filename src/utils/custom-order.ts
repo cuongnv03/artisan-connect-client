@@ -127,6 +127,13 @@ export const getCustomOrderActions = (
         expired: true,
       };
 
+    case QuoteStatus.COMPLETED:
+      return {
+        message: 'Custom order đã hoàn thành và chuyển thành đơn hàng',
+        completed: true,
+        readonly: true,
+      };
+
     default:
       return {
         message: 'Custom order đã kết thúc',
@@ -201,6 +208,12 @@ export const getStatusDisplayInfo = (status: QuoteStatus) => {
       color: 'default',
       icon: '⌛',
       description: 'Yêu cầu đã hết thời hạn phản hồi',
+    },
+    [QuoteStatus.COMPLETED]: {
+      text: 'Đã hoàn thành',
+      color: 'success',
+      icon: '🎉',
+      description: 'Đã được chuyển thành đơn hàng thành công',
     },
   };
 

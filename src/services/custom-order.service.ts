@@ -274,6 +274,12 @@ export const customOrderService = {
         icon: 'clock-x',
         description: 'Yêu cầu đã hết hạn',
       },
+      [QuoteStatus.COMPLETED]: {
+        label: 'Đã hoàn thành',
+        color: 'success',
+        icon: 'check-circle',
+        description: 'Custom order đã được chuyển thành đơn hàng',
+      },
     };
 
     return statusMap[status] || statusMap[QuoteStatus.PENDING];
