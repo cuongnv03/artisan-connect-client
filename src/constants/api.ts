@@ -30,6 +30,11 @@ export const API_ENDPOINTS = {
     FOLLOW_STATS: (userId: string) => `/users/${userId}/follow-stats`,
     DELETE_ACCOUNT: '/users/account',
     BY_ID: (id: string) => `/users/${id}`,
+    ADMIN: {
+      USERS: '/users/admin/users',
+      USER_BY_ID: (id: string) => `/users/admin/users/${id}`,
+      USER_STATS: '/users/admin/stats',
+    },
   },
 
   // Artisans

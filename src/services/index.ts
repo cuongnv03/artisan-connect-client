@@ -13,3 +13,5 @@ export * from './notification.service';
 export * from './review.service';
 export * from './analytics.service';
 export * from './upload.service';
+export * from './admin-user.service';
+export * from './wishlist.service';

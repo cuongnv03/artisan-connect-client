@@ -87,6 +87,8 @@ import { ServerErrorPage } from './pages/error/ServerErrorPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { UserRole } from './types/auth';
 import { NegotiationRedirect } from './components/common/NegotiationRedirect';
+import { RoleBasedRedirect } from './components/common/RoleBasedRedirect';
+import { LandingPageRedirect } from './components/common/LandingPageRedirect';
 
 // Admin Product pages
 import { AdminProductsPage } from './pages/admin/products/AdminProductsPage';
@@ -110,7 +112,11 @@ export const router = createBrowserRouter(
       children: [
         {
           index: true,
-          element: <LandingPage />,
+          element: <RoleBasedRedirect />,
+        },
+        {
+          path: 'landing',
+          element: <LandingPageRedirect />,
         },
         {
           path: 'home',

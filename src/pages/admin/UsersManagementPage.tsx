@@ -3,13 +3,18 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   EyeIcon,
-  PencilIcon,
   TrashIcon,
   UserIcon,
   ShieldCheckIcon,
   XCircleIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
-import { User, UserRole, UserStatus } from '../../types/auth';
+import { UserRole, UserStatus } from '../../types/auth';
+import {
+  AdminUserSummaryDto,
+  AdminUserSearchDto,
+  UserStatsDto,
+} from '../../types/admin-user';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -19,126 +24,180 @@ import { Select } from '../../components/ui/Dropdown';
 import { Pagination } from '../../components/ui/Pagination';
 import { Avatar } from '../../components/ui/Avatar';
 import { ConfirmModal } from '../../components/ui/Modal';
+import { UserDetailModal } from '../../components/admin/UserDetailModal';
 import { useToastContext } from '../../contexts/ToastContext';
+import { adminUserService } from '../../services/admin-user.service';
+import { formatDate, formatPrice } from '../../utils/format';
+import { useDebounce } from '../../hooks/common/useDebounce';
 
 export const UsersManagementPage: React.FC = () => {
   const { success, error } = useToastContext();
-  const [users, setUsers] = useState<User[]>([]);
+
+  // State for users list
+  const [users, setUsers] = useState<AdminUserSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    role: '',
-    status: '',
-    verified: '',
-  });
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [actionModal, setActionModal] = useState<{
-    isOpen: boolean;
-    action: 'suspend' | 'activate' | 'delete' | null;
-  }>({
+
+  // State for filters and search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    role: '' as UserRole | '',
+    status: '' as UserStatus | '',
+    verified: '' as boolean | '',
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // State for modals
+  const [selectedUser, setSelectedUser] = useState<AdminUserSummaryDto | null>(
+    null,
+  );
+  const [userDetailModal, setUserDetailModal] = useState({
     isOpen: false,
-    action: null,
+    user: null as any,
+    loading: false,
+  });
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    user: null as AdminUserSummaryDto | null,
+    loading: false,
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, [currentPage, searchQuery, filters]);
+  // State for stats
+  const [stats, setStats] = useState<UserStatsDto | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
+  // Debounce search query
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Load users
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Mock data - In real app, call admin API
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          email: 'nguyen.van.a@example.com',
-          username: 'nguyen_van_a',
-          firstName: 'Nguyễn Văn',
-          lastName: 'A',
-          role: UserRole.CUSTOMER,
-          status: UserStatus.ACTIVE,
-          bio: 'Yêu thích đồ thủ công',
-          avatarUrl: 'https://via.placeholder.com/40',
-          isVerified: true,
-          emailVerified: true,
-          phone: '0123456789',
-          followerCount: 12,
-          followingCount: 25,
-          createdAt: '2024-01-15T10:00:00Z',
-          updatedAt: '2024-01-20T10:00:00Z',
-        },
-        {
-          id: '2',
-          email: 'tran.thi.b@example.com',
-          username: 'tran_thi_b',
-          firstName: 'Trần Thị',
-          lastName: 'B',
-          role: UserRole.ARTISAN,
-          status: UserStatus.ACTIVE,
-          bio: 'Nghệ nhân gốm sứ',
-          avatarUrl: 'https://via.placeholder.com/40',
-          isVerified: true,
-          emailVerified: true,
-          phone: '0987654321',
-          followerCount: 156,
-          followingCount: 42,
-          createdAt: '2024-01-10T10:00:00Z',
-          updatedAt: '2024-01-22T10:00:00Z',
-        },
-        // Add more mock users...
-      ];
+      const searchDto: AdminUserSearchDto = {
+        query: debouncedSearchQuery,
+        page: currentPage,
+        limit: 20,
+        role: filters.role || undefined,
+        status: filters.status || undefined,
+        verified:
+          filters.verified !== '' ? Boolean(filters.verified) : undefined,
+      };
 
-      setTimeout(() => {
-        setUsers(mockUsers);
-        setTotalPages(5);
-        setTotalItems(mockUsers.length * 5);
-        setLoading(false);
-      }, 1000);
-    } catch (err) {
+      const result = await adminUserService.getUsers(searchDto);
+
+      setUsers(result.users);
+      setTotalPages(result.totalPages);
+      setTotalItems(result.total);
+    } catch (err: any) {
       console.error('Error loading users:', err);
+      error(err.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleUserAction = async (
-    action: 'suspend' | 'activate' | 'delete',
-  ) => {
-    if (!selectedUser) return;
-
+  // Load stats
+  const loadStats = async () => {
+    setStatsLoading(true);
     try {
-      // Mock API call
-      switch (action) {
-        case 'suspend':
-          // await adminService.suspendUser(selectedUser.id);
-          success(
-            `Đã đình chỉ tài khoản ${selectedUser.firstName} ${selectedUser.lastName}`,
-          );
-          break;
-        case 'activate':
-          // await adminService.activateUser(selectedUser.id);
-          success(
-            `Đã kích hoạt tài khoản ${selectedUser.firstName} ${selectedUser.lastName}`,
-          );
-          break;
-        case 'delete':
-          // await adminService.deleteUser(selectedUser.id);
-          success(
-            `Đã xóa tài khoản ${selectedUser.firstName} ${selectedUser.lastName}`,
-          );
-          break;
-      }
-
-      setActionModal({ isOpen: false, action: null });
-      setSelectedUser(null);
-      loadUsers();
+      const statsData = await adminUserService.getUserStats();
+      setStats(statsData);
     } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
+      console.error('Error loading stats:', err);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
+  // Load data on dependencies change
+  useEffect(() => {
+    loadUsers();
+  }, [currentPage, debouncedSearchQuery, filters]);
+
+  // Load stats on mount
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  // Reset page when search/filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, filters]);
+
+  // Handle view user details
+  const handleViewUser = async (user: AdminUserSummaryDto) => {
+    setUserDetailModal({
+      isOpen: true,
+      user: null,
+      loading: true,
+    });
+
+    try {
+      const userDetails = await adminUserService.getUserDetails(user.id);
+      setUserDetailModal({
+        isOpen: true,
+        user: userDetails,
+        loading: false,
+      });
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
+      setUserDetailModal({
+        isOpen: false,
+        user: null,
+        loading: false,
+      });
+    }
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async () => {
+    if (!deleteModal.user) return;
+
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
+
+    try {
+      await adminUserService.deleteUser(deleteModal.user.id);
+      success(
+        `Đã xóa tài khoản ${deleteModal.user.firstName} ${deleteModal.user.lastName}`,
+      );
+
+      setDeleteModal({
+        isOpen: false,
+        user: null,
+        loading: false,
+      });
+
+      // Reload users and stats
+      loadUsers();
+      loadStats();
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra khi xóa tài khoản');
+      setDeleteModal((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  // Handle filter change
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setFilters({
+      role: '',
+      status: '',
+      verified: '',
+    });
+    setSearchQuery('');
+  };
+
+  // Helper functions
   const getRoleBadge = (role: UserRole) => {
     const configs = {
       [UserRole.ADMIN]: { variant: 'danger' as const, text: 'Quản trị viên' },
@@ -166,6 +225,7 @@ export const UsersManagementPage: React.FC = () => {
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
+  // Filter options
   const roleOptions = [
     { label: 'Tất cả vai trò', value: '' },
     { label: 'Khách hàng', value: UserRole.CUSTOMER },
@@ -178,6 +238,7 @@ export const UsersManagementPage: React.FC = () => {
     { label: 'Hoạt động', value: UserStatus.ACTIVE },
     { label: 'Không hoạt động', value: UserStatus.INACTIVE },
     { label: 'Đình chỉ', value: UserStatus.SUSPENDED },
+    { label: 'Đã xóa', value: UserStatus.DELETED },
   ];
 
   const verifiedOptions = [
@@ -186,22 +247,89 @@ export const UsersManagementPage: React.FC = () => {
     { label: 'Chưa xác minh', value: 'false' },
   ];
 
+  const hasActiveFilters =
+    filters.role || filters.status || filters.verified !== '' || searchQuery;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
         <p className="text-gray-600">
-          Quản lý tài khoản và quyền hạn người dùng
+          Quản lý tài khoản và quyền hạn người dùng trong hệ thống
         </p>
       </div>
+
+      {/* Stats Cards */}
+      {!statsLoading && stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <ChartBarIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">
+                  Tổng người dùng
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <UserIcon className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Nghệ nhân</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.byRole[UserRole.ARTISAN] || 0}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <UserIcon className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Khách hàng</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.byRole[UserRole.CUSTOMER] || 0}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <ShieldCheckIcon className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Đã xác minh</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.verified}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <Card className="p-4">
         <div className="space-y-4">
           <SearchBox
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={handleSearch}
+            onSubmit={() => {}} // Auto search with debounce
             placeholder="Tìm kiếm theo tên, email, username..."
           />
 
@@ -214,31 +342,31 @@ export const UsersManagementPage: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-3 flex-1">
               <Select
                 value={filters.role}
-                onChange={(value) =>
-                  setFilters((prev) => ({ ...prev, role: value }))
-                }
+                onChange={(value) => handleFilterChange('role', value)}
                 options={roleOptions}
                 className="md:w-40"
               />
 
               <Select
                 value={filters.status}
-                onChange={(value) =>
-                  setFilters((prev) => ({ ...prev, status: value }))
-                }
+                onChange={(value) => handleFilterChange('status', value)}
                 options={statusOptions}
                 className="md:w-40"
               />
 
               <Select
-                value={filters.verified}
-                onChange={(value) =>
-                  setFilters((prev) => ({ ...prev, verified: value }))
-                }
+                value={filters.verified.toString()}
+                onChange={(value) => handleFilterChange('verified', value)}
                 options={verifiedOptions}
                 className="md:w-40"
               />
             </div>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -253,6 +381,16 @@ export const UsersManagementPage: React.FC = () => {
                 Đang tải danh sách người dùng...
               </p>
             </div>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-12">
+            <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              Không tìm thấy người dùng
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.
+            </p>
           </div>
         ) : (
           <>
@@ -286,7 +424,7 @@ export const UsersManagementPage: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <Avatar
-                            src={user.avatarUrl}
+                            src={user.avatarUrl || undefined}
                             alt={`${user.firstName} ${user.lastName}`}
                             size="md"
                           />
@@ -305,6 +443,12 @@ export const UsersManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getRoleBadge(user.role)}
+                        {user.role === UserRole.ARTISAN &&
+                          user.artisanProfile && (
+                            <div className="mt-1 text-xs text-gray-500">
+                              {user.artisanProfile.shopName}
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(user.status)}
@@ -319,63 +463,43 @@ export const UsersManagementPage: React.FC = () => {
                               Email
                             </span>
                           )}
+                          {user.role === UserRole.ARTISAN &&
+                            user.artisanProfile?.isVerified && (
+                              <span className="text-xs text-blue-600">
+                                Nghệ nhân
+                              </span>
+                            )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+                        {formatDate(user.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <EyeIcon className="w-4 h-4" />
-                          </Button>
-
-                          {user.status === UserStatus.ACTIVE ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setActionModal({
-                                  isOpen: true,
-                                  action: 'suspend',
-                                });
-                              }}
-                              className="text-yellow-600 hover:text-yellow-700"
-                            >
-                              <XCircleIcon className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setActionModal({
-                                  isOpen: true,
-                                  action: 'activate',
-                                });
-                              }}
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <ShieldCheckIcon className="w-4 h-4" />
-                            </Button>
-                          )}
-
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setActionModal({
-                                isOpen: true,
-                                action: 'delete',
-                              });
-                            }}
-                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleViewUser(user)}
                           >
-                            <TrashIcon className="w-4 h-4" />
+                            <EyeIcon className="w-4 h-4" />
                           </Button>
+
+                          {user.status !== UserStatus.DELETED && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setDeleteModal({
+                                  isOpen: true,
+                                  user,
+                                  loading: false,
+                                })
+                              }
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -398,42 +522,41 @@ export const UsersManagementPage: React.FC = () => {
         )}
       </Card>
 
-      {/* Action Confirmation Modal */}
+      {/* User Detail Modal */}
+      <UserDetailModal
+        isOpen={userDetailModal.isOpen}
+        onClose={() =>
+          setUserDetailModal({
+            isOpen: false,
+            user: null,
+            loading: false,
+          })
+        }
+        user={userDetailModal.user}
+        loading={userDetailModal.loading}
+      />
+
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={actionModal.isOpen}
-        onClose={() => setActionModal({ isOpen: false, action: null })}
-        onConfirm={() =>
-          actionModal.action && handleUserAction(actionModal.action)
+        isOpen={deleteModal.isOpen}
+        onClose={() =>
+          setDeleteModal({
+            isOpen: false,
+            user: null,
+            loading: false,
+          })
         }
-        title={
-          actionModal.action === 'suspend'
-            ? 'Xác nhận đình chỉ tài khoản'
-            : actionModal.action === 'activate'
-            ? 'Xác nhận kích hoạt tài khoản'
-            : 'Xác nhận xóa tài khoản'
-        }
+        onConfirm={handleDeleteUser}
+        title="Xác nhận xóa tài khoản"
         message={
-          selectedUser
-            ? `Bạn có chắc chắn muốn ${
-                actionModal.action === 'suspend'
-                  ? 'đình chỉ'
-                  : actionModal.action === 'activate'
-                  ? 'kích hoạt'
-                  : 'xóa'
-              } tài khoản của ${selectedUser.firstName} ${
-                selectedUser.lastName
-              }?`
+          deleteModal.user
+            ? `Bạn có chắc chắn muốn xóa tài khoản của ${deleteModal.user.firstName} ${deleteModal.user.lastName}? Hành động này không thể hoàn tác.`
             : ''
         }
-        confirmText={
-          actionModal.action === 'suspend'
-            ? 'Đình chỉ'
-            : actionModal.action === 'activate'
-            ? 'Kích hoạt'
-            : 'Xóa tài khoản'
-        }
+        confirmText="Xóa tài khoản"
         cancelText="Hủy"
-        type={actionModal.action === 'delete' ? 'danger' : 'primary'}
+        type="danger"
+        loading={deleteModal.loading}
       />
     </div>
   );
