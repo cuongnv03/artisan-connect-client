@@ -8,7 +8,7 @@ import {
 import { CustomOrderWithDetails, QuoteStatus } from '../../types/custom-order';
 import { PaginatedResponse } from '../../types/common';
 
-export const useCustomOrders = (role: 'customer' | 'artisan' = 'customer') => {
+export const useCustomOrders = (mode: 'sent' | 'received' = 'sent') => {
   const { state } = useAuth();
   const { error } = useToastContext();
 
@@ -30,6 +30,7 @@ export const useCustomOrders = (role: 'customer' | 'artisan' = 'customer') => {
       const query: GetCustomOrdersQuery = {
         page: currentPage,
         limit: 10,
+        mode, // NEW: Pass mode to API
         sortBy: 'createdAt',
         sortOrder: 'desc',
         ...filters,
@@ -52,7 +53,7 @@ export const useCustomOrders = (role: 'customer' | 'artisan' = 'customer') => {
     if (state.isAuthenticated) {
       loadOrders();
     }
-  }, [currentPage, filters, state.isAuthenticated]);
+  }, [currentPage, filters, state.isAuthenticated, mode]);
 
   const refreshOrders = () => {
     setCurrentPage(1);
@@ -75,5 +76,6 @@ export const useCustomOrders = (role: 'customer' | 'artisan' = 'customer') => {
     updateFilters,
     refreshOrders,
     userRole: state.user?.role,
+    mode, // Return mode for components to use
   };
 };

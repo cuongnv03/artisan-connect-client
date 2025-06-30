@@ -3,12 +3,16 @@ import {
   InformationCircleIcon,
   DocumentIcon,
   ArrowDownTrayIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import { MessageWithUsers, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { CustomOrderCard } from '../custom-orders/CustomOrderCard';
+import { Badge } from '../ui';
+import { Link } from 'react-router-dom';
+import { formatPrice } from '../../utils/format';
 
 interface MessageItemProps {
   message: MessageWithUsers;
@@ -201,39 +205,100 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             )}
 
-            {/* Custom Order Card */}
-            {message.productMentions?.type === 'custom_order_proposal' &&
-              message.productMentions?.proposal && (
-                <CustomOrderCard
-                  proposal={message.productMentions.proposal}
-                  negotiationId={message.productMentions.negotiationId}
-                  status={message.productMentions.status || 'pending'}
-                  isOwn={isOwn}
-                />
-              )}
+            {/* Custom Order Display based on productMentions type */}
+            {message.productMentions && (
+              <>
+                {/* NEW: Custom Order Creation */}
+                {(message.productMentions.type === 'custom_order_created' ||
+                  message.productMentions.type === 'custom_order_proposal') && (
+                  <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl border-2 border-orange-200 p-4 max-w-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <WrenchScrewdriverIcon className="w-5 h-5 text-orange-500 mr-2" />
+                        <h4 className="font-semibold text-orange-900">
+                          Custom Order
+                        </h4>
+                      </div>
+                      <Badge variant="warning" size="sm">
+                        Chờ phản hồi
+                      </Badge>
+                    </div>
 
-            {/* Response type custom orders */}
-            {message.productMentions?.type === 'custom_order_response' && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">
-                  {message.productMentions.response?.accepted
-                    ? 'Đề xuất được chấp nhận'
-                    : 'Phản hồi đề xuất'}
-                </h4>
-                {message.productMentions.response?.counterOffer && (
-                  <div className="mt-2 p-3 bg-white rounded border">
-                    <h5 className="font-medium mb-1">Đề xuất mới:</h5>
-                    <p className="text-sm">
-                      Giá: $
-                      {message.productMentions.response.counterOffer.price}
-                    </p>
-                    <p className="text-sm">
-                      Thời gian:{' '}
-                      {message.productMentions.response.counterOffer.duration}
-                    </p>
+                    {message.productMentions.customOrderId && (
+                      <div className="mb-3">
+                        <Link
+                          to={`/custom-orders/${message.productMentions.customOrderId}`}
+                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Xem chi tiết →
+                        </Link>
+                      </div>
+                    )}
+
+                    <div className="text-sm text-orange-800">
+                      <p className="mb-2">
+                        <strong>ID:</strong> #
+                        {(
+                          message.productMentions.customOrderId ||
+                          message.productMentions.negotiationId ||
+                          ''
+                        ).slice(-8)}
+                      </p>
+                      <p>Đã tạo yêu cầu custom order thành công</p>
+                    </div>
                   </div>
                 )}
-              </div>
+
+                {/* Existing custom order proposal card */}
+                {message.productMentions.type === 'custom_order_proposal' &&
+                  message.productMentions.proposal && (
+                    <CustomOrderCard
+                      proposal={message.productMentions.proposal}
+                      negotiationId={message.productMentions.negotiationId}
+                      status={message.productMentions.status || 'pending'}
+                      isOwn={isOwn}
+                    />
+                  )}
+
+                {/* Response type custom orders */}
+                {message.productMentions.type === 'custom_order_response' && (
+                  <div className="bg-blue-50 rounded-lg p-4 max-w-sm">
+                    <h4 className="font-semibold mb-2 text-blue-900">
+                      {message.productMentions.response?.accepted
+                        ? '✅ Đề xuất được chấp nhận'
+                        : '💬 Phản hồi đề xuất'}
+                    </h4>
+                    {message.productMentions.response?.counterOffer && (
+                      <div className="mt-2 p-3 bg-white rounded border">
+                        <h5 className="font-medium mb-1">Đề xuất mới:</h5>
+                        <p className="text-sm">
+                          Giá:{' '}
+                          {formatPrice(
+                            message.productMentions.response.counterOffer.price,
+                          )}
+                        </p>
+                        <p className="text-sm">
+                          Thời gian:{' '}
+                          {
+                            message.productMentions.response.counterOffer
+                              .duration
+                          }
+                        </p>
+                      </div>
+                    )}
+                    {message.productMentions.quoteRequestId && (
+                      <div className="mt-2">
+                        <Link
+                          to={`/custom-orders/${message.productMentions.quoteRequestId}`}
+                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Xem chi tiết →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Timestamp */}

@@ -46,16 +46,21 @@ export const useCustomOrderOperations = () => {
     }
   };
 
-  const exportOrders = async (filters = {}) => {
+  const exportOrders = async (filters = {}, mode?: 'sent' | 'received') => {
     setLoading(true);
     try {
-      const blob = await customOrderService.exportCustomOrders(filters);
+      const exportFilters = mode ? { ...filters, mode } : filters;
+      const blob = await customOrderService.exportCustomOrders(exportFilters);
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `custom-orders-${Date.now()}.xlsx`);
+      const modeText = mode ? `-${mode}` : '';
+      link.setAttribute(
+        'download',
+        `custom-orders${modeText}-${Date.now()}.xlsx`,
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();

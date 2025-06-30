@@ -17,6 +17,7 @@ import { PaginatedResponse } from '../types/common';
 export interface GetCustomOrdersQuery {
   page?: number;
   limit?: number;
+  mode?: 'sent' | 'received'; // NEW
   status?: QuoteStatus | QuoteStatus[];
   dateFrom?: string;
   dateTo?: string;

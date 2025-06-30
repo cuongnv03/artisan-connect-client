@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  PlusIcon,
   FunnelIcon,
   ArrowDownTrayIcon,
-  ChartBarIcon,
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 import { useCustomOrders } from '../../hooks/custom-orders/useCustomOrders';
 import { useCustomOrderOperations } from '../../hooks/custom-orders/useCustomOrderOperations';
 import { Button } from '../../components/ui/Button';
@@ -14,8 +15,9 @@ import { Pagination } from '../../components/ui/Pagination';
 import { CustomOrderList } from '../../components/custom-orders/CustomOrderList/CustomOrderList';
 import { QuoteStatus } from '../../types/custom-order';
 
-export const ArtisanCustomOrdersPage: React.FC = () => {
+export const SentCustomOrdersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { state: authState } = useAuth();
   const { exportOrders, loading: exporting } = useCustomOrderOperations();
   const {
     orders,
@@ -28,7 +30,7 @@ export const ArtisanCustomOrdersPage: React.FC = () => {
     updateFilters,
     refreshOrders,
     userRole,
-  } = useCustomOrders('artisan');
+  } = useCustomOrders('sent'); // Use 'sent' mode
 
   const statusOptions = [
     { label: 'Tất cả trạng thái', value: '' },
@@ -54,28 +56,35 @@ export const ArtisanCustomOrdersPage: React.FC = () => {
     exportOrders(filters);
   };
 
+  const isCustomer = authState.user?.role === 'CUSTOMER';
+  const isArtisan = authState.user?.role === 'ARTISAN';
+
+  const getPageTitle = () => {
+    if (isCustomer) {
+      return {
+        title: 'Yêu cầu Custom Order đã gửi',
+        description: 'Quản lý các yêu cầu custom order bạn đã gửi',
+      };
+    }
+    return {
+      title: 'Custom Order đã gửi',
+      description:
+        'Quản lý các yêu cầu custom order bạn đã gửi cho nghệ nhân khác',
+    };
+  };
+
+  const pageInfo = getPageTitle();
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Yêu cầu Custom Order nhận được
-          </h1>
-          <p className="text-gray-600">
-            Quản lý các yêu cầu custom order từ khách hàng
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{pageInfo.title}</h1>
+          <p className="text-gray-600">{pageInfo.description}</p>
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/custom-orders/stats')}
-            leftIcon={<ChartBarIcon className="w-4 h-4" />}
-          >
-            Thống kê
-          </Button>
-
           <Button
             variant="ghost"
             onClick={handleExport}
@@ -84,44 +93,14 @@ export const ArtisanCustomOrdersPage: React.FC = () => {
           >
             Xuất Excel
           </Button>
-        </div>
-      </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-primary">{totalItems}</p>
-            <p className="text-sm text-gray-600">Tổng yêu cầu</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600">
-              {orders.filter((o) => o.status === QuoteStatus.PENDING).length}
-            </p>
-            <p className="text-sm text-gray-600">Chờ phản hồi</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
-              {orders.filter((o) => o.status === QuoteStatus.ACCEPTED).length}
-            </p>
-            <p className="text-sm text-gray-600">Đã chấp nhận</p>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-600">
-              {
-                orders.filter((o) => o.status === QuoteStatus.COUNTER_OFFERED)
-                  .length
-              }
-            </p>
-            <p className="text-sm text-gray-600">Đề xuất ngược</p>
-          </div>
-        </Card>
+          <Button
+            onClick={() => navigate('/custom-orders/create')}
+            leftIcon={<PlusIcon className="w-4 h-4" />}
+          >
+            Tạo yêu cầu mới
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -147,7 +126,7 @@ export const ArtisanCustomOrdersPage: React.FC = () => {
       <CustomOrderList
         orders={orders}
         loading={loading}
-        userRole={userRole || 'ARTISAN'}
+        userRole={userRole || 'CUSTOMER'}
         onOrderClick={handleOrderClick}
       />
 

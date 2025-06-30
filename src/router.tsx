@@ -95,9 +95,9 @@ import { AdminCategoriesPage } from './pages/admin/products/AdminCategoriesPage'
 import { CreateCategoryPage } from './pages/admin/products/CreateCategoryPage';
 import { EditCategoryPage } from './pages/admin/products/EditCategoryPage';
 import { CustomOrderRedirect } from './components/common/CustomOrderRedirect';
-import { CustomerCustomOrdersPage } from './pages/custom-orders/CustomerCustomOrdersPage';
+import { SentCustomOrdersPage } from './pages/custom-orders/SentCustomOrdersPage';
 import { CreateCustomOrderPage } from './pages/custom-orders/CreateCustomOrderPage';
-import { ArtisanCustomOrdersPage } from './pages/custom-orders/ArtisanCustomOrdersPage';
+import { ReceivedCustomOrdersPage } from './pages/custom-orders/ReceivedCustomOrdersPage';
 import { CustomOrderStatsPage } from './pages/custom-orders/CustomOrderStatsPage';
 import { CustomOrderDetailPage } from './pages/custom-orders/CustomOrderDetailPage';
 import { ArtisanRequestDetailPage } from './pages/admin/ArtisanRequestDetailPage';
@@ -530,15 +530,19 @@ export const router = createBrowserRouter(
             {
               path: 'requests',
               element: (
-                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
-                  <CustomerCustomOrdersPage />
+                <ProtectedRoute
+                  allowedRoles={[UserRole.CUSTOMER, UserRole.ARTISAN]}
+                >
+                  <SentCustomOrdersPage />
                 </ProtectedRoute>
               ),
             },
             {
               path: 'create',
               element: (
-                <ProtectedRoute allowedRoles={[UserRole.CUSTOMER]}>
+                <ProtectedRoute
+                  allowedRoles={[UserRole.CUSTOMER, UserRole.ARTISAN]}
+                >
                   <CreateCustomOrderPage />
                 </ProtectedRoute>
               ),
@@ -548,7 +552,7 @@ export const router = createBrowserRouter(
               path: 'received',
               element: (
                 <ProtectedRoute allowedRoles={[UserRole.ARTISAN]}>
-                  <ArtisanCustomOrdersPage />
+                  <ReceivedCustomOrdersPage />
                 </ProtectedRoute>
               ),
             },

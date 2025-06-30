@@ -97,21 +97,30 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     }
   };
 
-  const handleSendCustomOrder = async (proposal: CustomOrderProposal) => {
+  const handleSendCustomOrder = async (data: any) => {
     setCustomOrderLoading(true);
     try {
-      // Gọi service để tạo custom order thực sự thay vì chỉ gửi message
-      const customOrder = await customOrderService.createCustomOrder(proposal);
+      // Gọi service để tạo custom order thực sự
+      const customOrder = await customOrderService.createCustomOrder({
+        artisanId: userId,
+        title: data.title,
+        description: data.description,
+        estimatedPrice: data.estimatedPrice,
+        customerBudget: data.customerBudget,
+        timeline: data.timeline,
+        specifications: data.specifications,
+        attachmentUrls: data.attachmentUrls || [],
+        referenceProductId: data.referenceProductId,
+        expiresInDays: data.expiresInDays,
+      });
 
-      // Sau đó gửi message thông báo
+      // Sau đó gửi message thông báo với customOrderId thực
       await sendMessage(
-        `🛠️ Tôi đã gửi một đề xuất custom order: "${proposal.title}"`,
+        `🛠️ Tôi đã gửi một đề xuất custom order: "${customOrder.title}"`,
         MessageType.CUSTOM_ORDER,
         {
           type: 'custom_order_created',
           customOrderId: customOrder.id,
-          proposal: proposal,
-          status: 'pending',
           timestamp: new Date().toISOString(),
         },
       );
