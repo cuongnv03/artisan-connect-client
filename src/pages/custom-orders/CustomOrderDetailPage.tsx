@@ -14,6 +14,9 @@ import {
   DocumentTextIcon,
   SwatchIcon,
   WrenchScrewdriverIcon,
+  CreditCardIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { useCustomOrderDetail } from '../../hooks/custom-orders/useCustomOrderDetail';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +27,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { ImageGallery } from '../../components/common/ImageGallery';
 import { Modal } from '../../components/ui/Modal';
+import { Input } from '../../components/ui/Input';
 import { formatPrice, formatRelativeTime } from '../../utils/format';
 import { QuoteStatus } from '../../types/custom-order';
 import { useForm } from '../../hooks/common/useForm';
@@ -33,21 +37,39 @@ export const CustomOrderDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { state: authState } = useAuth();
+
+  // Modal states
   const [showResponseModal, setShowResponseModal] = useState(false);
+  const [showCustomerCounterModal, setShowCustomerCounterModal] =
+    useState(false);
+  const [showCustomerRejectModal, setShowCustomerRejectModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [showNegotiationHistory, setShowNegotiationHistory] = useState(false);
 
   const {
     order,
     loading,
     updating,
+    permissions,
     respondToOrder,
     updateOrder,
-    acceptCounterOffer,
     cancelOrder,
+    customerCounterOffer,
+    customerAcceptOffer,
+    customerRejectOffer,
+    // Permission helpers
     canRespond,
     canUpdate,
-    canAcceptCounter,
+    canAcceptOffer,
+    canRejectOffer,
+    canCounterOffer,
     canCancel,
+    canProceedToPayment,
+    // Status helpers
+    isExpired,
+    isActive,
+    isCompleted,
+    isCancelled,
   } = useCustomOrderDetail(id!);
 
   // Handle URL actions
@@ -55,11 +77,12 @@ export const CustomOrderDetailPage: React.FC = () => {
     const action = searchParams.get('action');
     if (action === 'accept' && canRespond) {
       handleQuickAccept();
-    } else if (action === 'accept-counter' && canAcceptCounter) {
-      handleAcceptCounter();
+    } else if (action === 'accept-offer' && canAcceptOffer) {
+      handleAcceptOffer();
     }
-  }, [searchParams, canRespond, canAcceptCounter]);
+  }, [searchParams, canRespond, canAcceptOffer]);
 
+  // Forms
   const {
     values: responseValues,
     handleChange: handleResponseChange,
@@ -86,6 +109,7 @@ export const CustomOrderDetailPage: React.FC = () => {
     },
   });
 
+  // Quick action handlers
   const handleQuickAccept = async () => {
     await respondToOrder({
       action: 'ACCEPT',
@@ -93,10 +117,14 @@ export const CustomOrderDetailPage: React.FC = () => {
     });
   };
 
-  const handleAcceptCounter = async () => {
-    await acceptCounterOffer();
+  const handleAcceptOffer = async () => {
+    await customerAcceptOffer({
+      action: 'ACCEPT',
+      message: 'Tôi chấp nhận đề xuất này!',
+    });
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -111,6 +139,7 @@ export const CustomOrderDetailPage: React.FC = () => {
     );
   }
 
+  // Not found state
   if (!order) {
     return (
       <div className="text-center py-16">
@@ -133,6 +162,7 @@ export const CustomOrderDetailPage: React.FC = () => {
     );
   }
 
+  // Helper functions
   const getStatusBadge = (status: QuoteStatus) => {
     const statusConfig = {
       PENDING: {
@@ -152,7 +182,7 @@ export const CustomOrderDetailPage: React.FC = () => {
       },
       COUNTER_OFFERED: {
         variant: 'info' as const,
-        text: 'Đề xuất ngược',
+        text: 'Đang thương lượng',
         bg: 'from-blue-400 to-indigo-400',
       },
       EXPIRED: {
@@ -199,7 +229,12 @@ export const CustomOrderDetailPage: React.FC = () => {
 
             <div className="flex items-center space-x-4">
               {getStatusBadge(order.status)}
-              {order.expiresAt && new Date(order.expiresAt) > new Date() && (
+              {isExpired && (
+                <div className="px-3 py-1 bg-red-500/80 rounded-full text-sm backdrop-blur-sm">
+                  ⏰ Đã hết hạn
+                </div>
+              )}
+              {order.expiresAt && !isExpired && (
                 <div className="px-3 py-1 bg-white/20 rounded-full text-sm backdrop-blur-sm">
                   Hết hạn {formatRelativeTime(order.expiresAt)}
                 </div>
@@ -212,6 +247,11 @@ export const CustomOrderDetailPage: React.FC = () => {
             <p className="text-white/90 text-lg">
               Custom Order #{order.id.slice(-8)}
             </p>
+            {permissions?.message && (
+              <div className="mt-4 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                <p className="text-white/90">💡 {permissions.message}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -238,35 +278,36 @@ export const CustomOrderDetailPage: React.FC = () => {
           </Card>
 
           {/* Specifications */}
-          {order.specifications && (
-            <Card className="p-8 border-l-4 border-l-purple-400">
-              <div className="flex items-center mb-6">
-                <div className="p-3 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl mr-4">
-                  <SwatchIcon className="w-6 h-6 text-purple-500" />
+          {order.specifications &&
+            Object.keys(order.specifications).length > 0 && (
+              <Card className="p-8 border-l-4 border-l-purple-400">
+                <div className="flex items-center mb-6">
+                  <div className="p-3 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl mr-4">
+                    <SwatchIcon className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Thông số kỹ thuật
+                  </h2>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Thông số kỹ thuật
-                </h2>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(order.specifications).map(([key, value]) =>
-                  value ? (
-                    <div
-                      key={key}
-                      className="bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl p-4 border border-purple-100"
-                    >
-                      <h3 className="font-semibold text-gray-800 capitalize mb-2 flex items-center">
-                        <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                      </h3>
-                      <p className="text-gray-700">{String(value)}</p>
-                    </div>
-                  ) : null,
-                )}
-              </div>
-            </Card>
-          )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {Object.entries(order.specifications)
+                    .filter(([_, value]) => value && String(value).trim())
+                    .map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="bg-gradient-to-r from-gray-50 to-purple-50 rounded-xl p-4 border border-purple-100"
+                      >
+                        <h3 className="font-semibold text-gray-800 capitalize mb-2 flex items-center">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                          {key.replace(/([A-Z])/g, ' $1').trim()}
+                        </h3>
+                        <p className="text-gray-700">{String(value)}</p>
+                      </div>
+                    ))}
+                </div>
+              </Card>
+            )}
 
           {/* Images Gallery */}
           {order.attachmentUrls && order.attachmentUrls.length > 0 && (
@@ -355,6 +396,67 @@ export const CustomOrderDetailPage: React.FC = () => {
               </div>
             </Card>
           )}
+
+          {/* Negotiation History */}
+          {order.negotiationHistory && order.negotiationHistory.length > 0 && (
+            <Card className="p-8 border-l-4 border-l-gray-400">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="p-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl mr-4">
+                    <ClockIcon className="w-6 h-6 text-gray-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Lịch sử thương lượng
+                  </h2>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNegotiationHistory(true)}
+                  leftIcon={<EyeIcon className="w-4 h-4" />}
+                >
+                  Xem chi tiết
+                </Button>
+              </div>
+
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {order.negotiationHistory.slice(-3).map((entry, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full mt-2 ${
+                        entry.actor === 'customer'
+                          ? 'bg-blue-400'
+                          : 'bg-orange-400'
+                      }`}
+                    ></div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-gray-900">
+                          {entry.actor === 'customer'
+                            ? 'Khách hàng'
+                            : 'Nghệ nhân'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatRelativeTime(entry.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        {entry.data.message || `Đã thực hiện: ${entry.action}`}
+                      </p>
+                      {entry.data.finalPrice && (
+                        <p className="text-xs text-green-600 font-medium">
+                          Giá: {formatPrice(entry.data.finalPrice)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -414,7 +516,7 @@ export const CustomOrderDetailPage: React.FC = () => {
               {/* Customer */}
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <p className="text-sm text-blue-600 font-medium mb-2">
-                  Khách hàng
+                  Khách hàng {isCustomer && '(Bạn)'}
                 </p>
                 <div className="flex items-center space-x-3">
                   <Avatar
@@ -437,7 +539,7 @@ export const CustomOrderDetailPage: React.FC = () => {
               {/* Artisan */}
               <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
                 <p className="text-sm text-orange-600 font-medium mb-2">
-                  Nghệ nhân
+                  Nghệ nhân {isArtisan && '(Bạn)'}
                 </p>
                 <div className="flex items-center space-x-3">
                   <Avatar
@@ -472,7 +574,7 @@ export const CustomOrderDetailPage: React.FC = () => {
             </h3>
 
             <div className="space-y-3">
-              {/* Message Button */}
+              {/* Message Button - Always available */}
               <Button
                 fullWidth
                 variant="outline"
@@ -484,35 +586,66 @@ export const CustomOrderDetailPage: React.FC = () => {
               </Button>
 
               {/* Artisan Actions */}
-              {canRespond && isArtisan && (
-                <div className="space-y-2">
-                  <Button
-                    fullWidth
-                    onClick={() => setShowResponseModal(true)}
-                    loading={updating}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                    leftIcon={<CheckIcon className="w-4 h-4" />}
-                  >
-                    Phản hồi yêu cầu
-                  </Button>
-                </div>
-              )}
-
-              {/* Customer Actions */}
-              {canAcceptCounter && isCustomer && (
+              {canRespond && (
                 <Button
                   fullWidth
-                  onClick={() => acceptCounterOffer()}
+                  onClick={() => setShowResponseModal(true)}
+                  loading={updating}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  leftIcon={<CheckIcon className="w-4 h-4" />}
+                >
+                  Phản hồi yêu cầu
+                </Button>
+              )}
+
+              {/* Customer Actions - Accept Offer */}
+              {canAcceptOffer && (
+                <Button
+                  fullWidth
+                  onClick={() =>
+                    customerAcceptOffer({
+                      action: 'ACCEPT',
+                      message: 'Tôi chấp nhận đề xuất này!',
+                    })
+                  }
                   loading={updating}
                   className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
                   leftIcon={<CheckIcon className="w-4 h-4" />}
                 >
-                  Chấp nhận đề xuất ngược
+                  Chấp nhận đề xuất
+                </Button>
+              )}
+
+              {/* Customer Actions - Counter Offer */}
+              {canCounterOffer && (
+                <Button
+                  fullWidth
+                  onClick={() => setShowCustomerCounterModal(true)}
+                  loading={updating}
+                  variant="outline"
+                  leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                >
+                  Đề xuất ngược
+                </Button>
+              )}
+
+              {/* Customer Actions - Reject Offer */}
+              {canRejectOffer && (
+                <Button
+                  fullWidth
+                  onClick={() => setShowCustomerRejectModal(true)}
+                  loading={updating}
+                  variant="outline"
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  leftIcon={<XMarkIcon className="w-4 h-4" />}
+                >
+                  Từ chối đề xuất
                 </Button>
               )}
 
               {/* Proceed to Checkout */}
-              {order.status === 'ACCEPTED' && isCustomer && (
+              {canProceedToPayment && (
                 <Button
                   fullWidth
                   onClick={() =>
@@ -521,19 +654,20 @@ export const CustomOrderDetailPage: React.FC = () => {
                     })
                   }
                   className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg"
+                  leftIcon={<CreditCardIcon className="w-4 h-4" />}
                 >
                   Tiến hành thanh toán
                 </Button>
               )}
 
               {/* Cancel Order */}
-              {canCancel && (
+              {canCancel && !isCompleted && (
                 <Button
                   fullWidth
                   variant="outline"
-                  onClick={() => cancelOrder()}
+                  onClick={() => setShowCancelModal(true)}
                   loading={updating}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
                   leftIcon={<XMarkIcon className="w-4 h-4" />}
                 >
                   Hủy yêu cầu
@@ -550,6 +684,15 @@ export const CustomOrderDetailPage: React.FC = () => {
                 Xem lịch sử thương lượng
               </Button>
             </div>
+
+            {/* Status Message */}
+            {permissions?.message && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 {permissions.message}
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* Timeline */}
@@ -573,13 +716,21 @@ export const CustomOrderDetailPage: React.FC = () => {
                 </span>
               </div>
               {order.expiresAt && (
-                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <span className="text-orange-700">Hết hạn:</span>
+                <div
+                  className={`flex justify-between items-center p-3 rounded-lg border ${
+                    isExpired
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-orange-50 border-orange-200'
+                  }`}
+                >
+                  <span
+                    className={isExpired ? 'text-red-700' : 'text-orange-700'}
+                  >
+                    {isExpired ? 'Đã hết hạn:' : 'Hết hạn:'}
+                  </span>
                   <span
                     className={`font-medium ${
-                      new Date(order.expiresAt) < new Date()
-                        ? 'text-red-600'
-                        : 'text-orange-700'
+                      isExpired ? 'text-red-600' : 'text-orange-700'
                     }`}
                   >
                     {formatRelativeTime(order.expiresAt)}
@@ -591,7 +742,9 @@ export const CustomOrderDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Response Modal */}
+      {/* MODALS */}
+
+      {/* Artisan Response Modal */}
       <Modal
         isOpen={showResponseModal}
         onClose={() => setShowResponseModal(false)}
@@ -629,6 +782,8 @@ export const CustomOrderDetailPage: React.FC = () => {
                   className="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500"
                   placeholder="Nhập giá đề xuất"
                   required
+                  min="1"
+                  step="1000"
                 />
               </div>
               <div>
@@ -679,6 +834,273 @@ export const CustomOrderDetailPage: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Customer Counter Offer Modal */}
+      <Modal
+        isOpen={showCustomerCounterModal}
+        onClose={() => setShowCustomerCounterModal(false)}
+        title="Đề xuất giá ngược"
+        size="lg"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            customerCounterOffer({
+              action: 'COUNTER_OFFER',
+              finalPrice: Number(formData.get('finalPrice')),
+              timeline: formData.get('timeline') as string,
+              message: formData.get('message') as string,
+            });
+            setShowCustomerCounterModal(false);
+          }}
+        >
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="text-sm text-gray-600">Giá hiện tại:</div>
+              <div className="text-lg font-semibold text-gray-900">
+                {formatPrice(order?.finalPrice || order?.estimatedPrice || 0)}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Giá đề xuất mới (VNĐ) *
+              </label>
+              <input
+                type="number"
+                name="finalPrice"
+                required
+                min="1"
+                step="1000"
+                defaultValue={order?.finalPrice || order?.estimatedPrice || ''}
+                className="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="Nhập giá đề xuất"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Thời gian thực hiện
+              </label>
+              <input
+                type="text"
+                name="timeline"
+                defaultValue={order?.timeline || ''}
+                className="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="VD: 2-3 tuần"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tin nhắn giải thích *
+              </label>
+              <textarea
+                name="message"
+                rows={3}
+                required
+                className="w-full rounded-lg border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                placeholder="Giải thích lý do đề xuất giá mới..."
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowCustomerCounterModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button type="submit" loading={updating}>
+              Gửi đề xuất
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Customer Reject Modal */}
+      <Modal
+        isOpen={showCustomerRejectModal}
+        onClose={() => setShowCustomerRejectModal(false)}
+        title="Từ chối đề xuất"
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            customerRejectOffer({
+              action: 'REJECT',
+              reason: formData.get('reason') as string,
+              message: formData.get('message') as string,
+            });
+            setShowCustomerRejectModal(false);
+          }}
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Lý do từ chối
+              </label>
+              <select
+                name="reason"
+                className="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500"
+              >
+                <option value="">Chọn lý do...</option>
+                <option value="Giá quá cao">Giá quá cao</option>
+                <option value="Thời gian quá lâu">Thời gian quá lâu</option>
+                <option value="Không phù hợp yêu cầu">
+                  Không phù hợp yêu cầu
+                </option>
+                <option value="Khác">Lý do khác</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tin nhắn bổ sung
+              </label>
+              <textarea
+                name="message"
+                rows={3}
+                className="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring-red-500"
+                placeholder="Thêm tin nhắn để giải thích chi tiết..."
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowCustomerRejectModal(false)}
+            >
+              Hủy
+            </Button>
+            <Button type="submit" variant="danger" loading={updating}>
+              Từ chối
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Cancel Order Modal */}
+      <Modal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Hủy Custom Order"
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target as HTMLFormElement);
+            cancelOrder(formData.get('reason') as string);
+            setShowCancelModal(false);
+          }}
+        >
+          <div className="mb-4">
+            <div className="flex items-center space-x-2 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
+              <p className="text-amber-800 text-sm">
+                <strong>Cảnh báo:</strong> Bạn có chắc chắn muốn hủy custom
+                order này? Hành động này không thể hoàn tác.
+              </p>
+            </div>
+
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lý do hủy (tùy chọn)
+            </label>
+            <textarea
+              name="reason"
+              rows={3}
+              className="w-full rounded-lg border-gray-300 focus:border-gray-500 focus:ring-gray-500"
+              placeholder="Nhập lý do hủy để giúp đối phương hiểu rõ hơn..."
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setShowCancelModal(false)}
+            >
+              Không hủy
+            </Button>
+            <Button type="submit" variant="danger" loading={updating}>
+              Xác nhận hủy
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Negotiation History Modal */}
+      <Modal
+        isOpen={showNegotiationHistory}
+        onClose={() => setShowNegotiationHistory(false)}
+        title="Lịch sử thương lượng"
+        size="lg"
+      >
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {order.negotiationHistory && order.negotiationHistory.length > 0 ? (
+            order.negotiationHistory.map((entry, index) => (
+              <div
+                key={index}
+                className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg"
+              >
+                <div
+                  className={`w-3 h-3 rounded-full mt-2 ${
+                    entry.actor === 'customer' ? 'bg-blue-400' : 'bg-orange-400'
+                  }`}
+                ></div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-gray-900">
+                      {entry.actor === 'customer' ? 'Khách hàng' : 'Nghệ nhân'}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {formatRelativeTime(entry.timestamp)}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-700">
+                      <strong>Hành động:</strong> {entry.action}
+                    </p>
+                    {entry.data.message && (
+                      <p className="text-sm text-gray-700">
+                        <strong>Tin nhắn:</strong> {entry.data.message}
+                      </p>
+                    )}
+                    {entry.data.finalPrice && (
+                      <p className="text-sm text-green-600 font-medium">
+                        <strong>Giá:</strong>{' '}
+                        {formatPrice(entry.data.finalPrice)}
+                      </p>
+                    )}
+                    {entry.data.timeline && (
+                      <p className="text-sm text-blue-600">
+                        <strong>Thời gian:</strong> {entry.data.timeline}
+                      </p>
+                    )}
+                    {entry.data.reason && (
+                      <p className="text-sm text-red-600">
+                        <strong>Lý do:</strong> {entry.data.reason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              Chưa có lịch sử thương lượng
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../../contexts/ToastContext';
 import { customOrderService } from '../../services/custom-order.service';
+import { messageService } from '../../services/message.service';
 import {
   CustomOrderWithDetails,
   ArtisanResponseRequest,
@@ -10,8 +11,12 @@ import {
   AcceptOfferRequest,
   RejectOfferRequest,
 } from '../../types/custom-order';
-import { messageService } from '../../services/message.service';
 import { formatPrice } from '../../utils/format';
+import {
+  getCustomOrderActions,
+  getLastNegotiationActor,
+} from '../../utils/custom-order';
+import { MessageType } from '../../types/message';
 
 export const useCustomOrderDetail = (orderId: string) => {
   const { state } = useAuth();
@@ -30,13 +35,9 @@ export const useCustomOrderDetail = (orderId: string) => {
       const orderData = await customOrderService.getCustomOrder(orderId);
       setOrder(orderData);
 
-      // Calculate permissions
+      // Calculate permissions using new utility
       if (state.user) {
-        const userPermissions = customOrderService.getUserPermissions(
-          orderData,
-          state.user.id,
-          state.user.role,
-        );
+        const userPermissions = getCustomOrderActions(orderData, state.user.id);
         setPermissions(userPermissions);
       }
     } catch (err: any) {
@@ -46,8 +47,82 @@ export const useCustomOrderDetail = (orderId: string) => {
     }
   };
 
-  // ===== EXISTING METHODS =====
+  // Auto-send message helper
+  const sendAutoMessage = async (
+    action: string,
+    updatedOrder: CustomOrderWithDetails,
+    data?: any,
+  ) => {
+    try {
+      const isCustomer = state.user?.id === updatedOrder.customer.id;
+      const receiverId = isCustomer
+        ? updatedOrder.artisan.id
+        : updatedOrder.customer.id;
 
+      let content = '';
+      let productMentions: any = {
+        type: 'custom_order_response',
+        negotiationId: updatedOrder.id,
+        customerId: updatedOrder.customer.id,
+        artisanId: updatedOrder.artisan.id,
+        action,
+        status: updatedOrder.status,
+        lastActor: isCustomer ? 'customer' : 'artisan',
+        timestamp: new Date().toISOString(),
+        proposal: {
+          title: updatedOrder.title,
+          description: updatedOrder.description,
+          estimatedPrice: updatedOrder.estimatedPrice,
+          timeline: updatedOrder.timeline,
+          specifications: updatedOrder.specifications,
+        },
+      };
+
+      switch (action) {
+        case 'ACCEPT':
+          content = `✅ Tôi đã chấp nhận custom order "${updatedOrder.title}"`;
+          break;
+        case 'REJECT':
+          content = `❌ Tôi đã từ chối custom order "${updatedOrder.title}"`;
+          if (data?.reason) {
+            content += `: ${data.reason}`;
+          }
+          break;
+        case 'COUNTER_OFFER':
+          content = `💰 Tôi đã gửi đề xuất ngược cho custom order "${
+            updatedOrder.title
+          }" với giá ${formatPrice(data.finalPrice)}`;
+          productMentions.finalPrice = data.finalPrice;
+          productMentions.status = 'counter_offered';
+          break;
+        case 'CUSTOMER_COUNTER_OFFER':
+          content = `💰 Tôi đã gửi đề xuất ngược với giá ${formatPrice(
+            data.finalPrice,
+          )}`;
+          productMentions.finalPrice = data.finalPrice;
+          productMentions.status = 'counter_offered';
+          break;
+        case 'CUSTOMER_ACCEPT':
+          content = `✅ Tôi đã chấp nhận đề xuất cho custom order "${updatedOrder.title}"`;
+          break;
+        case 'CUSTOMER_REJECT':
+          content = `❌ Tôi đã từ chối đề xuất cho custom order "${updatedOrder.title}"`;
+          break;
+      }
+
+      await messageService.sendMessage({
+        receiverId,
+        content,
+        type: MessageType.CUSTOM_ORDER,
+        productMentions,
+      });
+    } catch (error) {
+      console.error('Error sending auto message:', error);
+      // Don't throw error, just log it
+    }
+  };
+
+  // Artisan methods
   const respondToOrder = async (data: ArtisanResponseRequest) => {
     if (!order) return;
 
@@ -59,34 +134,8 @@ export const useCustomOrderDetail = (orderId: string) => {
       );
       setOrder(updatedOrder);
 
-      // AUTO SEND MESSAGE TO CUSTOMER
-      try {
-        const actionMessages = {
-          ACCEPT: `✅ Tôi đã chấp nhận yêu cầu custom order "${order.title}"`,
-          REJECT: `❌ Tôi đã từ chối yêu cầu custom order "${order.title}"${
-            data.response?.message ? `: ${data.response.message}` : ''
-          }`,
-          COUNTER_OFFER: `💰 Tôi đã gửi đề xuất ngược cho custom order "${
-            order.title
-          }" với giá ${data.finalPrice ? formatPrice(data.finalPrice) : 'N/A'}`,
-        };
-
-        await messageService.sendMessage({
-          receiverId: order.customer.id,
-          content: actionMessages[data.action],
-          type: 'QUOTE_DISCUSSION',
-          quoteRequestId: order.id,
-          productMentions: {
-            type: 'custom_order_response',
-            action: data.action,
-            finalPrice: data.finalPrice,
-            quoteRequestId: order.id,
-            response: data.response,
-          },
-        });
-      } catch (msgError) {
-        console.error('Error sending auto message:', msgError);
-      }
+      // Auto send message
+      await sendAutoMessage(data.action, updatedOrder, data);
 
       const actionMessages = {
         ACCEPT: 'Đã chấp nhận yêu cầu custom order',
@@ -95,6 +144,73 @@ export const useCustomOrderDetail = (orderId: string) => {
       };
 
       success(actionMessages[data.action]);
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Customer methods
+  const customerCounterOffer = async (data: CounterOfferRequest) => {
+    if (!order) return;
+
+    setUpdating(true);
+    try {
+      const updatedOrder = await customOrderService.customerCounterOffer(
+        order.id,
+        data,
+      );
+      setOrder(updatedOrder);
+
+      // Auto send message
+      await sendAutoMessage('CUSTOMER_COUNTER_OFFER', updatedOrder, data);
+
+      success('Đã gửi đề xuất ngược');
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const customerAcceptOffer = async (data: AcceptOfferRequest) => {
+    if (!order) return;
+
+    setUpdating(true);
+    try {
+      const updatedOrder = await customOrderService.customerAcceptOffer(
+        order.id,
+        data,
+      );
+      setOrder(updatedOrder);
+
+      // Auto send message
+      await sendAutoMessage('CUSTOMER_ACCEPT', updatedOrder, data);
+
+      success('Đã chấp nhận đề xuất');
+    } catch (err: any) {
+      error(err.message || 'Có lỗi xảy ra');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const customerRejectOffer = async (data: RejectOfferRequest) => {
+    if (!order) return;
+
+    setUpdating(true);
+    try {
+      const updatedOrder = await customOrderService.customerRejectOffer(
+        order.id,
+        data,
+      );
+      setOrder(updatedOrder);
+
+      // Auto send message
+      await sendAutoMessage('CUSTOMER_REJECT', updatedOrder, data);
+
+      success('Đã từ chối đề xuất');
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra');
     } finally {
@@ -120,23 +236,6 @@ export const useCustomOrderDetail = (orderId: string) => {
     }
   };
 
-  const acceptCounterOffer = async () => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      const updatedOrder = await customOrderService.acceptCounterOffer(
-        order.id,
-      );
-      setOrder(updatedOrder);
-      success('Đã chấp nhận đề xuất ngược');
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   const cancelOrder = async (reason?: string) => {
     if (!order) return;
 
@@ -155,129 +254,12 @@ export const useCustomOrderDetail = (orderId: string) => {
     }
   };
 
-  // ===== NEW: BIDIRECTIONAL NEGOTIATION METHODS =====
-
-  const customerCounterOffer = async (data: CounterOfferRequest) => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      const updatedOrder = await customOrderService.customerCounterOffer(
-        order.id,
-        data,
-      );
-      setOrder(updatedOrder);
-
-      // AUTO SEND MESSAGE TO ARTISAN
-      try {
-        await messageService.sendMessage({
-          receiverId: order.artisan.id,
-          content: `💰 Tôi đã gửi đề xuất ngược cho custom order "${
-            order.title
-          }" với giá ${formatPrice(data.finalPrice)}${
-            data.message ? `: ${data.message}` : ''
-          }`,
-          type: 'QUOTE_DISCUSSION',
-          quoteRequestId: order.id,
-          productMentions: {
-            type: 'customer_counter_offer',
-            action: 'CUSTOMER_COUNTER_OFFER',
-            finalPrice: data.finalPrice,
-            quoteRequestId: order.id,
-            timeline: data.timeline,
-            message: data.message,
-          },
-        });
-      } catch (msgError) {
-        console.error('Error sending auto message:', msgError);
-      }
-
-      success('Đã gửi đề xuất ngược');
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const customerAcceptOffer = async (data: AcceptOfferRequest) => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      const updatedOrder = await customOrderService.customerAcceptOffer(
-        order.id,
-        data,
-      );
-      setOrder(updatedOrder);
-
-      // AUTO SEND MESSAGE TO ARTISAN
-      try {
-        await messageService.sendMessage({
-          receiverId: order.artisan.id,
-          content: `✅ Tôi đã chấp nhận đề xuất custom order "${order.title}"${
-            data.message ? `: ${data.message}` : ''
-          }`,
-          type: 'QUOTE_DISCUSSION',
-          quoteRequestId: order.id,
-          productMentions: {
-            type: 'customer_accept_offer',
-            action: 'CUSTOMER_ACCEPT',
-            quoteRequestId: order.id,
-            finalPrice: updatedOrder.finalPrice,
-            message: data.message,
-          },
-        });
-      } catch (msgError) {
-        console.error('Error sending auto message:', msgError);
-      }
-
-      success('Đã chấp nhận đề xuất');
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const customerRejectOffer = async (data: RejectOfferRequest) => {
-    if (!order) return;
-
-    setUpdating(true);
-    try {
-      const updatedOrder = await customOrderService.customerRejectOffer(
-        order.id,
-        data,
-      );
-      setOrder(updatedOrder);
-
-      // AUTO SEND MESSAGE TO ARTISAN
-      try {
-        await messageService.sendMessage({
-          receiverId: order.artisan.id,
-          content: `❌ Tôi đã từ chối đề xuất custom order "${order.title}"${
-            data.reason ? `: ${data.reason}` : ''
-          }${data.message ? ` - ${data.message}` : ''}`,
-          type: 'QUOTE_DISCUSSION',
-          quoteRequestId: order.id,
-          productMentions: {
-            type: 'customer_reject_offer',
-            action: 'CUSTOMER_REJECT',
-            quoteRequestId: order.id,
-            reason: data.reason,
-            message: data.message,
-          },
-        });
-      } catch (msgError) {
-        console.error('Error sending auto message:', msgError);
-      }
-
-      success('Đã từ chối đề xuất');
-    } catch (err: any) {
-      error(err.message || 'Có lỗi xảy ra');
-    } finally {
-      setUpdating(false);
-    }
+  // Legacy method for backward compatibility
+  const acceptCounterOffer = async () => {
+    return customerAcceptOffer({
+      action: 'ACCEPT',
+      message: 'Chấp nhận đề xuất',
+    });
   };
 
   useEffect(() => {
@@ -287,11 +269,7 @@ export const useCustomOrderDetail = (orderId: string) => {
   // Update permissions when order or user changes
   useEffect(() => {
     if (order && state.user) {
-      const userPermissions = customOrderService.getUserPermissions(
-        order,
-        state.user.id,
-        state.user.role,
-      );
+      const userPermissions = getCustomOrderActions(order, state.user.id);
       setPermissions(userPermissions);
     }
   }, [order, state.user]);
@@ -321,16 +299,17 @@ export const useCustomOrderDetail = (orderId: string) => {
     // Permission helpers (computed from permissions)
     canRespond: permissions?.canRespond || false,
     canUpdate: permissions?.canUpdate || false,
-    canAcceptOffer: permissions?.canAcceptOffer || false,
-    canRejectOffer: permissions?.canRejectOffer || false,
+    canAcceptOffer: permissions?.canAccept || false,
+    canRejectOffer: permissions?.canReject || false,
     canCounterOffer: permissions?.canCounterOffer || false,
     canCancel: permissions?.canCancel || false,
-    canMessage: permissions?.canMessage || false,
+    canMessage: permissions?.canMessage !== false, // Default true
+    canProceedToPayment: permissions?.canProceedToPayment || false,
 
     // Status helpers
-    isExpired: permissions?.isExpired || false,
-    isActive: permissions?.isActive || false,
-    isCompleted: permissions?.isCompleted || false,
-    isCancelled: permissions?.isCancelled || false,
+    isExpired: permissions?.expired || false,
+    isActive: permissions?.actionFor !== undefined,
+    isCompleted: permissions?.completed || false,
+    isCancelled: permissions?.rejected || false,
   };
 };

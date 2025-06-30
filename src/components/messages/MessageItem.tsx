@@ -5,6 +5,9 @@ import {
   DocumentIcon,
   ArrowDownTrayIcon,
   WrenchScrewdriverIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { MessageWithUsers, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
@@ -48,24 +51,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     if (!authState.user) return;
 
     try {
-      if (authState.user.role === 'ARTISAN') {
+      const isCustomer =
+        authState.user.id === message.productMentions?.customerId;
+
+      if (isCustomer) {
+        // Customer accepts artisan's response/counter offer
+        await customerAcceptOfferInChat({
+          receiverId: message.senderId,
+          content: `✅ Tôi đã chấp nhận đề xuất cho custom order "${proposal.title}"`,
+          quoteRequestId: negotiationId,
+        });
+      } else {
         // Artisan accepts customer's initial request
         await respondToCustomOrderInChat({
           receiverId: message.senderId,
-          content: `Tôi đã chấp nhận yêu cầu custom order "${proposal.title}"`,
+          content: `✅ Tôi đã chấp nhận yêu cầu custom order "${proposal.title}"`,
           quoteRequestId: negotiationId,
           response: {
             action: 'ACCEPT',
             finalPrice: proposal.estimatedPrice,
             data: { message: 'Chấp nhận yêu cầu' },
           },
-        });
-      } else {
-        // Customer accepts artisan's counter offer
-        await customerAcceptOfferInChat({
-          receiverId: message.senderId,
-          content: `Tôi đã chấp nhận đề xuất custom order`,
-          quoteRequestId: negotiationId,
         });
       }
     } catch (error) {
@@ -80,24 +86,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     if (!authState.user) return;
 
     try {
-      if (authState.user.role === 'ARTISAN') {
+      const isCustomer =
+        authState.user.id === message.productMentions?.customerId;
+
+      if (isCustomer) {
+        // Customer rejects artisan's offer
+        await customerRejectOfferInChat({
+          receiverId: message.senderId,
+          content: reason || `❌ Tôi đã từ chối đề xuất custom order`,
+          quoteRequestId: negotiationId,
+          rejectOffer: { reason },
+        });
+      } else {
         // Artisan rejects customer's request
         await respondToCustomOrderInChat({
           receiverId: message.senderId,
-          content: reason || `Tôi đã từ chối yêu cầu custom order`,
+          content: reason || `❌ Tôi đã từ chối yêu cầu custom order`,
           quoteRequestId: negotiationId,
           response: {
             action: 'REJECT',
             data: { message: reason || 'Từ chối yêu cầu' },
           },
-        });
-      } else {
-        // Customer rejects artisan's offer
-        await customerRejectOfferInChat({
-          receiverId: message.senderId,
-          content: reason || `Tôi đã từ chối đề xuất custom order`,
-          quoteRequestId: negotiationId,
-          rejectOffer: { reason },
         });
       }
     } catch (error) {
@@ -116,11 +125,26 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     if (!authState.user) return;
 
     try {
-      if (authState.user.role === 'ARTISAN') {
+      const isCustomer =
+        authState.user.id === message.productMentions?.customerId;
+
+      if (isCustomer) {
+        // Customer counter offers
+        await customerCounterOfferInChat({
+          receiverId: message.senderId,
+          content: `💰 ${data.message}`,
+          quoteRequestId: negotiationId,
+          counterOffer: {
+            finalPrice: data.finalPrice,
+            timeline: data.timeline,
+            data: { message: data.message },
+          },
+        });
+      } else {
         // Artisan counter offers
         await respondToCustomOrderInChat({
           receiverId: message.senderId,
-          content: data.message,
+          content: `💰 ${data.message}`,
           quoteRequestId: negotiationId,
           response: {
             action: 'COUNTER_OFFER',
@@ -129,18 +153,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               message: data.message,
               timeline: data.timeline,
             },
-          },
-        });
-      } else {
-        // Customer counter offers
-        await customerCounterOfferInChat({
-          receiverId: message.senderId,
-          content: data.message,
-          quoteRequestId: negotiationId,
-          counterOffer: {
-            finalPrice: data.finalPrice,
-            timeline: data.timeline,
-            data: { message: data.message },
           },
         });
       }
@@ -187,7 +199,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   };
 
   const renderMessageContent = () => {
-    switch (message.type) {
+    const { content, type, productMentions } = message;
+
+    switch (type) {
       case MessageType.IMAGE:
         return (
           <div>
@@ -197,13 +211,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                     key={index}
                     src={imageUrl}
                     alt="Shared image"
-                    className="rounded-lg max-w-full h-auto max-h-64 object-cover cursor-pointer mb-2"
+                    className="rounded-lg max-w-full h-auto max-h-64 object-cover cursor-pointer mb-2 shadow-sm"
                     onClick={() => window.open(imageUrl, '_blank')}
                   />
                 ))
               : null}
-            {message.content && message.content !== '📷 Đã gửi hình ảnh' && (
-              <p className="whitespace-pre-wrap">{message.content}</p>
+            {content && content !== '📷 Đã gửi hình ảnh' && (
+              <p className="whitespace-pre-wrap mt-2">{content}</p>
             )}
           </div>
         );
@@ -215,33 +229,33 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               ? message.attachments.map((fileUrl, index) => (
                   <div
                     key={index}
-                    className={`flex items-center space-x-3 p-3 rounded-lg mb-2 ${
-                      isOwn ? 'bg-primary-dark bg-opacity-20' : 'bg-white'
+                    className={`flex items-center space-x-3 p-3 rounded-lg mb-2 border ${
+                      isOwn
+                        ? 'bg-primary-dark bg-opacity-10 border-primary-light'
+                        : 'bg-gray-50 border-gray-200'
                     }`}
                   >
                     <DocumentIcon
                       className={`w-8 h-8 flex-shrink-0 ${
-                        isOwn ? 'text-white' : 'text-blue-500'
+                        isOwn ? 'text-primary' : 'text-blue-500'
                       }`}
                     />
                     <div className="flex-1 min-w-0">
                       <p
                         className={`text-sm font-medium truncate ${
-                          isOwn ? 'text-white' : 'text-gray-900'
+                          isOwn ? 'text-primary-dark' : 'text-gray-900'
                         }`}
                       >
-                        {message.productMentions?.originalFileName ||
+                        {productMentions?.originalFileName ||
                           getFileName(fileUrl)}
                       </p>
                       <p
                         className={`text-xs ${
-                          isOwn ? 'text-gray-200' : 'text-gray-500'
+                          isOwn ? 'text-primary' : 'text-gray-500'
                         }`}
                       >
-                        {message.productMentions?.fileSize
-                          ? `${Math.round(
-                              message.productMentions.fileSize / 1024,
-                            )} KB`
+                        {productMentions?.fileSize
+                          ? `${Math.round(productMentions.fileSize / 1024)} KB`
                           : 'Tài liệu'}
                       </p>
                     </div>
@@ -251,8 +265,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       onClick={() => window.open(fileUrl, '_blank')}
                       className={
                         isOwn
-                          ? 'text-white hover:bg-white hover:bg-opacity-20'
-                          : ''
+                          ? 'text-primary hover:bg-primary hover:bg-opacity-10'
+                          : 'text-gray-600 hover:bg-gray-100'
                       }
                       leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
                     >
@@ -261,10 +275,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   </div>
                 ))
               : null}
-            {message.content &&
-              !message.content.startsWith('📄 Đã gửi tài liệu:') && (
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              )}
+            {content && !content.startsWith('📄 Đã gửi tài liệu:') && (
+              <p className="whitespace-pre-wrap mt-2">{content}</p>
+            )}
           </div>
         );
 
@@ -272,19 +285,184 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         return (
           <div>
             <div className="flex items-center mb-2">
-              <InformationCircleIcon className="w-4 h-4 mr-2" />
-              <span className="font-medium">Thảo luận báo giá</span>
+              <InformationCircleIcon className="w-4 h-4 mr-2 text-blue-500" />
+              <span className="font-medium text-blue-700">
+                Thảo luận báo giá
+              </span>
             </div>
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <p className="whitespace-pre-wrap">{content}</p>
           </div>
         );
 
+      case MessageType.CUSTOM_ORDER:
+        return renderCustomOrderContent();
+
       default:
-        return <p className="whitespace-pre-wrap">{message.content}</p>;
+        return <p className="whitespace-pre-wrap">{content}</p>;
     }
   };
 
-  // Custom Order messages không cần background wrapper
+  const renderCustomOrderContent = () => {
+    const { content, productMentions } = message;
+
+    if (!productMentions) {
+      return <p className="whitespace-pre-wrap">{content}</p>;
+    }
+
+    // Regular message content first
+    const messageContent = content && (
+      <div
+        className={`px-4 py-2 rounded-lg mb-3 ${
+          isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
+        }`}
+      >
+        <p className="whitespace-pre-wrap">{content}</p>
+      </div>
+    );
+
+    // Custom Order Card Logic
+    const renderCustomOrderCard = () => {
+      const {
+        type,
+        negotiationId,
+        status,
+        customerId,
+        artisanId,
+        lastActor,
+        finalPrice,
+        proposal,
+        action,
+      } = productMentions;
+
+      // Only show interactive card for certain types
+      if (
+        !['custom_order_proposal', 'custom_order_response'].includes(type || '')
+      ) {
+        return null;
+      }
+
+      // For proposal (initial custom order)
+      if (type === 'custom_order_proposal' && proposal) {
+        return (
+          <CustomOrderCard
+            proposal={proposal}
+            negotiationId={negotiationId || ''}
+            status={status || 'pending'}
+            customerId={customerId || message.senderId}
+            artisanId={artisanId || message.receiverId}
+            currentUserId={authState.user?.id || ''}
+            lastActor={lastActor}
+            finalPrice={finalPrice}
+            onAccept={handleAcceptCustomOrder}
+            onDecline={handleDeclineCustomOrder}
+            onCounterOffer={handleCounterOffer}
+            loading={sending}
+          />
+        );
+      }
+
+      // For response (artisan response or customer counter)
+      if (type === 'custom_order_response' && proposal) {
+        return (
+          <CustomOrderCard
+            proposal={proposal}
+            negotiationId={negotiationId || ''}
+            status={status || 'counter_offered'}
+            customerId={customerId || ''}
+            artisanId={artisanId || ''}
+            currentUserId={authState.user?.id || ''}
+            lastActor={lastActor}
+            finalPrice={finalPrice}
+            onAccept={handleAcceptCustomOrder}
+            onDecline={handleDeclineCustomOrder}
+            onCounterOffer={handleCounterOffer}
+            loading={sending}
+          />
+        );
+      }
+
+      return null;
+    };
+
+    // Render status update cards
+    const renderStatusUpdate = () => {
+      const { action, finalPrice, negotiationId } = productMentions;
+
+      if (!action) return null;
+
+      const getStatusConfig = () => {
+        switch (action) {
+          case 'ACCEPT':
+          case 'CUSTOMER_ACCEPT':
+            return {
+              icon: <CheckCircleIcon className="w-5 h-5 text-green-500" />,
+              title: 'Đã chấp nhận',
+              color: 'bg-green-50 border-green-200',
+              textColor: 'text-green-800',
+            };
+          case 'REJECT':
+          case 'CUSTOMER_REJECT':
+            return {
+              icon: <XCircleIcon className="w-5 h-5 text-red-500" />,
+              title: 'Đã từ chối',
+              color: 'bg-red-50 border-red-200',
+              textColor: 'text-red-800',
+            };
+          case 'COUNTER_OFFER':
+          case 'CUSTOMER_COUNTER_OFFER':
+            return {
+              icon: <ArrowPathIcon className="w-5 h-5 text-blue-500" />,
+              title: 'Đề xuất ngược',
+              color: 'bg-blue-50 border-blue-200',
+              textColor: 'text-blue-800',
+            };
+          default:
+            return null;
+        }
+      };
+
+      const statusConfig = getStatusConfig();
+      if (!statusConfig) return null;
+
+      return (
+        <div className={`p-3 rounded-lg border ${statusConfig.color} mt-2`}>
+          <div className="flex items-center mb-2">
+            {statusConfig.icon}
+            <span className={`font-medium ml-2 ${statusConfig.textColor}`}>
+              {statusConfig.title}
+            </span>
+          </div>
+
+          {finalPrice && (
+            <div className={`text-sm ${statusConfig.textColor} mb-2`}>
+              Giá: <strong>{formatPrice(finalPrice)}</strong>
+            </div>
+          )}
+
+          {negotiationId && (
+            <div className="text-xs text-gray-600">
+              <Link
+                to={`/custom-orders/${negotiationId}`}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Xem chi tiết custom order →
+              </Link>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    return (
+      <div>
+        {messageContent}
+        {renderCustomOrderCard()}
+        {renderStatusUpdate()}
+      </div>
+    );
+  };
+
+  // Custom Order messages don't need background wrapper for the card
   if (message.type === MessageType.CUSTOM_ORDER) {
     return (
       <div>
@@ -314,157 +492,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <div
             className={`max-w-xs lg:max-w-md ${isOwn ? 'order-1' : 'order-2'}`}
           >
-            {/* Message text */}
-            {message.content && (
-              <div
-                className={`px-4 py-2 rounded-lg mb-2 ${
-                  isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              </div>
-            )}
-
-            {/* Custom Order Card with Actions */}
-            {message.productMentions && (
-              <>
-                {/* Initial Custom Order Creation */}
-                {(message.productMentions.type === 'custom_order_created' ||
-                  message.productMentions.type === 'custom_order_proposal') && (
-                  <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl border-2 border-orange-200 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <WrenchScrewdriverIcon className="w-5 h-5 text-orange-500 mr-2" />
-                        <h4 className="font-semibold text-orange-900">
-                          Custom Order
-                        </h4>
-                      </div>
-                      <Badge variant="warning" size="sm">
-                        Chờ phản hồi
-                      </Badge>
-                    </div>
-
-                    {message.productMentions.customOrderId && (
-                      <div className="mb-3">
-                        <Link
-                          to={`/custom-orders/${message.productMentions.customOrderId}`}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Xem chi tiết →
-                        </Link>
-                      </div>
-                    )}
-
-                    <div className="text-sm text-orange-800">
-                      <p className="mb-2">
-                        <strong>ID:</strong> #
-                        {(
-                          message.productMentions.customOrderId ||
-                          message.productMentions.negotiationId ||
-                          ''
-                        ).slice(-8)}
-                      </p>
-                      <p>Đã tạo yêu cầu custom order thành công</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Interactive Custom Order Card */}
-                {message.productMentions.type === 'custom_order_proposal' &&
-                  message.productMentions.proposal && (
-                    <CustomOrderCard
-                      proposal={message.productMentions.proposal}
-                      negotiationId={message.productMentions.negotiationId}
-                      status={message.productMentions.status || 'pending'}
-                      isOwn={isOwn}
-                      currentUserRole={authState.user?.role || 'CUSTOMER'}
-                      onAccept={handleAcceptCustomOrder}
-                      onDecline={handleDeclineCustomOrder}
-                      onCounterOffer={handleCounterOffer}
-                      loading={sending}
-                    />
-                  )}
-
-                {/* Response Display */}
-                {message.productMentions.type === 'custom_order_response' && (
-                  <div className="bg-blue-50 rounded-lg p-4 max-w-sm">
-                    <h4 className="font-semibold mb-2 text-blue-900">
-                      {message.productMentions.response?.accepted
-                        ? '✅ Đề xuất được chấp nhận'
-                        : message.productMentions.action === 'COUNTER_OFFER'
-                        ? '💰 Đề xuất ngược'
-                        : '💬 Phản hồi đề xuất'}
-                    </h4>
-
-                    {message.productMentions.response?.counterOffer && (
-                      <div className="mt-2 p-3 bg-white rounded border">
-                        <h5 className="font-medium mb-1">Đề xuất mới:</h5>
-                        <p className="text-sm">
-                          Giá:{' '}
-                          {formatPrice(
-                            message.productMentions.response.counterOffer.price,
-                          )}
-                        </p>
-                        <p className="text-sm">
-                          Thời gian:{' '}
-                          {
-                            message.productMentions.response.counterOffer
-                              .duration
-                          }
-                        </p>
-                      </div>
-                    )}
-
-                    {message.productMentions.quoteRequestId && (
-                      <div className="mt-2">
-                        <Link
-                          to={`/custom-orders/${message.productMentions.quoteRequestId}`}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          Xem chi tiết →
-                        </Link>
-                      </div>
-                    )}
-
-                    {/* Actions for counter offers */}
-                    {message.productMentions.action === 'COUNTER_OFFER' &&
-                      !isOwn && (
-                        <div className="flex gap-2 mt-3 pt-2 border-t">
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              handleAcceptCustomOrder(
-                                message.productMentions.quoteRequestId,
-                                message.productMentions.response,
-                              )
-                            }
-                            loading={sending}
-                          >
-                            Chấp nhận
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleCounterOffer(
-                                message.productMentions.quoteRequestId,
-                                {
-                                  finalPrice:
-                                    message.productMentions.finalPrice || 0,
-                                  message: 'Đề xuất ngược',
-                                },
-                              )
-                            }
-                            loading={sending}
-                          >
-                            Đề xuất lại
-                          </Button>
-                        </div>
-                      )}
-                  </div>
-                )}
-              </>
-            )}
+            {renderCustomOrderContent()}
 
             {/* Timestamp */}
             <div
@@ -515,8 +543,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         >
           {/* Message content với background */}
           <div
-            className={`px-4 py-2 rounded-lg ${
-              isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
+            className={`px-4 py-2 rounded-lg shadow-sm ${
+              isOwn
+                ? 'bg-primary text-white'
+                : 'bg-white text-gray-900 border border-gray-200'
             }`}
           >
             {renderMessageContent()}
