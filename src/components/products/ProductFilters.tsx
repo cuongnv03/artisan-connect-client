@@ -45,6 +45,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     onFilterChange({ ...filters, [key]: value });
   };
 
+  const handleMultipleFilterChanges = (changes: Record<string, any>) => {
+    onFilterChange({ ...filters, ...changes });
+  };
+
   const handleCategoryToggle = (categoryId: string) => {
     const currentCategories = filters.categoryIds || [];
     let newCategories;
@@ -135,8 +139,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 key={range.label}
                 type="button"
                 onClick={() => {
-                  handleFilterChange('minPrice', range.min);
-                  handleFilterChange('maxPrice', range.max);
+                  handleMultipleFilterChanges({
+                    minPrice: range.min,
+                    maxPrice: range.max,
+                  });
                 }}
                 className="px-3 py-1 text-xs border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
               >

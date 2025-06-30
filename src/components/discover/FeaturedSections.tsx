@@ -35,13 +35,13 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
             <h2 className="text-xl font-semibold text-gray-900">
               Nghệ nhân nổi bật
             </h2>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={() => onViewMore('artisans')}
             >
               Xem tất cả
-            </Button>
+            </Button> */}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {content.artisans.slice(0, 6).map((artisan: any) => {
@@ -67,13 +67,13 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
             <h2 className="text-xl font-semibold text-gray-900">
               Bài viết nổi bật
             </h2>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={() => onViewMore('posts')}
             >
               Xem tất cả
-            </Button>
+            </Button> */}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {content.posts.slice(0, 4).map((post: Post) => (
@@ -96,13 +96,13 @@ export const FeaturedSections: React.FC<FeaturedSectionsProps> = ({
             <h2 className="text-xl font-semibold text-gray-900">
               Sản phẩm bán chạy
             </h2>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               onClick={() => onViewMore('products')}
             >
               Xem tất cả
-            </Button>
+            </Button> */}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {content.products.slice(0, 8).map((product: any) => (
