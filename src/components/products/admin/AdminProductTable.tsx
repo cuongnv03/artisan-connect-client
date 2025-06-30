@@ -10,9 +10,6 @@ import {
   EyeIcon,
   TrashIcon,
   UserIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   PhotoIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
@@ -46,36 +43,18 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      PUBLISHED: {
-        variant: 'success' as const,
-        label: 'Đã xuất bản',
-        icon: CheckCircleIcon,
-      },
-      DRAFT: {
-        variant: 'secondary' as const,
-        label: 'Bản nháp',
-        icon: ClockIcon,
-      },
-      OUT_OF_STOCK: {
-        variant: 'warning' as const,
-        label: 'Hết hàng',
-        icon: XCircleIcon,
-      },
-      DELETED: { variant: 'danger' as const, label: 'Đã xóa', icon: TrashIcon },
+      PUBLISHED: { variant: 'success' as const, label: 'Đã xuất bản' },
+      DRAFT: { variant: 'secondary' as const, label: 'Bản nháp' },
+      OUT_OF_STOCK: { variant: 'warning' as const, label: 'Hết hàng' },
+      DELETED: { variant: 'danger' as const, label: 'Đã xóa' },
     };
 
     const config = statusMap[status as keyof typeof statusMap] || {
       variant: 'secondary' as const,
       label: status,
-      icon: ClockIcon,
     };
 
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <config.icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    );
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
   const handleDeleteClick = (productId: string) => {
@@ -142,10 +121,7 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                 Nghệ nhân
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Giá
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kho
+                Giá / Kho
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Trạng thái
@@ -183,9 +159,6 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                       <div className="text-sm text-gray-500">
                         SKU: {product.sku || 'Không có'}
                       </div>
-                      <div className="text-xs text-gray-400">
-                        ID: {product.id}
-                      </div>
                     </div>
                   </div>
                 </td>
@@ -222,15 +195,8 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                   <div className="text-sm text-gray-900">
                     {formatPrice(product.discountPrice || product.price)}
                   </div>
-                  {product.discountPrice && (
-                    <div className="text-sm text-gray-500 line-through">
-                      {formatPrice(product.price)}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {product.quantity}
+                  <div className="text-sm text-gray-500">
+                    Kho: {product.quantity}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -248,8 +214,8 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div>Xem: {product.viewCount.toLocaleString()}</div>
-                  <div>Bán: {product.salesCount.toLocaleString()}</div>
+                  <div>Xem: {product.viewCount}</div>
+                  <div>Bán: {product.salesCount}</div>
                   {product.avgRating && (
                     <div>★ {product.avgRating.toFixed(1)}</div>
                   )}
@@ -259,11 +225,6 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                     <Link to={`/shop/${product.id}`}>
                       <Button variant="ghost" size="sm" title="Xem sản phẩm">
                         <EyeIcon className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link to={`/admin/products/${product.id}`}>
-                      <Button variant="ghost" size="sm" title="Chi tiết admin">
-                        <UserIcon className="h-4 w-4" />
                       </Button>
                     </Link>
                     <Button

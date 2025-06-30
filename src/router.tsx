@@ -92,7 +92,6 @@ import { LandingPageRedirect } from './components/common/LandingPageRedirect';
 
 // Admin Product pages
 import { AdminProductsPage } from './pages/admin/products/AdminProductsPage';
-import { CategoryAttributesPage } from './pages/admin/products/CategoryAttributesPage';
 import { AdminCategoriesPage } from './pages/admin/products/AdminCategoriesPage';
 import { CreateCategoryPage } from './pages/admin/products/CreateCategoryPage';
 import { EditCategoryPage } from './pages/admin/products/EditCategoryPage';
@@ -668,10 +667,6 @@ export const router = createBrowserRouter(
             {
               path: ':categoryId/edit',
               element: <EditCategoryPage />,
-            },
-            {
-              path: ':categoryId/attributes',
-              element: <CategoryAttributesPage />,
             },
           ],
         },

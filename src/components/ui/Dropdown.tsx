@@ -102,6 +102,8 @@ interface SelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  label?: string; // Add label prop
+  required?: boolean; // Add required prop
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -111,6 +113,8 @@ export const Select: React.FC<SelectProps> = ({
   placeholder = 'Chọn...',
   className = '',
   disabled = false,
+  label,
+  required = false,
 }) => {
   const selectedOption = options.find((option) => option.value === value);
 
@@ -137,5 +141,15 @@ export const Select: React.FC<SelectProps> = ({
     onClick: () => onChange(option.value),
   }));
 
-  return <Dropdown trigger={trigger} items={items} className="w-full" />;
+  return (
+    <div className="w-full">
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
+      <Dropdown trigger={trigger} items={items} className="w-full" />
+    </div>
+  );
 };

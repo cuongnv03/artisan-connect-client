@@ -264,17 +264,14 @@ export const API_ENDPOINTS = {
 
   // Admin
   ADMIN: {
-    PRODUCTS: {
-      BASE: '/admin/products',
-      BY_ID: (id: string) => `/admin/products/${id}`,
-      UPDATE_STATUS: (id: string) => `/admin/products/${id}/status`,
-      STATISTICS: '/admin/products/statistics',
-    },
-    CATEGORIES: {
-      BASE: '/admin/categories',
-      BY_ID: (id: string) => `/admin/categories/${id}`,
-      ATTRIBUTE_TEMPLATES: (categoryId: string) =>
-        `/admin/categories/${categoryId}/attributes`,
-    },
+    PRODUCTS: '/admin/products',
+    PRODUCT_STATUS: (id: string) => `/admin/products/${id}/status`,
+    DELETE_PRODUCT: (id: string) => `/admin/products/${id}`,
+    CATEGORIES: '/admin/categories',
+    CATEGORY_BY_ID: (id: string) => `/admin/categories/${id}`,
+    CATEGORY_ATTRIBUTES: (categoryId: string) =>
+      `/admin/categories/${categoryId}/attributes`,
+    DELETE_ATTRIBUTE: (templateId: string) =>
+      `/admin/categories/attributes/${templateId}`,
   },
 } as const;

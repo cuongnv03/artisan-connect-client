@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productService } from '../../services/product.service';
+import { apiClient } from '../../utils/api';
 import {
   Category,
   CreateCategoryRequest,
@@ -31,13 +31,13 @@ export const useAdminCategories = (): UseAdminCategoriesReturn => {
       setLoading(true);
       setError(null);
 
-      const [categoriesData, treeData] = await Promise.all([
-        productService.getCategories(),
-        productService.getCategoryTree(),
-      ]);
+      const response = await apiClient.get<{
+        categories: Category[];
+        categoryTree: Category[];
+      }>('/admin/categories');
 
-      setCategories(categoriesData);
-      setCategoryTree(treeData);
+      setCategories(response.categories);
+      setCategoryTree(response.categoryTree);
     } catch (err: any) {
       setError(err.message || 'Không thể tải danh mục');
     } finally {
@@ -49,7 +49,10 @@ export const useAdminCategories = (): UseAdminCategoriesReturn => {
     data: CreateCategoryRequest,
   ): Promise<Category> => {
     try {
-      const newCategory = await productService.createCategory(data);
+      const newCategory = await apiClient.post<Category>(
+        '/admin/categories',
+        data,
+      );
       await fetchCategories(); // Refresh data
       return newCategory;
     } catch (err: any) {
@@ -62,7 +65,10 @@ export const useAdminCategories = (): UseAdminCategoriesReturn => {
     data: UpdateCategoryRequest,
   ): Promise<Category> => {
     try {
-      const updatedCategory = await productService.updateCategory(id, data);
+      const updatedCategory = await apiClient.patch<Category>(
+        `/admin/categories/${id}`,
+        data,
+      );
       await fetchCategories(); // Refresh data
       return updatedCategory;
     } catch (err: any) {
@@ -72,7 +78,7 @@ export const useAdminCategories = (): UseAdminCategoriesReturn => {
 
   const deleteCategory = async (id: string): Promise<void> => {
     try {
-      await productService.deleteCategory(id);
+      await apiClient.delete(`/admin/categories/${id}`);
       await fetchCategories(); // Refresh data
     } catch (err: any) {
       throw new Error(err.message || 'Không thể xóa danh mục');

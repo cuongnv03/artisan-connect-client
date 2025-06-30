@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productService } from '../../services/product.service';
+import { apiClient } from '../../utils/api';
 import { Product, GetProductsQuery } from '../../types/product';
 import { PaginatedResponse } from '../../types/common';
 
@@ -18,8 +18,6 @@ export interface UseAdminProductsReturn {
     limit: number;
   };
   refetch: () => Promise<void>;
-  loadMore: () => Promise<void>;
-  hasMore: boolean;
   deleteProduct: (productId: string) => Promise<void>;
   updateProductStatus: (productId: string, status: string) => Promise<void>;
 }
@@ -38,36 +36,25 @@ export const useAdminProducts = (
     limit: query.limit || 20,
   });
 
-  const fetchProducts = async (reset = true) => {
+  const fetchProducts = async () => {
     if (!enabled) return;
 
     try {
       setLoading(true);
       setError(null);
 
-      // Admin sees all products regardless of seller
-      const response: PaginatedResponse<Product> =
-        await productService.getProducts({
-          ...query,
-          page: reset ? 1 : pagination.currentPage + 1,
-          // Don't filter by sellerId for admin
-        });
+      const response: PaginatedResponse<Product> = await apiClient.get(
+        '/admin/products',
+        query,
+      );
 
-      if (reset) {
-        setProducts(response.data);
-        setPagination({
-          total: response.meta.total,
-          totalPages: response.meta.totalPages,
-          currentPage: response.meta.page,
-          limit: response.meta.limit,
-        });
-      } else {
-        setProducts((prev) => [...prev, ...response.data]);
-        setPagination((prev) => ({
-          ...prev,
-          currentPage: response.meta.page,
-        }));
-      }
+      setProducts(response.data);
+      setPagination({
+        total: response.meta.total,
+        totalPages: response.meta.totalPages,
+        currentPage: response.meta.page,
+        limit: response.meta.limit,
+      });
     } catch (err: any) {
       setError(err.message || 'Không thể tải sản phẩm');
     } finally {
@@ -77,7 +64,7 @@ export const useAdminProducts = (
 
   const deleteProduct = async (productId: string) => {
     try {
-      await productService.deleteProduct(productId);
+      await apiClient.delete(`/admin/products/${productId}`);
       setProducts((prev) => prev.filter((p) => p.id !== productId));
     } catch (err: any) {
       throw new Error(err.message || 'Không thể xóa sản phẩm');
@@ -86,25 +73,18 @@ export const useAdminProducts = (
 
   const updateProductStatus = async (productId: string, status: string) => {
     try {
-      const updatedProduct = await productService.updateProduct(productId, {
-        status,
-      } as any);
+      await apiClient.patch(`/admin/products/${productId}/status`, { status });
       setProducts((prev) =>
-        prev.map((p) =>
-          p.id === productId ? { ...p, status: updatedProduct.status } : p,
-        ),
+        prev.map((p) => (p.id === productId ? { ...p, status } : p)),
       );
     } catch (err: any) {
       throw new Error(err.message || 'Không thể cập nhật trạng thái sản phẩm');
     }
   };
 
-  const refetch = () => fetchProducts(true);
-  const loadMore = () => fetchProducts(false);
-
   useEffect(() => {
     if (enabled) {
-      fetchProducts(true);
+      fetchProducts();
     }
   }, [enabled, JSON.stringify(query)]);
 
@@ -113,9 +93,7 @@ export const useAdminProducts = (
     loading,
     error,
     pagination,
-    refetch,
-    loadMore,
-    hasMore: pagination.currentPage < pagination.totalPages,
+    refetch: fetchProducts,
     deleteProduct,
     updateProductStatus,
   };

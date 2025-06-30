@@ -1,24 +1,36 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAdminCategories } from '../../../hooks/products/useAdminCategories';
+import { useCategoryAttributes } from '../../../hooks/products/useCategoryAttributes';
 import { AdminCategoryTable } from '../../../components/products/admin/AdminCategoryTable';
+import { CategoryForm } from '../../../components/products/admin/CategoryForm';
+import { SimpleAttributeManager } from '../../../components/products/admin/SimpleAttributeManager';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Card } from '../../../components/ui/Card';
-import { Toggle } from '../../../components/ui/Toggle';
+import { Modal } from '../../../components/ui/Modal';
 import { useToastContext } from '../../../contexts/ToastContext';
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   FolderIcon,
-  ListBulletIcon,
-  Squares2X2Icon,
   ArrowPathIcon,
+  ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
+import {
+  Category,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+} from '../../../types/product';
+
+type ViewMode = 'list' | 'edit' | 'attributes';
 
 export const AdminCategoriesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showHierarchy, setShowHierarchy] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { success, error } = useToastContext();
 
   const {
@@ -27,8 +39,19 @@ export const AdminCategoriesPage: React.FC = () => {
     loading,
     error: fetchError,
     refetch,
+    createCategory,
+    updateCategory,
     deleteCategory,
   } = useAdminCategories();
+
+  // Category attributes hook
+  const {
+    attributes,
+    loading: attributesLoading,
+    createAttribute,
+    deleteAttribute,
+    refetch: refetchAttributes,
+  } = useCategoryAttributes(selectedCategory?.id || '');
 
   const handleDelete = async (categoryId: string) => {
     try {
@@ -39,6 +62,41 @@ export const AdminCategoriesPage: React.FC = () => {
     }
   };
 
+  const handleEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setViewMode('edit');
+  };
+
+  const handleManageAttributes = (category: Category) => {
+    setSelectedCategory(category);
+    setViewMode('attributes');
+  };
+
+  const handleCreateCategory = async (data: CreateCategoryRequest) => {
+    try {
+      await createCategory(data);
+      success('Tạo danh mục thành công');
+      setShowCreateModal(false);
+    } catch (err: any) {
+      error(err.message);
+      throw err;
+    }
+  };
+
+  const handleUpdateCategory = async (data: UpdateCategoryRequest) => {
+    if (!selectedCategory) return;
+
+    try {
+      await updateCategory(selectedCategory.id, data);
+      success('Cập nhật danh mục thành công');
+      setViewMode('list');
+      setSelectedCategory(null);
+    } catch (err: any) {
+      error(err.message);
+      throw err;
+    }
+  };
+
   // Filter categories based on search
   const filteredCategories = categories.filter(
     (category) =>
@@ -46,21 +104,10 @@ export const AdminCategoriesPage: React.FC = () => {
       category.slug.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const filteredCategoryTree = categoryTree.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      category.slug.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const displayCategories = showHierarchy
-    ? filteredCategoryTree
-    : filteredCategories;
-
   // Calculate stats
   const stats = {
     total: categories.length,
     active: categories.filter((c) => c.isActive).length,
-    inactive: categories.filter((c) => !c.isActive).length,
     withProducts: categories.filter((c) => c.productCount && c.productCount > 0)
       .length,
     totalProducts: categories.reduce(
@@ -69,6 +116,81 @@ export const AdminCategoriesPage: React.FC = () => {
     ),
   };
 
+  // Render different views
+  if (viewMode === 'edit' && selectedCategory) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setViewMode('list');
+              setSelectedCategory(null);
+            }}
+            leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
+          >
+            Quay lại
+          </Button>
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Chỉnh sửa danh mục
+          </h1>
+          <p className="text-gray-600">
+            Cập nhật thông tin danh mục "{selectedCategory.name}"
+          </p>
+        </div>
+
+        <CategoryForm
+          initialData={{
+            name: selectedCategory.name,
+            description: selectedCategory.description || '',
+            imageUrl: selectedCategory.imageUrl || '',
+            parentId: selectedCategory.parentId || '',
+            sortOrder: selectedCategory.sortOrder,
+          }}
+          categoryId={selectedCategory.id}
+          categories={categories}
+          onSubmit={handleUpdateCategory}
+          onCancel={() => {
+            setViewMode('list');
+            setSelectedCategory(null);
+          }}
+          isEditing={true}
+        />
+      </div>
+    );
+  }
+
+  if (viewMode === 'attributes' && selectedCategory) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setViewMode('list');
+              setSelectedCategory(null);
+            }}
+            leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
+          >
+            Quay lại
+          </Button>
+        </div>
+
+        <SimpleAttributeManager
+          categoryId={selectedCategory.id}
+          categoryName={selectedCategory.name}
+          attributes={attributes}
+          onCreateAttribute={createAttribute}
+          onDeleteAttribute={deleteAttribute}
+        />
+      </div>
+    );
+  }
+
+  // Default list view
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
@@ -85,16 +207,17 @@ export const AdminCategoriesPage: React.FC = () => {
           >
             Làm mới
           </Button>
-          <Link to="/admin/categories/create">
-            <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
-              Tạo danh mục mới
-            </Button>
-          </Link>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            leftIcon={<PlusIcon className="w-4 h-4" />}
+          >
+            Tạo danh mục mới
+          </Button>
         </div>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="p-6">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
@@ -123,22 +246,8 @@ export const AdminCategoriesPage: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg text-yellow-600">
-              <FolderIcon className="w-6 h-6" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Tạm dừng</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats.inactive}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg text-purple-600">
-              <Squares2X2Icon className="w-6 h-6" />
+              <FolderIcon className="w-6 h-6" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Có sản phẩm</p>
@@ -152,52 +261,38 @@ export const AdminCategoriesPage: React.FC = () => {
         <Card className="p-6">
           <div className="flex items-center">
             <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-              <ListBulletIcon className="w-6 h-6" />
+              <FolderIcon className="w-6 h-6" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Tổng sản phẩm</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.totalProducts.toLocaleString()}
+                {stats.totalProducts}
               </p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Controls */}
+      {/* Search */}
       <Card className="p-6 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
-          <div className="flex-1 max-w-md">
-            <Input
-              placeholder="Tìm kiếm danh mục..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={
-                <MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />
-              }
-            />
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <ListBulletIcon className="w-4 h-4 text-gray-500" />
-              <Toggle checked={showHierarchy} onChange={setShowHierarchy} />
-              <Squares2X2Icon className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
-                {showHierarchy ? 'Dạng cây' : 'Dạng danh sách'}
-              </span>
-            </div>
-          </div>
+        <div className="max-w-md">
+          <Input
+            placeholder="Tìm kiếm danh mục..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            leftIcon={<MagnifyingGlassIcon className="w-4 h-4 text-gray-400" />}
+          />
         </div>
       </Card>
 
       {/* Categories Table */}
       <Card>
         <AdminCategoryTable
-          categories={displayCategories}
+          categories={filteredCategories}
           loading={loading}
+          onEdit={handleEdit}
           onDelete={handleDelete}
-          showHierarchy={showHierarchy}
+          onManageAttributes={handleManageAttributes}
         />
       </Card>
 
@@ -211,16 +306,20 @@ export const AdminCategoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Debug info */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card className="p-4 mt-6 bg-gray-50">
-          <p className="text-sm text-gray-600">
-            <strong>Debug:</strong> Admin Categories | Total:{' '}
-            {categories.length} | Display: {displayCategories.length} | Mode:{' '}
-            {showHierarchy ? 'Tree' : 'List'} | Search: "{searchQuery}"
-          </p>
-        </Card>
-      )}
+      {/* Create Category Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Tạo danh mục mới"
+        size="lg"
+      >
+        <CategoryForm
+          categories={categories}
+          onSubmit={handleCreateCategory}
+          onCancel={() => setShowCreateModal(false)}
+          isEditing={false}
+        />
+      </Modal>
     </div>
   );
 };

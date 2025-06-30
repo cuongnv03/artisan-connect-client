@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productService } from '../../services/product.service';
+import { apiClient } from '../../utils/api';
 import {
   CategoryAttributeTemplate,
   CreateCategoryAttributeTemplateRequest,
@@ -12,12 +12,8 @@ export interface UseCategoryAttributesReturn {
   refetch: () => Promise<void>;
   createAttribute: (
     data: CreateCategoryAttributeTemplateRequest,
-  ) => Promise<CategoryAttributeTemplate>;
-  updateAttribute: (
-    id: string,
-    data: Partial<CreateCategoryAttributeTemplateRequest>,
-  ) => Promise<CategoryAttributeTemplate>;
-  deleteAttribute: (id: string) => Promise<void>;
+  ) => Promise<void>;
+  deleteAttribute: (templateId: string) => Promise<void>;
 }
 
 export const useCategoryAttributes = (
@@ -28,13 +24,17 @@ export const useCategoryAttributes = (
   const [error, setError] = useState<string | null>(null);
 
   const fetchAttributes = async () => {
-    if (!categoryId) return;
+    if (!categoryId) {
+      setAttributes([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
-      const attributesData = await productService.getCategoryAttributeTemplates(
-        categoryId,
+      const attributesData = await apiClient.get<CategoryAttributeTemplate[]>(
+        `/admin/categories/${categoryId}/attributes`,
       );
       setAttributes(attributesData);
     } catch (err: any) {
@@ -46,39 +46,22 @@ export const useCategoryAttributes = (
 
   const createAttribute = async (
     data: CreateCategoryAttributeTemplateRequest,
-  ): Promise<CategoryAttributeTemplate> => {
+  ): Promise<void> => {
     try {
-      const newAttribute = await productService.createCategoryAttributeTemplate(
-        categoryId,
+      const newAttribute = await apiClient.post<CategoryAttributeTemplate>(
+        `/admin/categories/${categoryId}/attributes`,
         data,
       );
       setAttributes((prev) => [...prev, newAttribute]);
-      return newAttribute;
     } catch (err: any) {
       throw new Error(err.message || 'Không thể tạo thuộc tính');
     }
   };
 
-  const updateAttribute = async (
-    id: string,
-    data: Partial<CreateCategoryAttributeTemplateRequest>,
-  ): Promise<CategoryAttributeTemplate> => {
+  const deleteAttribute = async (templateId: string): Promise<void> => {
     try {
-      const updatedAttribute =
-        await productService.updateCategoryAttributeTemplate(id, data);
-      setAttributes((prev) =>
-        prev.map((attr) => (attr.id === id ? updatedAttribute : attr)),
-      );
-      return updatedAttribute;
-    } catch (err: any) {
-      throw new Error(err.message || 'Không thể cập nhật thuộc tính');
-    }
-  };
-
-  const deleteAttribute = async (id: string): Promise<void> => {
-    try {
-      await productService.deleteCategoryAttributeTemplate(id);
-      setAttributes((prev) => prev.filter((attr) => attr.id !== id));
+      await apiClient.delete(`/admin/categories/attributes/${templateId}`);
+      setAttributes((prev) => prev.filter((attr) => attr.id !== templateId));
     } catch (err: any) {
       throw new Error(err.message || 'Không thể xóa thuộc tính');
     }
@@ -94,7 +77,6 @@ export const useCategoryAttributes = (
     error,
     refetch: fetchAttributes,
     createAttribute,
-    updateAttribute,
     deleteAttribute,
   };
 };
