@@ -231,4 +231,38 @@ export const orderService = {
       query,
     );
   },
+
+  // === ADMIN METHODS ===
+  admin: {
+    async getAllOrders(
+      query: GetOrdersQuery = {},
+    ): Promise<PaginatedResponse<OrderSummary>> {
+      return await apiClient.get<PaginatedResponse<OrderSummary>>(
+        '/orders/admin/all',
+        query,
+      );
+    },
+
+    async getOrderStats(): Promise<
+      OrderStats & { totalUsers: number; totalRevenue: number }
+    > {
+      return await apiClient.get<
+        OrderStats & { totalUsers: number; totalRevenue: number }
+      >('/orders/admin/stats');
+    },
+
+    async updateOrderStatus(
+      id: string,
+      data: UpdateOrderStatusRequest,
+    ): Promise<OrderWithDetails> {
+      return await apiClient.patch<OrderWithDetails>(
+        `/orders/admin/${id}/status`,
+        data,
+      );
+    },
+
+    async deleteOrder(id: string): Promise<void> {
+      return await apiClient.delete<void>(`/orders/admin/${id}`);
+    },
+  },
 };

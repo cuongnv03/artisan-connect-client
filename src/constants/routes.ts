@@ -525,13 +525,6 @@ export const NAVIGATION_MENUS = {
       path: ROUTE_PATHS.ADMIN.ORDERS,
       label: 'Đơn hàng',
       icon: 'shopping-cart',
-      submenu: [
-        { path: ROUTE_PATHS.ADMIN.ORDERS, label: 'Tất cả đơn hàng' },
-        { path: ROUTE_PATHS.ADMIN.CUSTOM_ORDERS, label: 'Đơn tùy chỉnh' },
-        { path: ROUTE_PATHS.ADMIN.NEGOTIATIONS, label: 'Thương lượng giá' },
-        { path: ROUTE_PATHS.ADMIN.DISPUTES, label: 'Tranh chấp' },
-        { path: ROUTE_PATHS.ADMIN.RETURNS, label: 'Trả hàng' },
-      ],
     },
   ],
 } as const;

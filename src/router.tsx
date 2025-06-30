@@ -102,6 +102,7 @@ import { ReceivedCustomOrdersPage } from './pages/custom-orders/ReceivedCustomOr
 import { CustomOrderStatsPage } from './pages/custom-orders/CustomOrderStatsPage';
 import { CustomOrderDetailPage } from './pages/custom-orders/CustomOrderDetailPage';
 import { ArtisanRequestDetailPage } from './pages/admin/ArtisanRequestDetailPage';
+import { AdminOrdersPage } from './pages/admin/orders/AdminOrdersPage';
 
 export const router = createBrowserRouter(
   [
@@ -673,6 +674,10 @@ export const router = createBrowserRouter(
         {
           path: 'posts',
           element: <PostsManagementPage />,
+        },
+        {
+          path: 'orders',
+          element: <AdminOrdersPage />,
         },
       ],
     },
