@@ -84,7 +84,7 @@ export interface SendCustomOrderRequest {
     | 'customer_accept_offer'
     | 'customer_reject_offer'
     | 'quote_discussion'
-    | 'send_existing_custom_order'; // ADDED
+    | 'send_existing_custom_order';
   receiverId: string;
   content: string;
 
@@ -137,9 +137,9 @@ export interface MessageQueryOptions {
   sortOrder?: 'asc' | 'desc';
 }
 
-// Custom Order types for messaging
+// ENHANCED: Custom Order types for messaging with complete data structure
 export interface CustomOrderProposal {
-  artisanId: string;
+  artisanId?: string; // Optional for display
   title: string;
   description: string;
   referenceProductId?: string;
@@ -149,6 +149,16 @@ export interface CustomOrderProposal {
   customerBudget?: number;
   timeline?: string;
   expiresInDays?: number;
+
+  // Additional fields for enhanced display
+  materials?: string[];
+  dimensions?: string;
+  colors?: string[];
+  style?: string;
+  features?: string;
+  inspiration?: string;
+  usage?: string;
+  occasion?: string;
 }
 
 export interface CustomOrderResponse {

@@ -283,23 +283,27 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const renderCustomOrderContent = () => {
     const { content, productMentions } = message;
 
-    if (!productMentions) {
-      return <p className="whitespace-pre-wrap">{content}</p>;
-    }
-
-    // Regular message content first
+    // FIXED: Always show message content first
     const messageContent = content && (
       <div
         className={`px-4 py-2 rounded-lg mb-3 ${
           isOwn ? 'bg-primary text-white' : 'bg-gray-100 text-gray-900'
         }`}
       >
-        <p className="whitespace-pre-wrap">{content}</p>
+        <p className="whitespace-pre-wrap flex items-center">
+          <WrenchScrewdriverIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+          {content}
+        </p>
       </div>
     );
 
-    // Custom Order Card Logic
+    // FIXED: Render Custom Order Card if we have proper data
     const renderCustomOrderCard = () => {
+      if (!productMentions) {
+        console.warn('No productMentions data for custom order message');
+        return null;
+      }
+
       const {
         type,
         negotiationId,
@@ -311,28 +315,49 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         proposal,
       } = productMentions;
 
-      // Only show interactive card for certain types
-      if (
-        ![
-          'custom_order_proposal',
-          'custom_order_response',
-          'create_custom_order',
-          'respond_custom_order',
-        ].includes(type || '')
-      ) {
+      // FIXED: Check for valid types and required data
+      if (!type || !negotiationId || !proposal) {
+        console.warn('Missing required data for custom order card:', {
+          type,
+          negotiationId,
+          hasProposal: !!proposal,
+        });
         return null;
       }
 
-      // For proposal or creation
-      if (
-        (type === 'custom_order_proposal' || type === 'create_custom_order') &&
-        proposal
-      ) {
-        return (
+      // FIXED: Show card for all custom order types
+      const validTypes = [
+        'create_custom_order',
+        'custom_order_creation', // Legacy support
+        'respond_custom_order',
+        'custom_order_response', // Legacy support
+        'custom_order_update',
+      ];
+
+      if (!validTypes.includes(type)) {
+        console.warn(`Invalid custom order type: ${type}`);
+        return null;
+      }
+
+      // FIXED: Ensure proposal has all required fields
+      const enhancedProposal = {
+        title: proposal.title || 'Custom Order',
+        description: proposal.description || 'Không có mô tả',
+        estimatedPrice: proposal.estimatedPrice || 0,
+        customerBudget: proposal.customerBudget,
+        timeline: proposal.timeline,
+        specifications: proposal.specifications || {},
+        attachmentUrls: proposal.attachmentUrls || [],
+        referenceProductId: proposal.referenceProductId,
+        ...proposal, // Spread any additional fields
+      };
+
+      return (
+        <div className="mt-2">
           <CustomOrderCard
-            proposal={proposal}
-            negotiationId={negotiationId || ''}
-            status={status || 'pending'}
+            proposal={enhancedProposal}
+            negotiationId={negotiationId}
+            status={status || 'PENDING'}
             customerId={customerId || message.senderId}
             artisanId={artisanId || message.receiverId}
             currentUserId={authState.user?.id || ''}
@@ -343,33 +368,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             onCounterOffer={handleCounterOffer}
             loading={sending}
           />
-        );
-      }
-
-      // For response
-      if (
-        (type === 'custom_order_response' || type === 'respond_custom_order') &&
-        proposal
-      ) {
-        return (
-          <CustomOrderCard
-            proposal={proposal}
-            negotiationId={negotiationId || ''}
-            status={status || 'counter_offered'}
-            customerId={customerId || ''}
-            artisanId={artisanId || ''}
-            currentUserId={authState.user?.id || ''}
-            lastActor={lastActor}
-            finalPrice={finalPrice}
-            onAccept={handleAcceptCustomOrder}
-            onDecline={handleDeclineCustomOrder}
-            onCounterOffer={handleCounterOffer}
-            loading={sending}
-          />
-        );
-      }
-
-      return null;
+        </div>
+      );
     };
 
     return (
@@ -380,7 +380,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
   };
 
-  // Custom Order messages don't need background wrapper for the card
+  // FIXED: Custom Order messages get special layout
   if (message.type === MessageType.CUSTOM_ORDER) {
     return (
       <div>
@@ -430,7 +430,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     );
   }
 
-  // Regular messages (TEXT, IMAGE, FILE)
+  // Regular messages (TEXT, IMAGE, FILE) - existing code remains the same
   return (
     <div>
       {showDate && (

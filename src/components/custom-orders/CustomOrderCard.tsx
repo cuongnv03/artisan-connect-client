@@ -8,6 +8,11 @@ import {
   ArrowPathIcon,
   CreditCardIcon,
   EyeIcon,
+  PhotoIcon,
+  SwatchIcon,
+  SparklesIcon,
+  ExclamationTriangleIcon,
+  UserIcon,
 } from '@heroicons/react/24/outline';
 import { CustomOrderProposal } from '../../types/message';
 import { Button } from '../ui/Button';
@@ -15,7 +20,10 @@ import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { useForm } from '../../hooks/common/useForm';
 import { formatPrice } from '../../utils/format';
-import { getCustomOrderActions } from '../../utils/custom-order';
+import {
+  getCustomOrderActions,
+  getStatusDisplayInfo,
+} from '../../utils/custom-order';
 
 interface CustomOrderCardProps {
   proposal: CustomOrderProposal;
@@ -55,6 +63,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
 }) => {
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [showCounterModal, setShowCounterModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Create mock order for permissions calculation
   const mockOrder = {
@@ -75,12 +84,14 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
   } as any;
 
   const permissions = getCustomOrderActions(mockOrder, currentUserId);
+  const statusInfo = getStatusDisplayInfo(status as any);
 
   const {
     values: counterValues,
     handleChange: handleCounterChange,
     handleSubmit: handleCounterSubmit,
     errors: counterErrors,
+    resetForm: resetCounterForm,
   } = useForm({
     initialValues: {
       finalPrice: (finalPrice || proposal.estimatedPrice || 0).toString(),
@@ -107,33 +118,27 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         timeline: data.timeline || undefined,
       });
       setShowCounterModal(false);
+      resetCounterForm();
     },
   });
 
   const getStatusBadge = () => {
-    const statusConfig = {
-      pending: { variant: 'warning' as const, text: 'Chờ phản hồi' },
-      accepted: { variant: 'success' as const, text: 'Đã chấp nhận' },
-      rejected: { variant: 'danger' as const, text: 'Đã từ chối' },
-      counter_offered: { variant: 'info' as const, text: 'Đang thương lượng' },
-      expired: { variant: 'default' as const, text: 'Đã hết hạn' },
-      // Add more mappings for different status values
-      PENDING: { variant: 'warning' as const, text: 'Chờ phản hồi' },
-      ACCEPTED: { variant: 'success' as const, text: 'Đã chấp nhận' },
-      REJECTED: { variant: 'danger' as const, text: 'Đã từ chối' },
-      COUNTER_OFFERED: { variant: 'info' as const, text: 'Đang thương lượng' },
-      EXPIRED: { variant: 'default' as const, text: 'Đã hết hạn' },
+    const config = statusInfo;
+    const variantMap = {
+      warning: 'warning' as const,
+      info: 'info' as const,
+      success: 'success' as const,
+      danger: 'danger' as const,
+      default: 'default' as const,
     };
 
-    // Normalize status to lowercase for lookup
-    const normalizedStatus = status?.toLowerCase();
-    const config =
-      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.pending;
-
     return (
-      <Badge variant={config.variant} size="sm">
+      <Badge
+        variant={variantMap[config.color as keyof typeof variantMap]}
+        size="sm"
+        className="flex items-center gap-1"
+      >
+        <span>{config.icon}</span>
         {config.text}
       </Badge>
     );
@@ -141,152 +146,211 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
 
   const displayPrice = finalPrice || proposal.estimatedPrice;
   const isCustomer = currentUserId === customerId;
+  const isArtisan = currentUserId === artisanId;
+  const hasSpecifications =
+    proposal.specifications && Object.keys(proposal.specifications).length > 0;
+  const hasAttachments =
+    proposal.attachmentUrls && proposal.attachmentUrls.length > 0;
+
+  // ADDED: Check if this user should see interactive actions
+  const showActions = !!(
+    permissions.canAccept ||
+    permissions.canReject ||
+    permissions.canCounterOffer ||
+    permissions.canProceedToPayment
+  );
 
   return (
     <>
-      <div className="bg-white border border-gray-200 rounded-xl p-4 max-w-sm shadow-sm hover:shadow-md transition-shadow">
+      <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-5 max-w-sm shadow-md hover:shadow-lg transition-all duration-300">
         {/* Header */}
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex items-center">
-            <div className="p-2 bg-gradient-to-r from-orange-100 to-pink-100 rounded-lg mr-2">
-              <WrenchScrewdriverIcon className="w-5 h-5 text-orange-500" />
+            <div className="p-2.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl mr-3 shadow-sm">
+              <WrenchScrewdriverIcon className="w-5 h-5 text-white" />
             </div>
-            <h4 className="font-semibold text-gray-900">Custom Order</h4>
+            <div>
+              <h4 className="font-bold text-gray-900 text-sm">Custom Order</h4>
+              <p className="text-xs text-gray-500">
+                #{negotiationId.slice(-8)}
+              </p>
+            </div>
           </div>
           {getStatusBadge()}
         </div>
 
         {/* Content */}
-        <div className="space-y-3">
-          <div>
-            <h5 className="font-medium text-gray-900 line-clamp-1">
+        <div className="space-y-4">
+          {/* Title & Description */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+            <h5 className="font-semibold text-gray-900 line-clamp-1 mb-1">
               {proposal.title}
             </h5>
-            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+            <p className="text-sm text-gray-600 line-clamp-2">
               {proposal.description}
             </p>
+
+            {/* Quick View Details Button */}
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              className="text-xs text-blue-600 hover:text-blue-800 flex items-center mt-2"
+            >
+              <EyeIcon className="w-3 h-3 mr-1" />
+              Xem chi tiết
+            </button>
           </div>
 
           {/* Price & Timeline */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-3">
             {displayPrice && (
-              <div className="flex items-center space-x-1">
-                <CurrencyDollarIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-gray-600">Giá:</span>
-                  <div className="font-medium text-green-600">
-                    {formatPrice(displayPrice)}
-                  </div>
-                  {finalPrice && finalPrice !== proposal.estimatedPrice && (
-                    <div className="text-xs text-gray-500 line-through">
-                      {formatPrice(proposal.estimatedPrice || 0)}
-                    </div>
-                  )}
+              <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+                <div className="flex items-center space-x-1 mb-1">
+                  <CurrencyDollarIcon className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <span className="text-xs text-green-700 font-medium">
+                    Giá:
+                  </span>
                 </div>
+                <div className="text-sm font-bold text-green-700">
+                  {formatPrice(displayPrice)}
+                </div>
+                {finalPrice && finalPrice !== proposal.estimatedPrice && (
+                  <div className="text-xs text-gray-500 line-through">
+                    {formatPrice(proposal.estimatedPrice || 0)}
+                  </div>
+                )}
               </div>
             )}
 
             {proposal.timeline && (
-              <div className="flex items-center space-x-1">
-                <ClockIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-gray-600 text-xs">Thời gian:</span>
-                  <div className="font-medium text-xs">{proposal.timeline}</div>
+              <div className="bg-purple-50 border border-purple-100 rounded-lg p-3">
+                <div className="flex items-center space-x-1 mb-1">
+                  <ClockIcon className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                  <span className="text-xs text-purple-700 font-medium">
+                    Thời gian:
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-purple-700 line-clamp-1">
+                  {proposal.timeline}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Specifications Preview */}
-          {proposal.specifications &&
-            Object.keys(proposal.specifications).length > 0 && (
+          {/* Quick Preview of Specifications & Attachments */}
+          {(hasSpecifications || hasAttachments) && (
+            <div className="flex items-center justify-center space-x-4 py-2 bg-gray-50 rounded-lg">
+              {hasSpecifications && (
+                <div className="flex items-center text-xs text-gray-600">
+                  <SwatchIcon className="w-3 h-3 mr-1" />
+                  {Object.keys(proposal.specifications).length} thông số
+                </div>
+              )}
+              {hasAttachments && (
+                <div className="flex items-center text-xs text-gray-600">
+                  <PhotoIcon className="w-3 h-3 mr-1" />
+                  {proposal.attachmentUrls!.length} hình ảnh
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Customer Budget Display */}
+          {proposal.customerBudget && (
+            <div className="text-center py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <span className="text-xs text-yellow-700">
+                💰 Ngân sách: {formatPrice(proposal.customerBudget)}
+              </span>
+            </div>
+          )}
+
+          {/* ENHANCED: Status Message with better context */}
+          {permissions.message && (
+            <div
+              className={`text-xs p-3 rounded-lg flex items-start border ${
+                showActions
+                  ? 'text-orange-700 bg-orange-50 border-orange-200'
+                  : 'text-blue-700 bg-blue-50 border-blue-200'
+              }`}
+            >
+              <ExclamationTriangleIcon className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
               <div>
-                <h6 className="text-sm font-medium text-gray-700 mb-1">
-                  Yêu cầu kỹ thuật:
-                </h6>
-                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded max-h-20 overflow-y-auto">
-                  {Object.entries(proposal.specifications)
-                    .filter(([_, value]) => value)
-                    .slice(0, 2) // Show only first 2 specs
-                    .map(([key, value]) => (
-                      <div key={key} className="mb-1">
-                        <span className="font-medium">{key}:</span> {value}
-                      </div>
-                    ))}
-                  {Object.keys(proposal.specifications).length > 2 && (
-                    <div className="text-gray-500">...</div>
-                  )}
+                <div className="font-medium mb-1">{permissions.message}</div>
+                <div className="text-xs opacity-75">
+                  {statusInfo.description}
                 </div>
               </div>
-            )}
-
-          {/* Status Message */}
-          {permissions.message && (
-            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
-              💡 {permissions.message}
             </div>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
-          {/* Accept Button */}
-          {permissions.canAccept && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => onAccept?.(negotiationId, proposal)}
-              disabled={loading}
-              leftIcon={<CheckIcon className="w-4 h-4" />}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              Chấp nhận
-            </Button>
-          )}
+        {/* ENHANCED: Actions - Show different actions based on permissions */}
+        {showActions && (
+          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+            {/* Accept Button */}
+            {permissions.canAccept && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => onAccept?.(negotiationId, proposal)}
+                disabled={loading}
+                leftIcon={<CheckIcon className="w-4 h-4" />}
+                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+              >
+                {status === 'PENDING' ? 'Chấp nhận yêu cầu' : 'Chấp nhận'}
+              </Button>
+            )}
 
-          {/* Counter Offer Button */}
-          {permissions.canCounterOffer && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCounterModal(true)}
-              disabled={loading}
-              leftIcon={<ArrowPathIcon className="w-4 h-4" />}
-            >
-              Đề xuất lại
-            </Button>
-          )}
+            {/* Counter Offer Button */}
+            {permissions.canCounterOffer && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowCounterModal(true)}
+                disabled={loading}
+                leftIcon={<ArrowPathIcon className="w-4 h-4" />}
+                className="border-orange-300 text-orange-700 hover:bg-orange-50 flex-1"
+              >
+                {status === 'PENDING' ? 'Đề xuất giá' : 'Đề xuất lại'}
+              </Button>
+            )}
 
-          {/* Decline Button */}
-          {permissions.canReject && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowDeclineModal(true)}
-              disabled={loading}
-              leftIcon={<XMarkIcon className="w-4 h-4" />}
-              className="text-red-600 hover:bg-red-50"
-            >
-              Từ chối
-            </Button>
-          )}
+            {/* Decline Button */}
+            {permissions.canReject && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowDeclineModal(true)}
+                disabled={loading}
+                leftIcon={<XMarkIcon className="w-4 h-4" />}
+                className="text-red-600 hover:bg-red-50"
+              >
+                {status === 'PENDING' ? 'Từ chối yêu cầu' : 'Từ chối'}
+              </Button>
+            )}
 
-          {/* Payment Button - Only for customer when accepted */}
-          {permissions.canProceedToPayment && (
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => {
-                window.location.href = `/checkout?customOrderId=${negotiationId}`;
-              }}
-              leftIcon={<CreditCardIcon className="w-4 h-4" />}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              Thanh toán
-            </Button>
-          )}
+            {/* Payment Button - Only for customer when accepted */}
+            {permissions.canProceedToPayment && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => {
+                  window.location.href = `/checkout?customOrderId=${negotiationId}`;
+                }}
+                leftIcon={<CreditCardIcon className="w-4 h-4" />}
+                className="bg-orange-600 hover:bg-orange-700 flex-1"
+              >
+                Thanh toán
+              </Button>
+            )}
+          </div>
+        )}
 
-          {/* View Details Button */}
+        {/* Always show view details button */}
+        <div
+          className={`${
+            showActions ? 'mt-2' : 'mt-4 pt-4 border-t border-gray-100'
+          }`}
+        >
           <Button
             size="sm"
             variant="ghost"
@@ -294,18 +358,136 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               window.open(`/custom-orders/${negotiationId}`, '_blank');
             }}
             leftIcon={<EyeIcon className="w-4 h-4" />}
-            className="text-gray-600 hover:bg-gray-50"
+            className="text-gray-600 hover:bg-gray-50 w-full"
           >
-            Chi tiết
+            Xem chi tiết đầy đủ
           </Button>
         </div>
       </div>
+
+      {/* Details Modal */}
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title={`Chi tiết: ${proposal.title}`}
+        size="lg"
+      >
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {/* Status Info */}
+          <div
+            className={`p-4 rounded-lg border ${
+              showActions
+                ? 'bg-orange-50 border-orange-200'
+                : 'bg-blue-50 border-blue-200'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-gray-900">
+                Trạng thái hiện tại:
+              </h4>
+              {getStatusBadge()}
+            </div>
+            <p className="text-sm text-gray-600">{statusInfo.description}</p>
+            {permissions.message && (
+              <p className="text-sm font-medium text-gray-800 mt-2">
+                💡 {permissions.message}
+              </p>
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2">
+              Mô tả chi tiết:
+            </h4>
+            <p className="text-gray-700 bg-gray-50 p-3 rounded-lg whitespace-pre-wrap">
+              {proposal.description}
+            </p>
+          </div>
+
+          {/* Specifications */}
+          {hasSpecifications && (
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                <SwatchIcon className="w-4 h-4 mr-1" />
+                Thông số kỹ thuật:
+              </h4>
+              <div className="space-y-2">
+                {Object.entries(proposal.specifications!)
+                  .filter(([_, value]) => value)
+                  .map(([key, value]) => (
+                    <div key={key} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="font-medium text-gray-900 capitalize mb-1">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}:
+                      </div>
+                      <div className="text-gray-700">{String(value)}</div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Images */}
+          {hasAttachments && (
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                <PhotoIcon className="w-4 h-4 mr-1" />
+                Hình ảnh tham khảo:
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                {proposal.attachmentUrls!.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Attachment ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                    onClick={() => window.open(url, '_blank')}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pricing Summary */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-semibold text-green-900 mb-2">
+              Thông tin giá:
+            </h4>
+            <div className="space-y-2">
+              {proposal.estimatedPrice && (
+                <div className="flex justify-between">
+                  <span className="text-green-700">Giá ước tính:</span>
+                  <span className="font-semibold text-green-900">
+                    {formatPrice(proposal.estimatedPrice)}
+                  </span>
+                </div>
+              )}
+              {proposal.customerBudget && (
+                <div className="flex justify-between">
+                  <span className="text-green-700">Ngân sách khách:</span>
+                  <span className="font-semibold text-green-900">
+                    {formatPrice(proposal.customerBudget)}
+                  </span>
+                </div>
+              )}
+              {finalPrice && finalPrice !== proposal.estimatedPrice && (
+                <div className="flex justify-between border-t border-green-300 pt-2">
+                  <span className="text-green-800 font-medium">Giá cuối:</span>
+                  <span className="font-bold text-green-900 text-lg">
+                    {formatPrice(finalPrice)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* Decline Modal */}
       <Modal
         isOpen={showDeclineModal}
         onClose={() => setShowDeclineModal(false)}
-        title="Từ chối đề xuất"
+        title={status === 'PENDING' ? 'Từ chối yêu cầu' : 'Từ chối đề xuất'}
         size="md"
       >
         <form
@@ -324,7 +506,11 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               name="reason"
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-              placeholder="Nhập lý do từ chối để giúp đối phương hiểu rõ hơn..."
+              placeholder={
+                status === 'PENDING'
+                  ? 'Nhập lý do từ chối yêu cầu này...'
+                  : 'Nhập lý do từ chối đề xuất để giúp đối phương hiểu rõ hơn...'
+              }
             />
           </div>
           <div className="flex justify-end space-x-3">
@@ -341,7 +527,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               loading={loading}
               leftIcon={<XMarkIcon className="w-4 h-4" />}
             >
-              Từ chối
+              {status === 'PENDING' ? 'Từ chối yêu cầu' : 'Từ chối đề xuất'}
             </Button>
           </div>
         </form>
@@ -351,14 +537,20 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
       <Modal
         isOpen={showCounterModal}
         onClose={() => setShowCounterModal(false)}
-        title="Đề xuất giá mới"
+        title={
+          status === 'PENDING' ? 'Đề xuất giá cho yêu cầu' : 'Đề xuất giá mới'
+        }
         size="md"
       >
         <form onSubmit={handleCounterSubmit}>
           <div className="space-y-4">
             {/* Current Price Display */}
             <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="text-sm text-gray-600">Giá hiện tại:</div>
+              <div className="text-sm text-gray-600">
+                {status === 'PENDING'
+                  ? 'Giá ước tính của khách:'
+                  : 'Giá hiện tại:'}
+              </div>
               <div className="text-lg font-semibold text-gray-900">
                 {formatPrice(displayPrice || 0)}
               </div>
@@ -366,7 +558,9 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Giá đề xuất mới (VNĐ) *
+                {status === 'PENDING'
+                  ? 'Giá bạn đề xuất (VNĐ) *'
+                  : 'Giá đề xuất mới (VNĐ) *'}
               </label>
               <input
                 type="number"
@@ -402,14 +596,18 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tin nhắn giải thích *
+                Tin nhắn {status === 'PENDING' ? 'phản hồi' : 'giải thích'} *
               </label>
               <textarea
                 name="message"
                 rows={3}
                 value={counterValues.message}
                 onChange={handleCounterChange}
-                placeholder="Giải thích lý do thay đổi giá hoặc điều kiện..."
+                placeholder={
+                  status === 'PENDING'
+                    ? 'Phản hồi về yêu cầu và giải thích giá đề xuất...'
+                    : 'Giải thích lý do thay đổi giá hoặc điều kiện...'
+                }
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 required
               />
@@ -434,7 +632,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               loading={loading}
               leftIcon={<ArrowPathIcon className="w-4 h-4" />}
             >
-              Gửi đề xuất
+              {status === 'PENDING' ? 'Gửi đề xuất' : 'Gửi đề xuất mới'}
             </Button>
           </div>
         </form>
