@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   InformationCircleIcon,
   DocumentIcon,
@@ -9,9 +10,10 @@ import { MessageWithUsers, MessageType } from '../../types/message';
 import { User } from '../../types/auth';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 import { CustomOrderCard } from '../custom-orders/CustomOrderCard';
-import { Badge } from '../ui';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCustomOrderChat } from '../../hooks/custom-orders/useCustomOrderChat';
 import { formatPrice } from '../../utils/format';
 
 interface MessageItemProps {
@@ -29,6 +31,124 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   previousMessage,
   nextMessage,
 }) => {
+  const { state: authState } = useAuth();
+  const {
+    customerCounterOfferInChat,
+    customerAcceptOfferInChat,
+    customerRejectOfferInChat,
+    respondToCustomOrderInChat,
+    sending,
+  } = useCustomOrderChat();
+
+  // Custom Order handlers for chat actions
+  const handleAcceptCustomOrder = async (
+    negotiationId: string,
+    proposal: any,
+  ) => {
+    if (!authState.user) return;
+
+    try {
+      if (authState.user.role === 'ARTISAN') {
+        // Artisan accepts customer's initial request
+        await respondToCustomOrderInChat({
+          receiverId: message.senderId,
+          content: `Tôi đã chấp nhận yêu cầu custom order "${proposal.title}"`,
+          quoteRequestId: negotiationId,
+          response: {
+            action: 'ACCEPT',
+            finalPrice: proposal.estimatedPrice,
+            data: { message: 'Chấp nhận yêu cầu' },
+          },
+        });
+      } else {
+        // Customer accepts artisan's counter offer
+        await customerAcceptOfferInChat({
+          receiverId: message.senderId,
+          content: `Tôi đã chấp nhận đề xuất custom order`,
+          quoteRequestId: negotiationId,
+        });
+      }
+    } catch (error) {
+      console.error('Error accepting custom order:', error);
+    }
+  };
+
+  const handleDeclineCustomOrder = async (
+    negotiationId: string,
+    reason?: string,
+  ) => {
+    if (!authState.user) return;
+
+    try {
+      if (authState.user.role === 'ARTISAN') {
+        // Artisan rejects customer's request
+        await respondToCustomOrderInChat({
+          receiverId: message.senderId,
+          content: reason || `Tôi đã từ chối yêu cầu custom order`,
+          quoteRequestId: negotiationId,
+          response: {
+            action: 'REJECT',
+            data: { message: reason || 'Từ chối yêu cầu' },
+          },
+        });
+      } else {
+        // Customer rejects artisan's offer
+        await customerRejectOfferInChat({
+          receiverId: message.senderId,
+          content: reason || `Tôi đã từ chối đề xuất custom order`,
+          quoteRequestId: negotiationId,
+          rejectOffer: { reason },
+        });
+      }
+    } catch (error) {
+      console.error('Error declining custom order:', error);
+    }
+  };
+
+  const handleCounterOffer = async (
+    negotiationId: string,
+    data: {
+      finalPrice: number;
+      message: string;
+      timeline?: string;
+    },
+  ) => {
+    if (!authState.user) return;
+
+    try {
+      if (authState.user.role === 'ARTISAN') {
+        // Artisan counter offers
+        await respondToCustomOrderInChat({
+          receiverId: message.senderId,
+          content: data.message,
+          quoteRequestId: negotiationId,
+          response: {
+            action: 'COUNTER_OFFER',
+            finalPrice: data.finalPrice,
+            data: {
+              message: data.message,
+              timeline: data.timeline,
+            },
+          },
+        });
+      } else {
+        // Customer counter offers
+        await customerCounterOfferInChat({
+          receiverId: message.senderId,
+          content: data.message,
+          quoteRequestId: negotiationId,
+          counterOffer: {
+            finalPrice: data.finalPrice,
+            timeline: data.timeline,
+            data: { message: data.message },
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error making counter offer:', error);
+    }
+  };
+
   const showAvatar =
     !isOwn && (!nextMessage || nextMessage.senderId !== message.senderId);
   const showDate =
@@ -194,7 +314,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <div
             className={`max-w-xs lg:max-w-md ${isOwn ? 'order-1' : 'order-2'}`}
           >
-            {/* Short message text */}
+            {/* Message text */}
             {message.content && (
               <div
                 className={`px-4 py-2 rounded-lg mb-2 ${
@@ -205,13 +325,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </div>
             )}
 
-            {/* Custom Order Display based on productMentions type */}
+            {/* Custom Order Card with Actions */}
             {message.productMentions && (
               <>
-                {/* NEW: Custom Order Creation */}
+                {/* Initial Custom Order Creation */}
                 {(message.productMentions.type === 'custom_order_created' ||
                   message.productMentions.type === 'custom_order_proposal') && (
-                  <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl border-2 border-orange-200 p-4 max-w-sm">
+                  <div className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-xl border-2 border-orange-200 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center">
                         <WrenchScrewdriverIcon className="w-5 h-5 text-orange-500 mr-2" />
@@ -249,7 +369,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                   </div>
                 )}
 
-                {/* Existing custom order proposal card */}
+                {/* Interactive Custom Order Card */}
                 {message.productMentions.type === 'custom_order_proposal' &&
                   message.productMentions.proposal && (
                     <CustomOrderCard
@@ -257,17 +377,25 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                       negotiationId={message.productMentions.negotiationId}
                       status={message.productMentions.status || 'pending'}
                       isOwn={isOwn}
+                      currentUserRole={authState.user?.role || 'CUSTOMER'}
+                      onAccept={handleAcceptCustomOrder}
+                      onDecline={handleDeclineCustomOrder}
+                      onCounterOffer={handleCounterOffer}
+                      loading={sending}
                     />
                   )}
 
-                {/* Response type custom orders */}
+                {/* Response Display */}
                 {message.productMentions.type === 'custom_order_response' && (
                   <div className="bg-blue-50 rounded-lg p-4 max-w-sm">
                     <h4 className="font-semibold mb-2 text-blue-900">
                       {message.productMentions.response?.accepted
                         ? '✅ Đề xuất được chấp nhận'
+                        : message.productMentions.action === 'COUNTER_OFFER'
+                        ? '💰 Đề xuất ngược'
                         : '💬 Phản hồi đề xuất'}
                     </h4>
+
                     {message.productMentions.response?.counterOffer && (
                       <div className="mt-2 p-3 bg-white rounded border">
                         <h5 className="font-medium mb-1">Đề xuất mới:</h5>
@@ -286,6 +414,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         </p>
                       </div>
                     )}
+
                     {message.productMentions.quoteRequestId && (
                       <div className="mt-2">
                         <Link
@@ -296,6 +425,42 @@ export const MessageItem: React.FC<MessageItemProps> = ({
                         </Link>
                       </div>
                     )}
+
+                    {/* Actions for counter offers */}
+                    {message.productMentions.action === 'COUNTER_OFFER' &&
+                      !isOwn && (
+                        <div className="flex gap-2 mt-3 pt-2 border-t">
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleAcceptCustomOrder(
+                                message.productMentions.quoteRequestId,
+                                message.productMentions.response,
+                              )
+                            }
+                            loading={sending}
+                          >
+                            Chấp nhận
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleCounterOffer(
+                                message.productMentions.quoteRequestId,
+                                {
+                                  finalPrice:
+                                    message.productMentions.finalPrice || 0,
+                                  message: 'Đề xuất ngược',
+                                },
+                              )
+                            }
+                            loading={sending}
+                          >
+                            Đề xuất lại
+                          </Button>
+                        </div>
+                      )}
                   </div>
                 )}
               </>

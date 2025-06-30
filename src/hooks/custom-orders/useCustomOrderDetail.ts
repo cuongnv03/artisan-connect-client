@@ -10,6 +10,8 @@ import {
   AcceptOfferRequest,
   RejectOfferRequest,
 } from '../../types/custom-order';
+import { messageService } from '../../services/message.service';
+import { formatPrice } from '../../utils/format';
 
 export const useCustomOrderDetail = (orderId: string) => {
   const { state } = useAuth();
@@ -56,6 +58,35 @@ export const useCustomOrderDetail = (orderId: string) => {
         data,
       );
       setOrder(updatedOrder);
+
+      // AUTO SEND MESSAGE TO CUSTOMER
+      try {
+        const actionMessages = {
+          ACCEPT: `✅ Tôi đã chấp nhận yêu cầu custom order "${order.title}"`,
+          REJECT: `❌ Tôi đã từ chối yêu cầu custom order "${order.title}"${
+            data.response?.message ? `: ${data.response.message}` : ''
+          }`,
+          COUNTER_OFFER: `💰 Tôi đã gửi đề xuất ngược cho custom order "${
+            order.title
+          }" với giá ${data.finalPrice ? formatPrice(data.finalPrice) : 'N/A'}`,
+        };
+
+        await messageService.sendMessage({
+          receiverId: order.customer.id,
+          content: actionMessages[data.action],
+          type: 'QUOTE_DISCUSSION',
+          quoteRequestId: order.id,
+          productMentions: {
+            type: 'custom_order_response',
+            action: data.action,
+            finalPrice: data.finalPrice,
+            quoteRequestId: order.id,
+            response: data.response,
+          },
+        });
+      } catch (msgError) {
+        console.error('Error sending auto message:', msgError);
+      }
 
       const actionMessages = {
         ACCEPT: 'Đã chấp nhận yêu cầu custom order',
@@ -136,6 +167,31 @@ export const useCustomOrderDetail = (orderId: string) => {
         data,
       );
       setOrder(updatedOrder);
+
+      // AUTO SEND MESSAGE TO ARTISAN
+      try {
+        await messageService.sendMessage({
+          receiverId: order.artisan.id,
+          content: `💰 Tôi đã gửi đề xuất ngược cho custom order "${
+            order.title
+          }" với giá ${formatPrice(data.finalPrice)}${
+            data.message ? `: ${data.message}` : ''
+          }`,
+          type: 'QUOTE_DISCUSSION',
+          quoteRequestId: order.id,
+          productMentions: {
+            type: 'customer_counter_offer',
+            action: 'CUSTOMER_COUNTER_OFFER',
+            finalPrice: data.finalPrice,
+            quoteRequestId: order.id,
+            timeline: data.timeline,
+            message: data.message,
+          },
+        });
+      } catch (msgError) {
+        console.error('Error sending auto message:', msgError);
+      }
+
       success('Đã gửi đề xuất ngược');
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra');
@@ -154,6 +210,28 @@ export const useCustomOrderDetail = (orderId: string) => {
         data,
       );
       setOrder(updatedOrder);
+
+      // AUTO SEND MESSAGE TO ARTISAN
+      try {
+        await messageService.sendMessage({
+          receiverId: order.artisan.id,
+          content: `✅ Tôi đã chấp nhận đề xuất custom order "${order.title}"${
+            data.message ? `: ${data.message}` : ''
+          }`,
+          type: 'QUOTE_DISCUSSION',
+          quoteRequestId: order.id,
+          productMentions: {
+            type: 'customer_accept_offer',
+            action: 'CUSTOMER_ACCEPT',
+            quoteRequestId: order.id,
+            finalPrice: updatedOrder.finalPrice,
+            message: data.message,
+          },
+        });
+      } catch (msgError) {
+        console.error('Error sending auto message:', msgError);
+      }
+
       success('Đã chấp nhận đề xuất');
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra');
@@ -172,6 +250,28 @@ export const useCustomOrderDetail = (orderId: string) => {
         data,
       );
       setOrder(updatedOrder);
+
+      // AUTO SEND MESSAGE TO ARTISAN
+      try {
+        await messageService.sendMessage({
+          receiverId: order.artisan.id,
+          content: `❌ Tôi đã từ chối đề xuất custom order "${order.title}"${
+            data.reason ? `: ${data.reason}` : ''
+          }${data.message ? ` - ${data.message}` : ''}`,
+          type: 'QUOTE_DISCUSSION',
+          quoteRequestId: order.id,
+          productMentions: {
+            type: 'customer_reject_offer',
+            action: 'CUSTOMER_REJECT',
+            quoteRequestId: order.id,
+            reason: data.reason,
+            message: data.message,
+          },
+        });
+      } catch (msgError) {
+        console.error('Error sending auto message:', msgError);
+      }
+
       success('Đã từ chối đề xuất');
     } catch (err: any) {
       error(err.message || 'Có lỗi xảy ra');
