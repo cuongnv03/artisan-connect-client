@@ -26,7 +26,7 @@ Here are the main interfaces of the application.
 ### General & Customer Interfaces
 
 * **Homepage (Logged Out)**
-    * `[<img width="1102" height="534" alt="image" src="https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259" />: Homepage for users who are not logged in, introducing the platform]`
+    * `<img width="1102" height="534" alt="image" src="https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259" />[Homepage for users who are not logged in, introducing the platform]`
 * **Homepage (Logged In)**
 <img width="1113" height="530" alt="image" src="https://github.com/user-attachments/assets/2c369d70-389e-4084-adbb-9940d4e18cb9" />
     * `[Image: Personalized homepage showing a feed of posts from followed artisans and discovery shortcuts]`
