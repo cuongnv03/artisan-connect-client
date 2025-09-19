@@ -26,30 +26,24 @@ Here are the main interfaces of the application.
 ### General & Customer Interfaces
 
 * **Homepage (Logged Out)**
-    * `<img width="1102" height="534" alt="image" src="https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259" />[Homepage for users who are not logged in, introducing the platform]`
+    * ![Homepage (Logged Out)](https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259 "Homepage for users who are not logged in, introducing the platform")
 * **Homepage (Logged In)**
-<img width="1113" height="530" alt="image" src="https://github.com/user-attachments/assets/2c369d70-389e-4084-adbb-9940d4e18cb9" />
-    * `[Image: Personalized homepage showing a feed of posts from followed artisans and discovery shortcuts]`
+    * ![Homepage (Logged In)](https://github.com/user-attachments/assets/2c369d70-389e-4084-adbb-9940d4e18cb9 "Personalized homepage showing a feed of posts from followed artisans and discovery shortcuts")
 * **Discover Page**
-<img width="1100" height="533" alt="image" src="https://github.com/user-attachments/assets/605021dd-fe64-413f-bb98-52ad0947144c" />
-    * `[Image: Discover page with a search bar and featured categories]`
+    * ![Discover Page](https://github.com/user-attachments/assets/605021dd-fe64-413f-bb98-52ad0947144c "Discover page with a search bar and featured categories")
 * **Store Page**
-<img width="1097" height="529" alt="image" src="https://github.com/user-attachments/assets/1b1c1929-f30d-428a-9187-506342e11915" />
-    * `[Image: Store interface displaying products with filtering options]`
+    * ![Store Page](https://github.com/user-attachments/assets/1b1c1929-f30d-428a-9187-506342e11915 "Store interface displaying products with filtering options")
 * **Post Details**
-<img width="1108" height="528" alt="image" src="https://github.com/user-attachments/assets/0fddf271-6c79-4c6a-8036-cc63f663b9dd" />
-    * `[Image: Modal window showing the detailed content of a post]`
+    * ![Post Details](https://github.com/user-attachments/assets/0fddf271-6c79-4c6a-8036-cc63f663b9dd "Modal window showing the detailed content of a post")
 * **Product Details**
-<img width="1097" height="526" alt="image" src="https://github.com/user-attachments/assets/c9d2473e-4aef-4b01-916c-0ce1b5480557" />
-    * `[Image: Page showing the product's information, images, price, and detailed description]`
+    * ![Product Details](https://github.com/user-attachments/assets/c9d2473e-4aef-4b01-916c-0ce1b5480557 "Page showing the product's information, images, price, and detailed description")
 * **Ordering Process**
-    * `[Image: Shopping cart interface]`
-    * `[Image: Checkout page with address and payment method information]`
-    * `[Image: Order details interface after a successful order]`
+    * ![Ordering Process 1](https://github.com/user-attachments/assets/f3a2171f-5304-42f8-8d69-29fe15a6135f "Shopping cart interface")
+    * ![Ordering Process 2](https://github.com/user-attachments/assets/b27e4967-ad01-4077-85de-e2bb2d5b807e "Checkout page with address and payment method information")
+    * ![Ordering Process 3](https://github.com/user-attachments/assets/2e14aa3f-3341-41b8-9a05-102bcf636b18 "Order details interface after a successful order")
 * **Become an Artisan Request**
-    * `[Image: Page introducing the benefits and starting the request process]`
-    * `[Image: Detailed form for applying to become an artisan]`
-    * `[Image: Confirmation screen after successfully submitting the request]`
+    * ![Become an Artisan Request 1](https://github.com/user-attachments/assets/4d3c6356-86cd-4240-823e-9e8c2cb87e93 "Page introducing the benefits and starting the request process")
+    * ![Become an Artisan Request 2](https://github.com/user-attachments/assets/53cc1ba1-7565-4f2d-87de-883c55828448 "Detailed form for applying to become an artisan and Confirmation screen after successfully submitting the request")
 
 ### Artisan Interfaces
 
