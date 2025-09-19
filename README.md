@@ -26,16 +26,21 @@ Here are the main interfaces of the application.
 ### General & Customer Interfaces
 
 * **Homepage (Logged Out)**
-    * `[Image: Homepage for users who are not logged in, introducing the platform]`
+    * `[<img width="1102" height="534" alt="image" src="https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259" />: Homepage for users who are not logged in, introducing the platform]`
 * **Homepage (Logged In)**
+<img width="1113" height="530" alt="image" src="https://github.com/user-attachments/assets/2c369d70-389e-4084-adbb-9940d4e18cb9" />
     * `[Image: Personalized homepage showing a feed of posts from followed artisans and discovery shortcuts]`
 * **Discover Page**
+<img width="1100" height="533" alt="image" src="https://github.com/user-attachments/assets/605021dd-fe64-413f-bb98-52ad0947144c" />
     * `[Image: Discover page with a search bar and featured categories]`
 * **Store Page**
+<img width="1097" height="529" alt="image" src="https://github.com/user-attachments/assets/1b1c1929-f30d-428a-9187-506342e11915" />
     * `[Image: Store interface displaying products with filtering options]`
 * **Post Details**
+<img width="1108" height="528" alt="image" src="https://github.com/user-attachments/assets/0fddf271-6c79-4c6a-8036-cc63f663b9dd" />
     * `[Image: Modal window showing the detailed content of a post]`
 * **Product Details**
+<img width="1097" height="526" alt="image" src="https://github.com/user-attachments/assets/c9d2473e-4aef-4b01-916c-0ce1b5480557" />
     * `[Image: Page showing the product's information, images, price, and detailed description]`
 * **Ordering Process**
     * `[Image: Shopping cart interface]`
