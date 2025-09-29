@@ -48,31 +48,30 @@ Here are the main interfaces of the application.
 ### Artisan Interfaces
 
 * **Post Management**
-    * `[Image: Interface listing all posts created by the artisan]`
+    * ![Post Management](https://github.com/user-attachments/assets/2a54545f-9afc-45db-b77c-8e1798598d67 "Interface listing all posts created by the artisan")
 * **Create New Post**
-    * `[Image: Editor for creating a new post]`
+    * ![Create New Post](https://github.com/user-attachments/assets/0226b875-f4a9-4264-901e-831e754a6565 "Editor for creating a new post")
 * **Product Management**
-    * `[Image: Dashboard for managing all products in the store]`
+    * ![Product Management](https://github.com/user-attachments/assets/eef66fd2-d253-4532-8603-d14779f68b94 "Dashboard for managing all products in the store")
 * **Create New Product**
-    * `[Image: Detailed form for adding a new product]`
+    * ![Create New Product 1](https://github.com/user-attachments/assets/489fb5b6-b2c3-4db9-a0f6-0f9837c1059f "Detailed form for adding a new product")
+    * ![Create New Product 2](https://github.com/user-attachments/assets/7e58de04-8039-4bb4-b485-f83896834beb "Detailed form for adding a new product")
 * **Sales Order Management**
-    * `[Image: Interface for tracking and managing sold orders]`
+    * ![Sales Order Management](https://github.com/user-attachments/assets/1d318823-07dc-4098-9033-99f3e4c8caf7 "Interface for tracking and managing sold orders")
 * **Custom Order Management**
-    * `[Image: Interface for managing custom order requests from customers]`
+    * ![Custom Order Management](https://github.com/user-attachments/assets/4b764bbd-134b-401e-b7fc-3a1b65f93fca "Interface for managing custom order requests from customers")
 * **Price Negotiation Management**
-    * `[Image: Interface for managing price negotiation requests]`
-    * `[Image: Form for a customer to start a price negotiation]`
-    * `[Image: Interface for an artisan to respond to a negotiation request]`
-    * `[Image: Notification of a successful negotiation with an option to add to cart]`
+    * ![Price Negotiation Management 1](https://github.com/user-attachments/assets/41e55377-502a-4bf1-9bd6-b8d435b33a9a "Interface for managing price negotiation requests")
+    * ![Price Negotiation Management 2](https://github.com/user-attachments/assets/fba1ab02-ff29-4ff2-b303-cc497df9f7f0 "Interface for price negotiation process")
 * **Interface Customization**
-    * `[Image: Initial state of the personal profile page]`
-    * `[Image: Selecting a template and previewing the changes]`
-    * `[Image: Interface after saving and applying a new color scheme]`
+    * ![Interface Customization 1](https://github.com/user-attachments/assets/e6c29f20-b1e5-4c48-9813-c9ecd561ad39 "Initial state of the personal profile page")
+    * ![Interface Customization 2](https://github.com/user-attachments/assets/2fe4409e-7390-4199-a0e6-ac1688e5578a "Selecting a template and previewing the changes")
+    * ![Interface Customization 3](https://github.com/user-attachments/assets/f47087e3-8b80-4323-a02e-c8db345c5e01 "Interface after saving and applying a new color scheme")
 
 ### Admin Interface
 
 * **Artisan Upgrade Request Management**
-    * `[Image: Page for managing and approving requests to become an artisan]`
+    * ![Artisan Upgrade Request Management](https://github.com/user-attachments/assets/c0efd258-7041-40fa-b01b-185c2b4df320 "Page for managing and approving requests to become an artisan")
 
 ---
 
