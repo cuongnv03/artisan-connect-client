@@ -121,7 +121,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         error: null,
       };
 
-    case 'ITEM_REMOVED':
+    case 'ITEM_REMOVED': {
       const removedItem = state.items.find(
         (item) =>
           item.productId === action.payload.productId &&
@@ -139,6 +139,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         itemCount: state.itemCount - (removedItem?.quantity || 0),
         error: null,
       };
+    }
 
     case 'COUNT_UPDATED':
       return {
@@ -362,7 +363,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       await loadCart();
 
       success(`Đã thêm sản phẩm với giá thương lượng vào giỏ hàng`);
-      return cartItem;
     } catch (err: any) {
       const errorMessage =
         err.message || 'Không thể thêm sản phẩm với giá thương lượng';

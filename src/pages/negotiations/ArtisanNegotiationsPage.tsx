@@ -46,7 +46,7 @@ export const ArtisanNegotiationsPage: React.FC = () => {
     limit: 10,
     status:
       statusFilter !== 'ALL' ? (statusFilter as NegotiationStatus) : undefined,
-    sortBy,
+    sortBy: sortBy as any,
     sortOrder,
     enabled: !!authState.user,
   });

@@ -100,6 +100,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const displayImage = getDisplayImage();
   const displayStock = getDisplayStock();
   const totalStock = getTotalStock();
+  const totalQuantity = totalStock;
+  const displayWeight = hasVariants && defaultVariant ? defaultVariant.weight : product.weight;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {

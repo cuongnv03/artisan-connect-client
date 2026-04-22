@@ -322,8 +322,8 @@ export const ArtisanRequestsPage: React.FC = () => {
                         {request.reviewedBy && (
                           <>
                             {' '}
-                            bởi {request.reviewedBy.firstName}{' '}
-                            {request.reviewedBy.lastName}
+                            bởi {(request.reviewedBy as any).firstName || request.reviewedBy}{' '}
+                            {(request.reviewedBy as any).lastName || ''}
                           </>
                         )}
                       </p>

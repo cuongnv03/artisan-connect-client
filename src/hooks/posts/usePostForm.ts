@@ -48,13 +48,11 @@ export const usePostForm = (initialPost?: Post) => {
       // Load content
       let existingContent: ContentBlock[] = [];
       if (initialPost.content) {
-        if (Array.isArray(initialPost.content)) {
-          existingContent = initialPost.content;
-        } else if (
-          initialPost.content.blocks &&
-          Array.isArray(initialPost.content.blocks)
-        ) {
-          existingContent = initialPost.content.blocks;
+        const rawContent: any = initialPost.content;
+        if (Array.isArray(rawContent)) {
+          existingContent = rawContent;
+        } else if (rawContent.blocks && Array.isArray(rawContent.blocks)) {
+          existingContent = rawContent.blocks;
         }
       }
 

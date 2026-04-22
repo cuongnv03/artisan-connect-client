@@ -70,7 +70,7 @@ export const getCustomOrderActions = (
       }
       break;
 
-    case QuoteStatus.COUNTER_OFFERED:
+    case QuoteStatus.COUNTER_OFFERED: {
       // Counter offer state: whoever didn't make last counter should respond
       const shouldCustomerRespond = lastActor === 'artisan';
       const shouldArtisanRespond = lastActor === 'customer';
@@ -106,6 +106,7 @@ export const getCustomOrderActions = (
           nextActor: shouldCustomerRespond ? 'customer' : 'artisan',
         };
       }
+    }
 
     case QuoteStatus.ACCEPTED:
       // Accepted: only customer can proceed to payment

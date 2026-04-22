@@ -39,7 +39,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
         </div>
         <div className="hidden md:flex items-center space-x-2">
           <Button
-            variant="whiteOutline"
+            variant="outline"
             size="sm"
             onClick={onRefresh}
             loading={refreshing}

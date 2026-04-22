@@ -103,7 +103,7 @@ export const LandingPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/auth/register">
                   <Button
-                    variant="white"
+                    variant="ghost"
                     size="lg"
                     className="  shadow-lg font-semibold"
                   >
@@ -112,7 +112,7 @@ export const LandingPage: React.FC = () => {
                 </Link>
                 <Link to="/auth/login">
                   <Button
-                    variant="whiteOutline"
+                    variant="outline"
                     size="lg"
                     className="border-2 font-semibold"
                   >
@@ -269,13 +269,13 @@ export const LandingPage: React.FC = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth/register">
-              <Button variant="white" size="lg" className="font-semibold">
+              <Button variant="ghost" size="lg" className="font-semibold">
                 Đăng ký miễn phí
               </Button>
             </Link>
             <Link to="/discover">
               <Button
-                variant="whiteOutline"
+                variant="outline"
                 size="lg"
                 className="border-2 font-semibold"
               >

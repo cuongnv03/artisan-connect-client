@@ -208,7 +208,6 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                         handleStatusChange(product.id, value)
                       }
                       options={statusOptions}
-                      size="sm"
                       disabled={updatingStatus[product.id]}
                     />
                   </div>

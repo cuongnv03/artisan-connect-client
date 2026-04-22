@@ -258,7 +258,7 @@ export const formatNotificationDisplay = (
       );
       break;
 
-    case NotificationType.PAYMENT_FAILED:
+    case NotificationType.PAYMENT_FAILED: {
       const reason = notification.data?.reason
         ? `: ${notification.data.reason}`
         : '';
@@ -266,6 +266,7 @@ export const formatNotificationDisplay = (
         .replace('{orderNumber}', extractOrderNumber(notification))
         .replace('{reason}', reason);
       break;
+    }
 
     case NotificationType.QUOTE_RESPONSE:
       message = message.replace(

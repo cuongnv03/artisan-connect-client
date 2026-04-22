@@ -19,8 +19,8 @@ export const useCustomOrders = (mode: 'sent' | 'received' = 'sent') => {
   const [totalItems, setTotalItems] = useState(0);
   const [filters, setFilters] = useState<{
     status?: QuoteStatus | QuoteStatus[];
-    dateFrom?: Date;
-    dateTo?: Date;
+    dateFrom?: string;
+    dateTo?: string;
   }>({});
 
   const loadOrders = async () => {

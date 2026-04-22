@@ -91,7 +91,7 @@ export const usePostDetail = () => {
         // Delay để tránh race condition
         setTimeout(async () => {
           try {
-            await postService.viewPost(postData.id, authState.user!.id);
+            await postService.getPost(postData.id); // track view
             console.log('View count incremented successfully');
           } catch (err) {
             console.error('Failed to increment view count:', err);

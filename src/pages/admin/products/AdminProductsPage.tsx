@@ -27,7 +27,7 @@ export const AdminProductsPage: React.FC = () => {
     updateProductStatus,
   } = useAdminProducts({
     search: searchQuery || undefined,
-    status: statusFilter || undefined,
+    status: (statusFilter as any) || undefined,
     sortBy,
     sortOrder,
     limit: 20,

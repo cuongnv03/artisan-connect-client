@@ -2,7 +2,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   delay: number,
 ): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func.apply(null, args), delay);
@@ -115,7 +115,10 @@ export const resizeImage = (
 
       if (ctx) {
         ctx.drawImage(img, 0, 0, newWidth, newHeight);
-        canvas.toBlob(resolve, 'image/jpeg', quality);
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Canvas toBlob returned null'));
+        }, 'image/jpeg', quality);
       } else {
         reject(new Error('Canvas context not available'));
       }

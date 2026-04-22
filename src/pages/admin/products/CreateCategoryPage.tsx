@@ -48,7 +48,7 @@ export const CreateCategoryPage: React.FC = () => {
       {/* Form */}
       <CategoryForm
         categories={categories}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit as any}
         onCancel={handleCancel}
         isEditing={false}
       />

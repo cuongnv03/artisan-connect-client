@@ -1,11 +1,13 @@
 import React, { forwardRef } from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  as?: 'input' | 'textarea';
+  rows?: number;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -18,11 +20,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       rightIcon,
       className = '',
       id,
+      as: Tag = 'input',
+      rows,
       ...props
     },
     ref,
   ) => {
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+
+    const inputClassName = `
+      block w-full rounded-lg border-gray-300 shadow-sm
+      focus:border-primary focus:ring-primary
+      ${leftIcon ? 'pl-10' : 'pl-3'}
+      ${rightIcon ? 'pr-10' : 'pr-3'}
+      ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+      ${className}
+    `;
 
     return (
       <div className="w-full">
@@ -43,23 +56,26 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
 
-          <input
-            ref={ref}
-            id={inputId}
-            className={`
-              block w-full rounded-lg border-gray-300 shadow-sm
-              focus:border-primary focus:ring-primary
-              ${leftIcon ? 'pl-10' : 'pl-3'}
-              ${rightIcon ? 'pr-10' : 'pr-3'}
-              ${
-                error
-                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                  : ''
-              }
-              ${className}
-            `}
-            {...props}
-          />
+          {Tag === 'textarea' ? (
+            <textarea
+              id={inputId}
+              rows={rows}
+              className={inputClassName}
+              onChange={props.onChange as any}
+              value={props.value as any}
+              placeholder={props.placeholder}
+              disabled={props.disabled}
+              required={props.required}
+              name={props.name}
+            />
+          ) : (
+            <input
+              ref={ref}
+              id={inputId}
+              className={inputClassName}
+              {...props}
+            />
+          )}
 
           {rightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center">

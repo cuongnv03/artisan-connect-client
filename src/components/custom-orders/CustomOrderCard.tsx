@@ -108,7 +108,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         specifications: proposal.specifications,
         attachmentUrls: proposal.attachmentUrls || [],
         status: status as any,
-        customer: { id: customerId },
+        customer: { id: customerId, firstName: '', lastName: '', email: '', username: '' },
         artisan: {
           id: artisanId,
           firstName: '',
@@ -120,8 +120,8 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
         messages: [],
         negotiationHistory: [],
         expiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       await proceedToPayment(orderForPayment);

@@ -478,7 +478,7 @@ export const ArtisanRequestDetailPage: React.FC = () => {
                   {showRejectForm ? (
                     <>
                       <Button
-                        variant="error"
+                        variant="danger"
                         className="w-full"
                         onClick={handleReject}
                         loading={processing}
@@ -553,8 +553,8 @@ export const ArtisanRequestDetailPage: React.FC = () => {
                       {request.reviewedBy && (
                         <>
                           {' '}
-                          bởi {request.reviewedBy.firstName}{' '}
-                          {request.reviewedBy.lastName}
+                          bởi {(request.reviewedBy as any).firstName || request.reviewedBy}{' '}
+                          {(request.reviewedBy as any).lastName || ''}
                         </>
                       )}
                     </p>

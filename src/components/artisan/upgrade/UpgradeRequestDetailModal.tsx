@@ -80,7 +80,7 @@ const SPECIALTY_DISPLAY: Record<string, string> = {
 const STATUS_CONFIG = {
   pending: { label: 'Chờ duyệt', color: 'warning' as const },
   approved: { label: 'Đã duyệt', color: 'success' as const },
-  rejected: { label: 'Từ chối', color: 'error' as const },
+  rejected: { label: 'Từ chối', color: 'danger' as const },
 };
 
 export const UpgradeRequestDetailModal: React.FC<
@@ -471,7 +471,7 @@ export const UpgradeRequestDetailModal: React.FC<
                       Hủy
                     </Button>
                     <Button
-                      variant="error"
+                      variant="danger"
                       onClick={handleReject}
                       loading={loading}
                       leftIcon={<XCircleIcon className="w-4 h-4" />}

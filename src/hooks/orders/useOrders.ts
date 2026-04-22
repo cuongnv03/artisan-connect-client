@@ -24,7 +24,7 @@ export const useOrders = (type: 'buy' | 'sell' = 'buy') => {
       const query: GetOrdersQuery = {
         page: currentPage,
         limit: 10,
-        status: statusFilter || undefined,
+        status: (statusFilter as any) || undefined,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       };

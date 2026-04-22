@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { analyticsService } from '../../services/analytics.service';
 import { postService } from '../../services/post.service';
 import { productService } from '../../services/product.service';
 import { artisanService } from '../../services/artisan.service';
@@ -37,7 +36,7 @@ export const useTrendingData = (
     try {
       const [trendingPosts, topProducts, featuredArtisans] =
         await Promise.allSettled([
-          analyticsService.getTrendingPosts({ period: timePeriod, limit: 10 }),
+          postService.getPosts({ sortBy: 'viewCount', sortOrder: 'desc', limit: 10 }),
           productService.getProducts({
             sortBy: 'viewCount',
             sortOrder: 'desc',
@@ -65,12 +64,12 @@ export const useTrendingData = (
       ];
 
       setTrendingData({
-        posts: trendingPosts.status === 'fulfilled' ? trendingPosts.value : [],
+        posts: trendingPosts.status === 'fulfilled' ? trendingPosts.value.data : [],
         products:
           topProducts.status === 'fulfilled' ? topProducts.value.data : [],
         artisans:
           featuredArtisans.status === 'fulfilled'
-            ? featuredArtisans.value.data
+            ? featuredArtisans.value
             : [],
         hashtags: mockHashtags,
         keywords: mockKeywords,

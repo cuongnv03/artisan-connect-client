@@ -114,11 +114,12 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info';
   loading?: boolean;
+  children?: React.ReactNode;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -131,6 +132,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Hủy',
   type = 'danger',
   loading = false,
+  children,
 }) => {
   const buttonVariant = type === 'danger' ? 'danger' : 'primary';
 
@@ -138,6 +140,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="mt-2">
         <p className="text-sm text-gray-500">{message}</p>
+        {children}
       </div>
 
       <div className="mt-6 flex space-x-3 justify-end">

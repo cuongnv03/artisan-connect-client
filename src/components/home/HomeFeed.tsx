@@ -33,7 +33,7 @@ export const HomeFeed: React.FC<HomeFeedProps> = ({
     // CHỈ chuyển đến trang manage khi là bài viết của chính mình
     if (
       authState.user?.role === 'ARTISAN' &&
-      post.authorId === authState.user.id
+      post.userId === authState.user.id
     ) {
       navigate(`/posts/manage/${post.id}`);
     } else {

@@ -529,17 +529,36 @@ export const NAVIGATION_MENUS = {
   ],
 } as const;
 
+export interface NavItem {
+  path: string;
+  label: string;
+  icon?: string;
+  subtitle?: string;
+  badge?: string;
+  highlight?: boolean;
+  business?: boolean;
+  type?: string;
+  submenu?: NavItem[];
+}
+
+export interface SecondaryNavItem {
+  path: string;
+  icon: string;
+  badge?: string;
+  label?: string;
+}
+
 // Helper để lấy menu theo role
-export const getNavigationMenu = (userRole: string) => {
+export const getNavigationMenu = (userRole: string): NavItem[] => {
   switch (userRole) {
     case 'CUSTOMER':
-      return NAVIGATION_MENUS.CUSTOMER;
+      return NAVIGATION_MENUS.CUSTOMER as unknown as NavItem[];
     case 'ARTISAN':
-      return NAVIGATION_MENUS.ARTISAN;
+      return NAVIGATION_MENUS.ARTISAN as unknown as NavItem[];
     case 'ADMIN':
-      return NAVIGATION_MENUS.ADMIN;
+      return NAVIGATION_MENUS.ADMIN as unknown as NavItem[];
     default:
-      return NAVIGATION_MENUS.CUSTOMER;
+      return NAVIGATION_MENUS.CUSTOMER as unknown as NavItem[];
   }
 };
 
@@ -557,7 +576,7 @@ export const isActiveMenu = (
   )
     return true;
   if (
-    menuPath === ROUTE_PATHS.APP.PRODUCTS.MY_PRODUCTS &&
+    menuPath === ROUTE_PATHS.APP.PRODUCTS.BASE &&
     currentPath.startsWith('/products/')
   )
     return true;
@@ -569,7 +588,7 @@ export const isActiveMenu = (
 
   if (
     menuPath === '/artisan/me' &&
-    currentPath.match(/^\/artisan\/[^\/]+$/) // Match /artisan/{userId}
+    currentPath.match(/^\/artisan\/[^/]+$/) // Match /artisan/{userId}
   )
     return true;
 
@@ -601,7 +620,7 @@ export const MENU_CONFIG = {
 } as const;
 
 // Secondary navigation (header actions)
-export const SECONDARY_NAVIGATION = {
+export const SECONDARY_NAVIGATION: Record<string, SecondaryNavItem[]> = {
   CUSTOMER: [
     {
       path: ROUTE_PATHS.APP.CART.VIEW,
@@ -653,4 +672,4 @@ export const SECONDARY_NAVIGATION = {
     },
     { path: ROUTE_PATHS.ADMIN.ANALYTICS, icon: 'bar-chart', label: 'Thống kê' },
   ],
-} as const;
+};

@@ -288,7 +288,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
           </div>
         );
 
-      case 'MULTI_SELECT':
+      case 'MULTI_SELECT': {
         const selectedValues = Array.isArray(value) ? value : [];
         return (
           <div>
@@ -326,6 +326,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
             </div>
           </div>
         );
+      }
 
       case 'BOOLEAN':
         return (

@@ -882,9 +882,9 @@ export const CheckoutPage: React.FC = () => {
                                     {displayInfo.variantInfo.name}
                                   </span>
                                 )}
-                                {displayInfo.variantInfo.attributes &&
+                                {(displayInfo.variantInfo as any).attributes &&
                                   Object.entries(
-                                    displayInfo.variantInfo.attributes,
+                                    (displayInfo.variantInfo as any).attributes,
                                   ).map(([key, value]) => (
                                     <span key={key} className="mr-2">
                                       {key}: {String(value)}

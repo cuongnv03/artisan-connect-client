@@ -77,7 +77,7 @@ export const CreateProductPage: React.FC = () => {
         {/* Product Form */}
         <ProductForm
           mode="create"
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit as any}
           onCancel={handleCancel}
           submitLabel="Tạo sản phẩm"
         />

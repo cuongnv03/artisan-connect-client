@@ -23,6 +23,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
     const newBlock: ContentBlock = {
       id: Date.now().toString(),
       type,
+      order: content.length,
       content: type === BlockType.DIVIDER ? undefined : '',
       metadata: type === BlockType.IMAGE ? {} : undefined,
     };

@@ -74,7 +74,7 @@ function notificationReducer(
         })),
         unreadCount: 0,
       };
-    case 'REMOVE_NOTIFICATION':
+    case 'REMOVE_NOTIFICATION': {
       const removedNotif = state.notifications.find(
         (n) => n.id === action.payload,
       );
@@ -88,6 +88,7 @@ function notificationReducer(
             ? Math.max(0, state.unreadCount - 1)
             : state.unreadCount,
       };
+    }
     default:
       return state;
   }

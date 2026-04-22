@@ -74,6 +74,7 @@ export const MyPostsPage: React.FC = () => {
             <SearchBox
               value={searchQuery}
               onChange={setSearchQuery}
+              onSubmit={setSearchQuery}
               placeholder="Tìm kiếm bài viết..."
             />
           </div>

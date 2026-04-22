@@ -136,7 +136,6 @@ export const usePostActions = () => {
       label: 'Xóa',
       icon: 'trash',
       onClick: () => deletePost(post.id),
-      variant: 'danger',
     });
 
     return actions;

@@ -79,7 +79,7 @@ export const useCheckout = () => {
       });
 
       // Process payment if needed
-      if (data.paymentMethod !== PaymentMethod.CASH_ON_DELIVERY) {
+      if (data.paymentMethod !== PaymentMethodType.CASH_ON_DELIVERY) {
         // Handle online payment flow
         // This would be implemented based on payment gateway
         await orderService.processPayment(order.id, {

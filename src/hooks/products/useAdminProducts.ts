@@ -75,7 +75,7 @@ export const useAdminProducts = (
     try {
       await apiClient.patch(`/admin/products/${productId}/status`, { status });
       setProducts((prev) =>
-        prev.map((p) => (p.id === productId ? { ...p, status } : p)),
+        prev.map((p) => (p.id === productId ? { ...p, status: status as any } : p)),
       );
     } catch (err: any) {
       throw new Error(err.message || 'Không thể cập nhật trạng thái sản phẩm');

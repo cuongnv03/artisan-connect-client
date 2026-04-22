@@ -82,7 +82,7 @@ export const ArtisanPostsSection: React.FC<ArtisanPostsSectionProps> = ({
           <div className="flex flex-col md:flex-row gap-3 flex-1">
             <Select
               value={filters.type}
-              onChange={(value) => setFilters({ ...filters, type: value })}
+              onChange={(value) => setFilters({ ...filters, type: value as PostType | '' })}
               options={getPostTypeOptions()}
               className="md:w-48"
             />

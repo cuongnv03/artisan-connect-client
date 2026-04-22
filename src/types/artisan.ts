@@ -1,6 +1,30 @@
 import { BaseEntity, PaginationParams } from './common';
 import { User } from './auth';
 
+export interface ArtisanProfile extends BaseEntity {
+  userId: string;
+  shopName: string;
+  shopDescription?: string | null;
+  specialties: string[];
+  experience?: number | null;
+  website?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  socialMedia?: Record<string, string> | null;
+  businessAddress?: string | null;
+  businessHours?: Record<string, any> | null;
+  shippingInfo?: Record<string, any> | null;
+  returnPolicy?: string | null;
+  shopLogoUrl?: string | null;
+  shopBannerUrl?: string | null;
+  isVerified: boolean;
+  rating?: number | null;
+  reviewCount: number;
+  totalSales: number;
+  followerCount?: number | null;
+  user?: User;
+}
+
 export interface ArtisanUpgradeRequest extends BaseEntity {
   userId: string;
   shopName: string;
@@ -16,7 +40,7 @@ export interface ArtisanUpgradeRequest extends BaseEntity {
   status: UpgradeRequestStatus;
   adminNotes?: string;
   reviewedBy?: string;
-  reviewedAt?: Date;
+  reviewedAt?: string;
   user?: User & { phone?: string }; // Add phone field
 }
 
@@ -26,24 +50,6 @@ export enum UpgradeRequestStatus {
   REJECTED = 'REJECTED',
 }
 
-export interface ArtisanUpgradeRequest extends BaseEntity {
-  userId: string;
-  shopName: string;
-  shopDescription?: string;
-  specialties: string[];
-  experience?: number;
-  website?: string;
-  socialMedia?: Record<string, string>;
-  reason?: string;
-  images: string[];
-  certificates: string[];
-  identityProof?: string;
-  status: UpgradeRequestStatus;
-  adminNotes?: string;
-  reviewedBy?: string;
-  reviewedAt?: Date;
-  user?: User;
-}
 
 // DTOs
 export interface CreateArtisanProfileRequest {
@@ -97,8 +103,8 @@ export interface SuggestedArtisansQuery extends PaginationParams {
 export interface UpgradeRequestStatusResponse {
   hasRequest: boolean;
   status?: UpgradeRequestStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
   adminNotes?: string;
-  reviewedAt?: Date;
+  reviewedAt?: string;
 }

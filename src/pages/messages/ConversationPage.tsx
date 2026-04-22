@@ -40,7 +40,7 @@ export const ConversationPage: React.FC = () => {
   };
 
   const handleSendMessage = async (content: string) => {
-    await sendMessage(content);
+    await sendMessage({ receiverId: userId!, content, type: MessageType.TEXT });
   };
 
   const handleSendMedia = async (file: File, type: 'image' | 'file') => {
@@ -69,20 +69,6 @@ export const ConversationPage: React.FC = () => {
         folder: 'messages',
       });
 
-      // Send message with attachment - sử dụng attachments array thay vì productMentions
-      await sendMessage(
-        type === 'image'
-          ? '📷 Đã gửi hình ảnh'
-          : `📄 Đã gửi tài liệu: ${file.name}`,
-        type === 'image' ? MessageType.IMAGE : MessageType.FILE,
-        {
-          originalFileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        },
-      );
-
-      // Thêm attachment vào message manually
       const messageData = {
         receiverId: userId,
         content:
@@ -117,24 +103,18 @@ export const ConversationPage: React.FC = () => {
 
     setCustomOrderLoading(true);
     try {
-      await sendMessage(
-        `🛠️ Tôi có một đề xuất custom order cho bạn: "${proposal.productName}"`,
-        MessageType.CUSTOM_ORDER,
-        {
+      await sendMessage({
+        receiverId: userId!,
+        content: `🛠️ Tôi có một đề xuất custom order cho bạn: "${proposal.productName}"`,
+        type: MessageType.CUSTOM_ORDER,
+        productMentions: {
           type: 'custom_order_proposal',
-          negotiationId: `custom_${Date.now()}_${Math.random()
-            .toString(36)
-            .substr(2, 9)}`,
-          proposal: {
-            ...proposal,
-            deadline: proposal.deadline
-              ? proposal.deadline.toISOString()
-              : undefined,
-          },
+          negotiationId: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          proposal,
           status: 'pending',
           timestamp: new Date().toISOString(),
         },
-      );
+      });
 
       showSuccess('Đề xuất custom order đã được gửi');
       setShowCustomOrderForm(false);

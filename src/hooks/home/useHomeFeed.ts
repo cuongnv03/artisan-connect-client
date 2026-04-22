@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Post, PostPaginationResult } from '../../types';
+import { Post, PostPaginationResult, PostStatus } from '../../types';
 import { postService } from '../../services/post.service';
 import { useToastContext } from '../../contexts/ToastContext';
 
@@ -49,7 +49,7 @@ export const useHomeFeed = () => {
               limit: 10,
               sortBy: 'publishedAt',
               sortOrder: 'desc',
-              status: 'PUBLISHED',
+              status: PostStatus.PUBLISHED,
             });
           } else {
             setShowFallback(false);
@@ -65,7 +65,7 @@ export const useHomeFeed = () => {
             limit: 10,
             sortBy: 'publishedAt',
             sortOrder: 'desc',
-            status: 'PUBLISHED',
+            status: PostStatus.PUBLISHED,
           });
         }
 

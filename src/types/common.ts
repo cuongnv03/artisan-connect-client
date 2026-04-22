@@ -1,8 +1,8 @@
 // Common types used across the application
 export interface BaseEntity {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -16,7 +16,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface SoftDeleteEntity extends BaseEntity {
-  deletedAt?: Date;
+  deletedAt?: string;
 }
 
 export type SortOrder = 'asc' | 'desc';

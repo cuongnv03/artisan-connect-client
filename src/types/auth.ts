@@ -25,7 +25,7 @@ export interface User extends BaseEntity {
   isVerified: boolean;
   emailVerified: boolean;
   phone?: string;
-  lastSeenAt?: Date;
+  lastSeenAt?: string;
   followerCount: number;
   followingCount: number;
 }

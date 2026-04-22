@@ -92,8 +92,8 @@ export const useConversation = (userId: string) => {
           phone: null,
           followerCount: 0,
           followingCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         setParticipant(participantUser);
       }
@@ -131,8 +131,8 @@ export const useConversation = (userId: string) => {
           phone: null,
           followerCount: 0,
           followingCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
         setParticipant(participantUser);
       }
@@ -158,8 +158,8 @@ export const useConversation = (userId: string) => {
         readAt: null,
         isEdited: false,
         editedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         sender: {
           id: currentUser.id,
           username: currentUser.username,

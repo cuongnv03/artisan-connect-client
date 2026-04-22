@@ -34,8 +34,11 @@ export enum BlockType {
 export interface ContentBlock {
   id: string;
   type: BlockType;
-  data: any;
+  data?: any;
   order: number;
+  content?: string;
+  metadata?: Record<string, any>;
+  blocks?: ContentBlock[];
 }
 
 export interface ProductMention {

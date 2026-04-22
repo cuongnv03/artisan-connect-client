@@ -177,8 +177,8 @@ export interface CustomOrderQueryOptions {
   customerId?: string;
   artisanId?: string;
   status?: QuoteStatus | QuoteStatus[];
-  dateFrom?: Date;
-  dateTo?: Date;
+  dateFrom?: string;
+  dateTo?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

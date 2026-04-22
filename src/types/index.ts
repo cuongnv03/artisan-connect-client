@@ -57,9 +57,11 @@ export * from './admin-user';
 // ===== COMMONLY USED TYPE ALIASES =====
 export type { ApiError, ApiSuccess, FileUpload } from './api';
 export type { User, UserRole, UserStatus } from './auth';
-export type { Post, PostType, PostStatus, ContentBlock } from './post';
+export type { Post, PostType, ContentBlock } from './post';
+export { PostStatus } from './post';
 export type { Product, ProductStatus, Category } from './product';
-export type { Order, OrderStatus } from './order';
+export type { Order } from './order';
+export { OrderStatus } from './order';
 export type { UpgradeRequestStatus } from './artisan';
 export type { Message, MessageType, Conversation } from './message';
 export type { Notification, NotificationType } from './notification';

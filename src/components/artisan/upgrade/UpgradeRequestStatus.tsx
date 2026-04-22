@@ -16,10 +16,10 @@ interface UpgradeRequestStatusProps {
   request: {
     hasRequest: boolean;
     status?: StatusEnum;
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt?: string;
+    updatedAt?: string;
     adminNotes?: string;
-    reviewedAt?: Date;
+    reviewedAt?: string;
   };
   onCreateNewRequest?: () => void; // Thêm prop này
 }

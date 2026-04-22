@@ -17,7 +17,7 @@ const navigation = [
   },
   {
     name: 'Sản phẩm',
-    href: ROUTE_PATHS.APP.ARTISAN.PRODUCTS,
+    href: ROUTE_PATHS.APP.PRODUCTS.BASE,
     icon: CubeIcon,
   },
   {
@@ -27,7 +27,7 @@ const navigation = [
   },
   {
     name: 'Tùy chỉnh',
-    href: ROUTE_PATHS.APP.ARTISAN.CUSTOMIZE,
+    href: ROUTE_PATHS.APP.ARTISAN.SHOP_CUSTOMIZE,
     icon: Cog6ToothIcon,
   },
 ];
@@ -40,8 +40,8 @@ export const ArtisanNavigation: React.FC = () => {
       {navigation.map((item) => {
         const isActive =
           location.pathname === item.href ||
-          (item.href === ROUTE_PATHS.APP.ARTISAN.PRODUCTS &&
-            location.pathname.startsWith('/artisan/products'));
+          (item.href === ROUTE_PATHS.APP.PRODUCTS.BASE &&
+            location.pathname.startsWith('/products'));
 
         return (
           <Link
@@ -67,7 +67,7 @@ export const ArtisanNavigation: React.FC = () => {
 
       {/* Quick Create Product Button */}
       <Link
-        to={ROUTE_PATHS.APP.ARTISAN.CREATE_PRODUCT}
+        to={ROUTE_PATHS.APP.PRODUCTS.CREATE}
         className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-primary hover:bg-primary hover:text-white border border-primary border-dashed"
       >
         <PlusIcon className="mr-3 h-6 w-6" />

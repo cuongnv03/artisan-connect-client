@@ -47,7 +47,7 @@ export const ArtisanProductsPage: React.FC = () => {
   const filters = {
     search: debouncedSearch || undefined,
     categoryIds: searchParams.getAll('categoryId') || undefined,
-    status: searchParams.get('status') || undefined,
+    status: (searchParams.get('status') || undefined) as any,
     minPrice: searchParams.get('minPrice')
       ? Number(searchParams.get('minPrice'))
       : undefined,

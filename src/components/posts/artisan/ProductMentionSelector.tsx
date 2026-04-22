@@ -95,7 +95,7 @@ export const ProductMentionSelector: React.FC<ProductMentionSelectorProps> = ({
         page: 1,
         limit: 10,
       });
-      setSearchResults(result.data);
+      setSearchResults(result.data as any);
     } catch (error) {
       console.error('Error searching products:', error);
       setSearchResults([]);

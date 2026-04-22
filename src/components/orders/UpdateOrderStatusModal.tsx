@@ -142,9 +142,7 @@ export const UpdateOrderStatusModal: React.FC<UpdateOrderStatusModalProps> = ({
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  estimatedDelivery: e.target.value
-                    ? new Date(e.target.value)
-                    : undefined,
+                  estimatedDelivery: e.target.value || undefined,
                 })
               }
             />

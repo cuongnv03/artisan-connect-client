@@ -41,12 +41,13 @@ function messageReducer(
       return { ...state, unreadCount: action.payload, loading: false };
     case 'INCREMENT_UNREAD':
       return { ...state, unreadCount: state.unreadCount + 1 };
-    case 'DECREMENT_UNREAD':
+    case 'DECREMENT_UNREAD': {
       const decrement = action.payload || 1;
       return {
         ...state,
         unreadCount: Math.max(0, state.unreadCount - decrement),
       };
+    }
     case 'RESET_UNREAD':
       return { ...state, unreadCount: 0 };
     default:

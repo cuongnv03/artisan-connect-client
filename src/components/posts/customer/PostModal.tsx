@@ -141,8 +141,8 @@ export const PostModal: React.FC<PostModalProps> = ({
           {(!displayPost.content ||
             (Array.isArray(displayPost.content) &&
               displayPost.content.length === 0) ||
-            (displayPost.content.blocks &&
-              displayPost.content.blocks.length === 0)) &&
+            ((displayPost.content as any).blocks &&
+              (displayPost.content as any).blocks.length === 0)) &&
             displayPost.contentText && (
               <div className="prose max-w-none">
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">

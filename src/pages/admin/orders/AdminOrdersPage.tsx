@@ -64,9 +64,9 @@ export const AdminOrdersPage: React.FC = () => {
       const query: GetOrdersQuery = {
         page: currentPage,
         limit,
-        status: statusFilter || undefined,
-        paymentStatus: paymentStatusFilter || undefined,
-        deliveryStatus: deliveryStatusFilter || undefined,
+        status: (statusFilter as any) || undefined,
+        paymentStatus: (paymentStatusFilter as any) || undefined,
+        deliveryStatus: (deliveryStatusFilter as any) || undefined,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       };

@@ -23,8 +23,10 @@ import { Link } from 'react-router-dom';
 
 interface PostCardProps {
   post: Post;
-  onClick: (post: Post) => void;
+  onClick?: (post: Post) => void;
   onCommentClick?: (post: Post) => void;
+  compact?: boolean;
+  showAuthor?: boolean;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({

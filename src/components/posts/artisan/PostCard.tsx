@@ -75,7 +75,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
         label: 'Chỉnh sửa',
         value: 'edit',
         icon: <PencilIcon className="w-4 h-4" />,
-        onClick: () => window.open(`/posts/${post.id}/edit`, '_blank'),
+        onClick: () => { window.open(`/posts/${post.id}/edit`, '_blank'); },
       },
     ];
 

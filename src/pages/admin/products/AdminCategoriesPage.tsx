@@ -315,7 +315,7 @@ export const AdminCategoriesPage: React.FC = () => {
       >
         <CategoryForm
           categories={categories}
-          onSubmit={handleCreateCategory}
+          onSubmit={handleCreateCategory as any}
           onCancel={() => setShowCreateModal(false)}
           isEditing={false}
         />

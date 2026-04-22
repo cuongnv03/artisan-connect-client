@@ -32,7 +32,7 @@ export const useArtisanPosts = (artisanId: string) => {
         page: currentPage,
         limit: 12,
         type: filters.type || undefined,
-        sortBy: filters.sortBy,
+        sortBy: filters.sortBy as any,
         sortOrder: filters.sortOrder,
       });
 

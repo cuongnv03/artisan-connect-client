@@ -39,8 +39,8 @@ export interface UserProfileDto {
   phone?: string | null;
   followerCount: number;
   followingCount: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   profile?: {
     id: string;
     coverUrl?: string | null;
@@ -74,7 +74,7 @@ export interface UpdateUserProfileRequest {
   coverUrl?: string | null;
   location?: string | null;
   website?: string | null;
-  dateOfBirth?: Date | string | null;
+  dateOfBirth?: string | null;
   gender?: string | null;
   socialLinks?: Record<string, string> | null;
   preferences?: Record<string, any> | null;

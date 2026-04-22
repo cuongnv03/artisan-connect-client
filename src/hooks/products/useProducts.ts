@@ -48,7 +48,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       // For public shop view, only get published products
       if (publicOnly) {
-        cleanQuery.status = 'PUBLISHED';
+        cleanQuery.status = 'PUBLISHED' as any;
       }
 
       // Handle category IDs properly

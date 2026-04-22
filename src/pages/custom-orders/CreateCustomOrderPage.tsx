@@ -152,6 +152,8 @@ export const CreateCustomOrderPage: React.FC = () => {
 
       {/* Form */}
       <CustomOrderForm
+        isOpen={true}
+        onClose={() => {}}
         artisanId={artisan.user.id}
         referenceProductId={referenceProduct?.id}
         onSubmit={createCustomOrder}

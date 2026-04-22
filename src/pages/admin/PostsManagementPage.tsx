@@ -47,8 +47,8 @@ export const PostsManagementPage: React.FC = () => {
         page: currentPage,
         limit: 20,
         search: debouncedSearch || undefined,
-        status: statusFilter || undefined,
-        type: typeFilter || undefined,
+        status: (statusFilter as any) || undefined,
+        type: (typeFilter as any) || undefined,
         sortBy: 'createdAt',
         sortOrder: 'desc',
       });

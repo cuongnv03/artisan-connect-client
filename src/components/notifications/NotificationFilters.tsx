@@ -47,7 +47,7 @@ export const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           <Select
             value={filters.isRead.toString()}
             onChange={(value) =>
-              handleFilterChange('isRead', value === '' ? '' : value === 'true')
+              handleFilterChange('isRead', (value === '' ? '' : value === 'true') as any)
             }
             options={statusOptions}
             className="md:w-48"

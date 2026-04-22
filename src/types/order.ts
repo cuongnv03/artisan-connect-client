@@ -89,13 +89,13 @@ export interface Order extends BaseEntity {
   paymentMethod?: PaymentMethodType;
   paymentReference?: string;
   deliveryStatus: DeliveryStatus;
-  expectedDelivery?: Date;
-  actualDelivery?: Date;
+  expectedDelivery?: string;
+  actualDelivery?: string;
   isDeliveryLate: boolean;
   deliveryNotes?: string;
   trackingNumber?: string;
   canReturn: boolean;
-  returnDeadline?: Date;
+  returnDeadline?: string;
   hasDispute: boolean;
   isRated: boolean;
   buyerSatisfaction?: number;
@@ -135,7 +135,7 @@ export interface OrderSummary {
   deliveryStatus: DeliveryStatus;
   totalAmount: number;
   itemCount: number;
-  createdAt: Date;
+  createdAt: string;
   customer?: {
     id: string;
     name: string;
@@ -200,7 +200,7 @@ export interface PaymentTransaction extends BaseEntity {
   externalReference?: string;
   failureReason?: string;
   metadata?: any;
-  processedAt?: Date;
+  processedAt?: string;
 }
 
 // DISPUTE INTERFACES
@@ -213,7 +213,7 @@ export interface OrderDispute extends BaseEntity {
   status: DisputeStatus;
   resolution?: string;
   resolvedBy?: string;
-  resolvedAt?: Date;
+  resolvedAt?: string;
 }
 
 export interface OrderDisputeWithDetails extends OrderDispute {
@@ -272,7 +272,7 @@ export interface CreateOrderFromQuoteRequest {
 export interface UpdateOrderStatusRequest {
   status: OrderStatus;
   note?: string;
-  estimatedDelivery?: Date;
+  estimatedDelivery?: string;
 }
 
 export interface ProcessPaymentRequest {

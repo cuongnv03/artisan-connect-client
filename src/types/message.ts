@@ -18,9 +18,9 @@ export interface Message extends BaseEntity {
   quoteRequestId?: string;
   productMentions?: Record<string, any>;
   isRead: boolean;
-  readAt?: Date;
+  readAt?: string;
   isEdited: boolean;
-  editedAt?: Date;
+  editedAt?: string;
 }
 
 export interface MessageWithUsers extends Message {
@@ -31,7 +31,7 @@ export interface MessageWithUsers extends Message {
     lastName: string;
     avatarUrl?: string;
     role: string;
-    lastSeenAt?: Date;
+    lastSeenAt?: string;
   };
   receiver: {
     id: string;
@@ -40,7 +40,7 @@ export interface MessageWithUsers extends Message {
     lastName: string;
     avatarUrl?: string;
     role: string;
-    lastSeenAt?: Date;
+    lastSeenAt?: string;
   };
   quoteRequest?: {
     id: string;
@@ -58,11 +58,11 @@ export interface Conversation {
     lastName: string;
     avatarUrl?: string;
     role: string;
-    lastSeenAt?: Date;
+    lastSeenAt?: string;
   };
   lastMessage?: MessageWithUsers;
   unreadCount: number;
-  lastActivity: Date;
+  lastActivity: string;
 }
 
 // DTOs
@@ -149,6 +149,8 @@ export interface CustomOrderProposal {
   customerBudget?: number;
   timeline?: string;
   expiresInDays?: number;
+  deadline?: string;
+  productName?: string;
 
   // Additional fields for enhanced display
   materials?: string[];
