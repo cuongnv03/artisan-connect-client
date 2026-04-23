@@ -117,7 +117,7 @@ npm run preview      # Preview production build locally
 
 ## Deployment with Docker
 
-This app is deployed together with the backend and a PostgreSQL database using Docker Compose. The Compose file and shared `.env` live in the **parent directory** of this repository — see the artisan-connect-server README for full deployment instructions.
+This app is deployed together with the backend and a PostgreSQL database using Docker Compose. The Compose file and shared `.env` live in the **parent directory** of this repository — see the [artisan-connect-server](https://github.com/cuongnv03/artisan-connect-server) README for full deployment instructions.
 
 Quick start (from the parent directory):
 
