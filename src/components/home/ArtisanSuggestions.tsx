@@ -148,7 +148,7 @@ export const ArtisanSuggestions: React.FC = () => {
                 >
                   <div className="flex items-center space-x-3 mb-2">
                     <Link to={`/artisan/${artisan.userId}`}>
-                      <img
+                      <img loading="lazy"
                         src={artisan.user?.avatarUrl || '/default-avatar.png'}
                         alt={`${artisan.user?.firstName} ${artisan.user?.lastName}`}
                         className="w-12 h-12 rounded-full object-cover hover:ring-2 hover:ring-primary transition-all"

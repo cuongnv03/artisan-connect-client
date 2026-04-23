@@ -56,7 +56,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isCtrlEnter = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
+    const isEnterWithoutShift = e.key === 'Enter' && !e.shiftKey;
+    if (isCtrlEnter || isEnterWithoutShift) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -218,12 +220,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
                 ? 'Đang tải file...'
                 : sending
                 ? 'Đang gửi...'
-                : 'Nhập tin nhắn...'
+                : 'Nhập tin nhắn... (Enter để gửi)'
             }
             value={values.content}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             disabled={isDisabled}
+            maxLength={2000}
             style={{
               minHeight: '44px',
               maxHeight: '120px',
@@ -235,6 +238,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               target.style.height = Math.min(target.scrollHeight, 120) + 'px';
             }}
           />
+          {values.content.length > 1800 && (
+            <span
+              className={`absolute bottom-1 right-2 text-xs ${
+                values.content.length >= 2000
+                  ? 'text-red-500'
+                  : 'text-yellow-500'
+              }`}
+            >
+              {2000 - values.content.length}
+            </span>
+          )}
         </div>
 
         {/* Send Button */}
@@ -258,6 +272,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           accept="image/*"
           onChange={handleImageUpload}
           className="hidden"
+          aria-label="Tải lên hình ảnh"
         />
 
         <input
@@ -266,6 +281,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           accept=".pdf,.doc,.docx,.txt,.rtf"
           onChange={handleDocumentUpload}
           className="hidden"
+          aria-label="Tải lên tài liệu"
         />
       </form>
 

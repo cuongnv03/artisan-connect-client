@@ -53,7 +53,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   if (images.length === 1) {
     return (
       <div className={className}>
-        <img
+        <img loading="lazy"
           src={images[0]}
           alt="Gallery image"
           className="w-full object-cover rounded-lg cursor-pointer"
@@ -69,7 +69,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           showCloseButton={false}
         >
           <div className="relative">
-            <img
+            <img loading="lazy"
               src={images[0]}
               alt="Full size"
               className="w-full h-auto max-h-screen object-contain"
@@ -90,7 +90,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     <div className={className}>
       {/* Main Image */}
       <div className="relative">
-        <img
+        <img loading="lazy"
           src={images[currentIndex]}
           alt={`Gallery image ${currentIndex + 1}`}
           className="w-full object-cover rounded-lg cursor-pointer"
@@ -132,7 +132,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                   : 'border-gray-300 hover:border-gray-400'
               }`}
             >
-              <img
+              <img loading="lazy"
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
@@ -150,7 +150,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         showCloseButton={false}
       >
         <div className="relative h-full">
-          <img
+          <img loading="lazy"
             src={images[currentIndex]}
             alt="Full size"
             className="w-full h-full object-contain"

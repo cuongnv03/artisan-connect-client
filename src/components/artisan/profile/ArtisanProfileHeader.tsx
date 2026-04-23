@@ -8,6 +8,7 @@ import {
   CalendarIcon,
   GlobeAltIcon,
   PencilIcon,
+  ShareIcon,
 } from '@heroicons/react/24/outline';
 import { CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -103,6 +104,27 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
     navigate(`/messages/${artisan.id}`);
   };
 
+  const handleShare = async () => {
+    const name = `${artisan.firstName} ${artisan.lastName}`;
+    const shareData = {
+      title: name,
+      text: artisan.artisanProfile?.shopName
+        ? `${name} - ${artisan.artisanProfile.shopName}`
+        : name,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      success('Đã sao chép đường dẫn trang cá nhân');
+    }
+  };
+
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'ARTISAN':
@@ -130,7 +152,7 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
       {/* Cover Image */}
       <div className="h-48 md:h-64 relative bg-gradient-to-r from-blue-500 to-purple-600">
         {artisan.profile?.coverUrl && (
-          <img
+          <img loading="lazy"
             src={artisan.profile.coverUrl}
             alt="Cover"
             className="w-full h-full object-cover"
@@ -298,6 +320,18 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                         </span>
                       </Button>
                     </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShare}
+                      leftIcon={<ShareIcon className="w-4 h-4" />}
+                      title="Chia sẻ trang cá nhân"
+                    >
+                      <span className="hidden sm:inline">Chia sẻ</span>
+                      <span className="sm:hidden">
+                        <ShareIcon className="w-4 h-4" />
+                      </span>
+                    </Button>
                   </>
                 ) : (
                   <>
@@ -325,6 +359,18 @@ export const ArtisanProfileHeader: React.FC<ArtisanProfileHeaderProps> = ({
                       <span className="hidden sm:inline">Nhắn tin</span>
                       <span className="sm:hidden">
                         <ChatBubbleLeftIcon className="w-4 h-4" />
+                      </span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShare}
+                      leftIcon={<ShareIcon className="w-4 h-4" />}
+                      title="Chia sẻ trang cá nhân"
+                    >
+                      <span className="hidden sm:inline">Chia sẻ</span>
+                      <span className="sm:hidden">
+                        <ShareIcon className="w-4 h-4" />
                       </span>
                     </Button>
                   </>

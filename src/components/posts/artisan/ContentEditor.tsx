@@ -143,7 +143,7 @@ export const ContentEditor: React.FC<ContentEditorProps> = ({
           <div key={block.id} className={commonClasses}>
             {block.data?.url || block.metadata?.url ? (
               <div className="relative">
-                <img
+                <img loading="lazy"
                   src={block.data?.url || block.metadata?.url}
                   alt="Uploaded content"
                   className="w-full max-h-96 object-cover rounded-lg"

@@ -230,7 +230,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         ...(negotiationId && { negotiationId }),
       };
 
-      console.log('CartContext: Adding to cart', addToCartData);
 
       const cartItem = await cartService.addToCart(addToCartData);
       dispatch({ type: 'ITEM_ADDED', payload: cartItem });

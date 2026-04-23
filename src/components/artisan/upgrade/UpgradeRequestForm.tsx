@@ -65,7 +65,6 @@ const transformSpecialties = (vietnameseSpecialties: string[]): string[] => {
   return vietnameseSpecialties.map((specialty) => {
     const enumValue = SPECIALTY_MAPPING[specialty];
     if (!enumValue) {
-      console.warn(`Unknown specialty: ${specialty}, defaulting to 'other'`);
       return 'other';
     }
     return enumValue;
@@ -618,7 +617,7 @@ export const UpgradeRequestForm: React.FC<UpgradeRequestFormProps> = ({
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {imageUrls.map((url, index) => (
                   <div key={index} className="relative">
-                    <img
+                    <img loading="lazy"
                       src={url}
                       alt={`Sản phẩm ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg border"

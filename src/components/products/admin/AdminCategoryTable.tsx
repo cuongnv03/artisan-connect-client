@@ -94,7 +94,7 @@ export const AdminCategoryTable: React.FC<AdminCategoryTableProps> = ({
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-12 w-12">
                       {category.imageUrl ? (
-                        <img
+                        <img loading="lazy"
                           className="h-12 w-12 rounded-lg object-cover"
                           src={category.imageUrl}
                           alt={category.name}

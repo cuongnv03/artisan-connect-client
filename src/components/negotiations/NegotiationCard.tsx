@@ -136,7 +136,7 @@ export const NegotiationCard: React.FC<NegotiationCardProps> = ({
             {/* Product Image */}
             {showProduct && negotiation.productImages?.[0] && (
               <div className="relative flex-shrink-0">
-                <img
+                <img loading="lazy"
                   src={negotiation.productImages[0]}
                   alt={negotiation.productName}
                   className="w-16 h-16 rounded-lg object-cover border-2 border-gray-100"

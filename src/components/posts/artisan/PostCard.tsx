@@ -145,7 +145,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onUpdate }) => {
           {/* Post Thumbnail */}
           {post.coverImage && (
             <div className="w-48 flex-shrink-0">
-              <img
+              <img loading="lazy"
                 src={post.coverImage}
                 alt={post.title}
                 className="w-full h-32 object-cover rounded-l-lg"

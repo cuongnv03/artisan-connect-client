@@ -47,7 +47,7 @@ export const ArtisanCard: React.FC<ArtisanCardProps> = ({
       {/* Cover Image */}
       {artisan.shopBannerUrl && (
         <div className="h-32 bg-gradient-to-r from-primary to-primary-dark rounded-t-lg relative overflow-hidden">
-          <img
+          <img loading="lazy"
             src={artisan.shopBannerUrl}
             alt={artisan.shopName}
             className="w-full h-full object-cover"

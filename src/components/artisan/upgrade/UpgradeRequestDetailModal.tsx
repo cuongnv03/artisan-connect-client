@@ -150,7 +150,7 @@ export const UpgradeRequestDetailModal: React.FC<
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
                   {request.user.avatarUrl ? (
-                    <img
+                    <img loading="lazy"
                       src={request.user.avatarUrl}
                       alt={`${request.user.firstName} ${request.user.lastName}`}
                       className="w-16 h-16 rounded-full object-cover"
@@ -310,7 +310,7 @@ export const UpgradeRequestDetailModal: React.FC<
                     className="relative group cursor-pointer"
                     onClick={() => setSelectedImageIndex(index)}
                   >
-                    <img
+                    <img loading="lazy"
                       src={image}
                       alt={`Sản phẩm ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg border"
@@ -512,7 +512,7 @@ export const UpgradeRequestDetailModal: React.FC<
           onClick={() => setSelectedImageIndex(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] p-4">
-            <img
+            <img loading="lazy"
               src={request.images[selectedImageIndex]}
               alt={`Sản phẩm ${selectedImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"

@@ -171,7 +171,7 @@ export const PostForm: React.FC<PostFormProps> = ({
             {initialPost?.coverImage && (
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-2">Ảnh bìa hiện tại:</p>
-                <img
+                <img loading="lazy"
                   src={initialPost.coverImage}
                   alt="Current cover"
                   className="w-full h-48 object-cover rounded-lg"
@@ -238,7 +238,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 <p className="text-sm text-gray-600 mb-2">Ảnh hiện có:</p>
                 <div className="grid grid-cols-2 gap-2">
                   {initialPost.mediaUrls.map((url, index) => (
-                    <img
+                    <img loading="lazy"
                       key={index}
                       src={url}
                       alt={`Media ${index + 1}`}

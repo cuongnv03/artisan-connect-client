@@ -270,7 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 {user?.avatarUrl ? (
-                  <img
+                  <img loading="lazy"
                     className="h-8 w-8 rounded-full object-cover"
                     src={user.avatarUrl}
                     alt={`${user.firstName} ${user.lastName}`}

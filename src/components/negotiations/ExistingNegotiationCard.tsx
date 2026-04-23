@@ -161,7 +161,7 @@ export const ExistingNegotiationCard: React.FC<
         {/* Product info with variant */}
         <div className="bg-gray-50 p-4 rounded-lg mb-4">
           <div className="flex items-start space-x-3 mb-3">
-            <img
+            <img loading="lazy"
               src={displayImages[0]}
               alt={negotiation.product.name}
               className="w-12 h-12 rounded-lg object-cover"

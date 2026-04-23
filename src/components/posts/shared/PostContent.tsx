@@ -8,24 +8,20 @@ interface PostContentProps {
 
 export const PostContent: React.FC<PostContentProps> = ({ content }) => {
   // Debug log
-  console.log('PostContent received:', content);
 
   // Chỉ xử lý format mới với blocks
   const getContentBlocks = (): ContentBlock[] => {
     if (!content) {
-      console.log('No content provided');
       return [];
     }
 
     // Format: {blocks: [...]}
     if (content.blocks && Array.isArray(content.blocks)) {
-      console.log('Found blocks format:', content.blocks);
       return content.blocks;
     }
 
     // Already an array of blocks
     if (Array.isArray(content)) {
-      console.log('Found array format:', content);
       return content;
     }
 
@@ -38,12 +34,11 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
         } else if (Array.isArray(parsed)) {
           return parsed;
         }
-      } catch (error) {
-        console.warn('Failed to parse content string:', error);
+      } catch {
+        // invalid JSON — return empty blocks
       }
     }
 
-    console.warn('Unknown content format:', content);
     return [];
   };
 
@@ -51,7 +46,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
     console.log('Rendering block:', block); // Debug log
 
     if (!block || !block.type) {
-      console.warn('Invalid block - missing type:', block);
       return null;
     }
 
@@ -62,7 +56,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'paragraph':
         const paragraphText = data.text || block.content || '';
         if (!paragraphText.trim()) {
-          console.log('Empty paragraph text:', data);
           return null;
         }
         return (
@@ -74,7 +67,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'heading':
         const headingText = data.text || block.content || '';
         if (!headingText.trim()) {
-          console.log('Empty heading text:', data);
           return null;
         }
         return (
@@ -89,7 +81,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'quote':
         const quoteText = data.text || block.content || '';
         if (!quoteText.trim()) {
-          console.log('Empty quote text:', data);
           return null;
         }
         return (
@@ -109,12 +100,11 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'image':
         const imageUrl = data.url || data.src || block.metadata?.url;
         if (!imageUrl) {
-          console.log('No image URL found:', data);
           return null;
         }
         return (
           <div key={index} className="mb-6">
-            <img
+            <img loading="lazy"
               src={imageUrl}
               alt={data.caption || data.alt || 'Hình ảnh'}
               className="w-full rounded-lg"
@@ -130,7 +120,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'list':
         const items = data.items || data.listItems || [];
         if (!Array.isArray(items) || items.length === 0) {
-          console.log('No list items found:', data);
           return null;
         }
         return (
@@ -146,7 +135,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'gallery':
         const galleryImages = data.images || data.items || [];
         if (!Array.isArray(galleryImages) || galleryImages.length === 0) {
-          console.log('No gallery images found:', data);
           return null;
         }
 
@@ -167,7 +155,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'video':
         const videoUrl = data.url || data.src;
         if (!videoUrl) {
-          console.log('No video URL found:', data);
           return null;
         }
         return (
@@ -187,7 +174,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'html':
         const htmlContent = data.html || data.content || '';
         if (!htmlContent.trim()) {
-          console.log('Empty HTML content:', data);
           return null;
         }
         return (
@@ -201,7 +187,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
       case 'embed':
         const embedUrl = data.url || data.embedUrl;
         if (!embedUrl) {
-          console.log('No embed URL found:', data);
           return null;
         }
         return (
@@ -217,7 +202,6 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
         );
 
       default:
-        console.warn('Unknown block type:', block.type);
         // Hiển thị fallback cho unknown block
         const fallbackText = data.text || block.content || '';
         if (fallbackText.trim()) {
@@ -235,10 +219,8 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
   };
 
   const contentBlocks = getContentBlocks();
-  console.log('Content blocks to render:', contentBlocks);
 
   if (contentBlocks.length === 0) {
-    console.log('No content blocks found, showing empty message');
     return (
       <div className="text-center py-8 text-gray-500">
         <p>Không có nội dung</p>
@@ -251,18 +233,15 @@ export const PostContent: React.FC<PostContentProps> = ({ content }) => {
     (a, b) => (a.order || 0) - (b.order || 0),
   );
 
-  console.log('Sorted content for rendering:', sortedContent);
 
   // Render các blocks và filter out null values
   const renderedBlocks = sortedContent
     .map((block, index) => renderContentBlock(block, index))
     .filter(Boolean); // Remove null/undefined blocks
 
-  console.log('Rendered blocks count:', renderedBlocks.length);
 
   // Nếu không có block nào được render thành công
   if (renderedBlocks.length === 0) {
-    console.log('No blocks rendered successfully');
     return (
       <div className="text-center py-8 text-gray-500">
         <p>Không có nội dung hiển thị được</p>

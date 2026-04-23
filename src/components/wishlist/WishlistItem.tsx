@@ -64,7 +64,7 @@ export const WishlistItem: React.FC<WishlistItemProps> = ({
           {/* Product Image */}
           <div className="w-32 h-32 flex-shrink-0">
             <Link to={`/shop/${product.id}`}>
-              <img
+              <img loading="lazy"
                 src={product.images[0] || '/placeholder-image.jpg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
@@ -186,7 +186,7 @@ export const WishlistItem: React.FC<WishlistItemProps> = ({
           {/* Post Thumbnail */}
           <div className="w-32 h-32 flex-shrink-0">
             <Link to={`/posts/${post.slug || post.id}`}>
-              <img
+              <img loading="lazy"
                 src={post.thumbnailUrl || '/placeholder-image.jpg'}
                 alt={post.title}
                 className="w-full h-full object-cover"

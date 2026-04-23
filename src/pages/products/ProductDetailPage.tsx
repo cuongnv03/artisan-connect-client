@@ -1097,6 +1097,19 @@ export const ProductDetailPage: React.FC = () => {
                   <Button
                     variant="outline"
                     leftIcon={<ShareIcon className="w-5 h-5" />}
+                    onClick={async () => {
+                      const shareData = {
+                        title: product.name,
+                        text: product.description || product.name,
+                        url: window.location.href,
+                      };
+                      if (navigator.share) {
+                        try { await navigator.share(shareData); } catch { /* cancelled */ }
+                      } else {
+                        await navigator.clipboard.writeText(window.location.href);
+                        success('Đã sao chép đường dẫn sản phẩm');
+                      }
+                    }}
                   >
                     Chia sẻ
                   </Button>

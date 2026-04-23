@@ -130,7 +130,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
           {review.images && review.images.length > 0 && (
             <div className="flex space-x-2 mb-3">
               {review.images.map((image, index) => (
-                <img
+                <img loading="lazy"
                   key={index}
                   src={image}
                   alt={`Review image ${index + 1}`}

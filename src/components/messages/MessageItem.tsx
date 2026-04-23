@@ -212,7 +212,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           <div>
             {message.attachments && message.attachments.length > 0
               ? message.attachments.map((imageUrl, index) => (
-                  <img
+                  <img loading="lazy"
                     key={index}
                     src={imageUrl}
                     alt="Hình ảnh đã gửi"
@@ -311,7 +311,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     // FIXED: Render Custom Order Card if we have proper data
     const renderCustomOrderCard = () => {
       if (!productMentions) {
-        console.warn('No productMentions data for custom order message');
         return null;
       }
 
@@ -346,7 +345,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       ];
 
       if (!validTypes.includes(type)) {
-        console.warn(`Invalid custom order type: ${type}`);
         return null;
       }
 

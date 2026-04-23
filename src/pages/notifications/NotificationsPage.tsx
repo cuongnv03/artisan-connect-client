@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNotifications } from '../../hooks/notifications/useNotifications';
 import {
   NotificationHeader,
@@ -25,6 +26,10 @@ export const NotificationsPage: React.FC = () => {
   } = useNotifications();
 
   return (
+    <>
+      <Helmet>
+        <title>Thông báo - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-7xl mx-auto">
       <NotificationHeader
         unreadCount={unreadCount}
@@ -49,5 +54,6 @@ export const NotificationsPage: React.FC = () => {
         onDelete={handleDeleteNotification}
       />
     </div>
+    </>
   );
 };

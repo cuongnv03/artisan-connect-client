@@ -690,7 +690,7 @@ export const CustomOrderForm: React.FC<CustomOrderFormProps> = ({
                   {selectedReferenceProduct && (
                     <div className="p-4 bg-white rounded-lg border border-blue-200">
                       <div className="flex items-start space-x-4">
-                        <img
+                        <img loading="lazy"
                           src={selectedReferenceProduct.images[0]}
                           alt={selectedReferenceProduct.name}
                           className="w-20 h-20 object-cover rounded-lg"

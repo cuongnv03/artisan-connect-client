@@ -26,7 +26,6 @@ export const EditPostPage: React.FC = () => {
 
     try {
       const postData = await postService.getPost(postId);
-      console.log('Loaded post data for editing:', postData);
       setPost(postData);
     } catch (err) {
       error('Không thể tải bài viết');

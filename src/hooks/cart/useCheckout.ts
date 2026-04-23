@@ -49,7 +49,6 @@ export const useCheckout = () => {
 
       if (validation.warnings.length > 0) {
         validation.warnings.forEach((warning) => {
-          console.warn(warning);
         });
       }
     } catch (err: any) {

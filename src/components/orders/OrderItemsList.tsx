@@ -25,7 +25,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
             key={item.id}
             className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
           >
-            <img
+            <img loading="lazy"
               src={
                 item.product?.images?.[0] || 'https://via.placeholder.com/48'
               }
@@ -65,7 +65,7 @@ export const OrderItemsList: React.FC<OrderItemsListProps> = ({
             key={item.id}
             className="flex items-start space-x-4 pb-4 border-b border-gray-100 last:border-b-0"
           >
-            <img
+            <img loading="lazy"
               src={
                 item.product?.images?.[0] || 'https://via.placeholder.com/80'
               }

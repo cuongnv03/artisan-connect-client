@@ -204,7 +204,7 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({
         <div className="space-y-4">
           {imageUrl ? (
             <div className="relative inline-block">
-              <img
+              <img loading="lazy"
                 src={imageUrl}
                 alt="Category preview"
                 className="w-48 h-32 object-cover rounded-lg border"

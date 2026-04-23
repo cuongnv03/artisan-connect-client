@@ -56,7 +56,7 @@ export const ProductMentionCard: React.FC<ProductMentionCardProps> = ({
       <Link to={`/shop/${product.id}`} className="block p-4">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100 rounded-lg mb-3">
-          <img
+          <img loading="lazy"
             src={product.images?.[0] || '/placeholder-product.jpg'}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

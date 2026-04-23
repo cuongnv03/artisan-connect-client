@@ -27,7 +27,7 @@ export const OrderDetailContent: React.FC<OrderDetailContentProps> = ({
               key={item.id}
               className="flex items-center space-x-4 pb-4 border-b border-gray-100 last:border-b-0"
             >
-              <img
+              <img loading="lazy"
                 src={
                   item.product?.images?.[0] || 'https://via.placeholder.com/80'
                 }

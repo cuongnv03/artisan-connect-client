@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { WishlistItemType } from '../../types/wishlist';
 import { useWishlist } from '../../hooks/wishlist/useWishlist';
 import { useCart } from '../../contexts/CartContext';
@@ -111,6 +112,10 @@ export const WishlistPage: React.FC = () => {
   ];
 
   return (
+    <>
+      <Helmet>
+        <title>Danh sách yêu thích - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
@@ -131,5 +136,6 @@ export const WishlistPage: React.FC = () => {
         size="md"
       />
     </div>
+    </>
   );
 };

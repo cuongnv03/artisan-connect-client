@@ -224,7 +224,7 @@ export const RespondToNegotiationForm: React.FC<
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         {/* Product header with variant */}
         <div className="flex items-start space-x-3 mb-4">
-          <img
+          <img loading="lazy"
             src={
               negotiation.variant?.images[0] || negotiation.product.images[0]
             }

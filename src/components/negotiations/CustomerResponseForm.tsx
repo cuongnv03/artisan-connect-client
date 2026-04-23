@@ -155,7 +155,7 @@ export const CustomerResponseForm: React.FC<CustomerResponseFormProps> = ({
       {/* Current offer details */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <div className="flex items-start space-x-3 mb-4">
-          <img
+          <img loading="lazy"
             src={
               negotiation.variant?.images[0] || negotiation.product.images[0]
             }

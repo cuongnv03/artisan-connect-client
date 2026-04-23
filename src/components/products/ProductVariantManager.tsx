@@ -627,7 +627,7 @@ export const ProductVariantManager: React.FC<ProductVariantManagerProps> = ({
                               key={imageIndex}
                               className="relative group aspect-square"
                             >
-                              <img
+                              <img loading="lazy"
                                 src={imageUrl}
                                 alt={`Biến thể ${index + 1} - ${
                                   imageIndex + 1

@@ -209,7 +209,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Image Section */}
         <div className={`relative ${imageSizeClasses[size]} overflow-hidden`}>
           {/* ===== UPDATED: Use display image ===== */}
-          <img
+          <img loading="lazy"
             src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

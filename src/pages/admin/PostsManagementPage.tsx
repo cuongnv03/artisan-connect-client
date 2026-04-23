@@ -358,7 +358,7 @@ const PostRow: React.FC<PostRowProps> = ({
       <td className="px-6 py-4">
         <div className="flex items-center">
           {post.coverImage && (
-            <img
+            <img loading="lazy"
               className="h-10 w-10 rounded object-cover mr-3"
               src={post.coverImage}
               alt={post.title}

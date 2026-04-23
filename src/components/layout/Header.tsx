@@ -213,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                   >
                     <div className="flex items-center">
                       {user?.avatarUrl ? (
-                        <img
+                        <img loading="lazy"
                           className="h-8 w-8 rounded-full object-cover"
                           src={user.avatarUrl}
                           alt={`${user.firstName} ${user.lastName}`}
@@ -230,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
                       <div className="p-4 border-b border-gray-100">
                         <div className="flex items-center">
                           {user?.avatarUrl ? (
-                            <img
+                            <img loading="lazy"
                               className="h-10 w-10 rounded-full object-cover"
                               src={user.avatarUrl}
                               alt={`${user.firstName} ${user.lastName}`}

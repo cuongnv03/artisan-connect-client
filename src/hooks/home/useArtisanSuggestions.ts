@@ -33,7 +33,6 @@ export const useArtisanSuggestions = () => {
         ? response
         : response.data || [];
 
-      console.log('Setting artisans to state:', artisansData);
       setArtisans(artisansData);
     } catch (err: any) {
       if (!mountedRef.current) return;

@@ -41,7 +41,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     currentPostIdRef.current = postId;
 
     try {
-      console.log('Loading comments for post:', postId);
 
       const result = await socialService.getPostComments(postId, {
         parentId: null,
@@ -77,7 +76,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
       setComments(commentsWithReplies);
       hasLoadedRef.current = true;
-      console.log('Comments loaded successfully:', commentsWithReplies.length);
     } catch (err: any) {
       console.error('Error loading comments:', err);
       error('Không thể tải bình luận');
@@ -107,7 +105,6 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
     // Cleanup
     return () => {
-      console.log('CommentSection cleanup for post:', postId);
     };
   }, [postId]); // Chỉ depend on postId
 

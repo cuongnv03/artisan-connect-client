@@ -490,7 +490,7 @@ export const CustomOrderCard: React.FC<CustomOrderCardProps> = ({
               </h4>
               <div className="grid grid-cols-2 gap-2">
                 {proposal.attachmentUrls!.map((url, index) => (
-                  <img
+                  <img loading="lazy"
                     key={index}
                     src={url}
                     alt={`Attachment ${index + 1}`}

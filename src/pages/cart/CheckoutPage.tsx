@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CreditCardIcon,
@@ -291,7 +292,6 @@ export const CheckoutPage: React.FC = () => {
 
       if (validation.warnings.length > 0) {
         validation.warnings.forEach((warning) => {
-          console.warn(warning);
         });
       }
     } catch (err: any) {
@@ -498,7 +498,7 @@ export const CheckoutPage: React.FC = () => {
                 Sản phẩm tham khảo:
               </h5>
               <div className="flex items-center space-x-3">
-                <img
+                <img loading="lazy"
                   src={customOrderData.referenceProduct.images[0]}
                   alt={customOrderData.referenceProduct.name}
                   className="w-12 h-12 object-cover rounded"
@@ -655,6 +655,10 @@ export const CheckoutPage: React.FC = () => {
   const orderTotals = calculateOrderTotals(summary);
 
   return (
+    <>
+      <Helmet>
+        <title>Thanh toán - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-8">
         {isCustomOrderCheckout ? 'Thanh toán Custom Order' : 'Thanh toán'}
@@ -859,7 +863,7 @@ export const CheckoutPage: React.FC = () => {
                           key={item.id}
                           className="flex items-start space-x-3 mb-3"
                         >
-                          <img
+                          <img loading="lazy"
                             src={
                               // ===== UPDATED: Prioritize variant images =====
                               item.variant?.images?.[0] ||
@@ -1106,5 +1110,6 @@ export const CheckoutPage: React.FC = () => {
         </form>
       </Modal>
     </div>
+    </>
   );
 };

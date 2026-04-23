@@ -537,7 +537,7 @@ export const ArtisanProductsPage: React.FC = () => {
                             className="rounded text-primary focus:ring-primary"
                           />
 
-                          <img
+                          <img loading="lazy"
                             src={product.featuredImage || product.images[0]}
                             alt={product.name}
                             className="w-16 h-16 object-cover rounded-lg"

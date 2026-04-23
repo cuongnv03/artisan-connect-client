@@ -560,7 +560,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                           key={index}
                           className="relative group aspect-square"
                         >
-                          <img
+                          <img loading="lazy"
                             src={imageUrl}
                             alt={`${index + 1}`}
                             className="w-full h-full object-cover rounded-lg border"

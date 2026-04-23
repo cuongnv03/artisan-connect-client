@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrders } from '../../hooks/orders/useOrders';
@@ -92,6 +93,10 @@ export const OrdersPage: React.FC = () => {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Đơn hàng của tôi - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">
         Quản lý đơn hàng
@@ -135,5 +140,6 @@ export const OrdersPage: React.FC = () => {
         </>
       )}
     </div>
+    </>
   );
 };

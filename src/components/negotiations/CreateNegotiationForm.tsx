@@ -162,7 +162,7 @@ export const CreateNegotiationForm: React.FC<CreateNegotiationFormProps> = ({
       {/* Product Summary */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <div className="flex items-start space-x-4">
-          <img
+          <img loading="lazy"
             src={displayImages[0]}
             alt={product.name}
             className="w-16 h-16 rounded-lg object-cover"

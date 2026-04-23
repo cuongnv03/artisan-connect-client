@@ -215,7 +215,7 @@ export const DisputePage: React.FC = () => {
                         rel="noopener noreferrer"
                         className="block"
                       >
-                        <img
+                        <img loading="lazy"
                           src={evidence}
                           alt={`Bằng chứng ${index + 1}`}
                           className="w-full h-24 object-cover rounded-lg border hover:opacity-80"

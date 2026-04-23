@@ -53,7 +53,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           {fallback || <UserIcon className={iconSizeClasses[size]} />}
         </div>
       ) : (
-        <img
+        <img loading="lazy"
           className={`${sizeClasses[size]} rounded-full object-cover border-2 border-white shadow-sm`}
           src={src}
           alt={alt}

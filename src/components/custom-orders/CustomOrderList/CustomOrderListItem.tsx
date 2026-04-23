@@ -106,7 +106,7 @@ export const CustomOrderListItem: React.FC<CustomOrderListItemProps> = ({
       {order.referenceProduct && (
         <div className="border-t pt-3 mt-3">
           <div className="flex items-center space-x-3">
-            <img
+            <img loading="lazy"
               src={order.referenceProduct.images[0]}
               alt={order.referenceProduct.name}
               className="w-12 h-12 object-cover rounded"

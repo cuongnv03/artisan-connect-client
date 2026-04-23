@@ -159,7 +159,7 @@ export const ProductMentionSelector: React.FC<ProductMentionSelectorProps> = ({
           {mentions.map((mention) => (
             <Card key={mention.productId} className="p-4">
               <div className="flex items-start space-x-4">
-                <img
+                <img loading="lazy"
                   src={
                     mention.product.images?.[0] || '/placeholder-product.jpg'
                   }
@@ -279,7 +279,7 @@ export const ProductMentionSelector: React.FC<ProductMentionSelectorProps> = ({
                           }
                         >
                           <div className="flex items-center space-x-3">
-                            <img
+                            <img loading="lazy"
                               src={
                                 product.images?.[0] ||
                                 '/placeholder-product.jpg'

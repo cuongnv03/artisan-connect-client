@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { useCartOperations, useCartValidation } from '../../hooks/cart';
 import { cartService } from '../../services/cart.service';
@@ -55,13 +56,6 @@ export const CartPage: React.FC = () => {
         return;
       }
 
-      if (validation.warnings.length > 0) {
-        // Log warnings but don't show as errors to user
-        validation.warnings.forEach((warning) => {
-          console.warn('Cart warning:', warning);
-        });
-      }
-
       navigate('/checkout');
     } catch (err: any) {
       error(err.message || 'Không thể tiến hành thanh toán');
@@ -94,6 +88,10 @@ export const CartPage: React.FC = () => {
 
   // Cart with items
   return (
+    <>
+      <Helmet>
+        <title>Giỏ hàng - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-6xl mx-auto">
       <CartHeader
         summary={summary}
@@ -133,5 +131,6 @@ export const CartPage: React.FC = () => {
         type="danger"
       />
     </div>
+    </>
   );
 };

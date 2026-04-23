@@ -63,7 +63,7 @@ export const PostDetailPage: React.FC = () => {
           {/* Cover Image - ĐẶT NGAY TRÊN TITLE */}
           {post.coverImage && (
             <div className="mb-6">
-              <img
+              <img loading="lazy"
                 src={post.coverImage}
                 alt={post.title}
                 className="w-full h-96 object-cover rounded-lg shadow-lg"

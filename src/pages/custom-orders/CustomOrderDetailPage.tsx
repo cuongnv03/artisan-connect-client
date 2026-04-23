@@ -355,7 +355,7 @@ export const CustomOrderDetailPage: React.FC = () => {
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
                 <div className="flex items-center space-x-4">
-                  <img
+                  <img loading="lazy"
                     src={order.referenceProduct.images[0]}
                     alt={order.referenceProduct.name}
                     className="w-20 h-20 object-cover rounded-xl shadow-md"

@@ -79,17 +79,14 @@ const DiscoverPageContent: React.FC = () => {
       authState.user?.role === 'ARTISAN' &&
       post.user?.id === authState.user.id
     ) {
-      console.log('Navigating to manage page for own post');
       navigate(`/posts/manage/${post.id}`);
     } else {
       // Tất cả trường hợp khác đều mở modal
-      console.log('Opening modal for post');
       openModal(post);
     }
   };
 
   const handleCommentClick = (post: Post) => {
-    console.log('Comment clicked, opening modal');
     // Luôn mở modal khi click comment, bất kể role
     openModal(post);
   };

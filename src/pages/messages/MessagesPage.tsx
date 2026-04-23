@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
@@ -80,6 +81,10 @@ export const MessagesPage: React.FC = () => {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Tin nhắn - Artisan Connect</title>
+      </Helmet>
     <div className="max-w-7xl mx-auto">
       {/* Header - Fixed */}
       <div className="flex items-center justify-between mb-6">
@@ -125,6 +130,7 @@ export const MessagesPage: React.FC = () => {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
+                aria-label="Lọc cuộc trò chuyện"
                 className="w-full rounded-lg border-gray-300 text-sm focus:border-primary focus:ring-primary"
               >
                 <option value="all">Tất cả ({conversations.length})</option>
@@ -194,5 +200,6 @@ export const MessagesPage: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

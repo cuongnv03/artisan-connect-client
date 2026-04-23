@@ -62,7 +62,6 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
     try {
       await sendMediaMessage(file, type, (progress) => {
         // Optional: Show upload progress
-        console.log(`Upload progress: ${progress}%`);
       });
     } catch (error) {
       // Error already handled in hook

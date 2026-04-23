@@ -169,7 +169,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'AUTH_START' });
 
     try {
-      console.log('Attempting login with:', { emailOrUsername, rememberMe });
 
       const response = await authService.login({
         emailOrUsername,
@@ -177,7 +176,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         rememberMe,
       });
 
-      console.log('Login response:', response);
 
       localStorage.setItem('accessToken', response.accessToken);
       if (response.refreshToken) {
@@ -186,7 +184,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user });
     } catch (error: any) {
-      console.log('Login error:', error);
       const errorMessage =
         error.response?.data?.message || error.message || 'Đăng nhập thất bại';
       dispatch({ type: 'AUTH_ERROR', payload: errorMessage });

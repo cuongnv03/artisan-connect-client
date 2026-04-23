@@ -178,7 +178,6 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
                 icon: <ArchiveBoxIcon className="w-4 h-4" />,
                 onClick: (e) => {
                   e?.stopPropagation();
-                  console.log('Archive conversation');
                 },
                 disabled: true,
               },

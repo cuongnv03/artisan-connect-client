@@ -106,7 +106,7 @@ export const CreateCustomOrderPage: React.FC = () => {
       {/* Artisan Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center space-x-4">
-          <img
+          <img loading="lazy"
             src={artisan.shopLogoUrl || '/default-shop.jpg'}
             alt={artisan.shopName}
             className="w-16 h-16 object-cover rounded-lg"
@@ -135,7 +135,7 @@ export const CreateCustomOrderPage: React.FC = () => {
             Sản phẩm tham khảo:
           </h3>
           <div className="flex items-center space-x-4">
-            <img
+            <img loading="lazy"
               src={referenceProduct.images[0]}
               alt={referenceProduct.name}
               className="w-20 h-20 object-cover rounded-lg"

@@ -103,7 +103,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Cover Image */}
       {post.coverImage && (
         <div className="h-48 overflow-hidden" onClick={handleCardClick}>
-          <img
+          <img loading="lazy"
             src={post.coverImage}
             alt={post.title}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
@@ -114,7 +114,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Thumbnail nếu không có cover */}
       {!post.coverImage && post.thumbnailUrl && (
         <div className="h-48 overflow-hidden" onClick={handleCardClick}>
-          <img
+          <img loading="lazy"
             src={post.thumbnailUrl}
             alt={post.title}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"

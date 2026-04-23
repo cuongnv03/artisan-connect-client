@@ -6,6 +6,7 @@ import { Sidebar } from './Sidebar';
 import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { BackToTop } from '../common/BackToTop';
 
 export const MainLayout: React.FC = () => {
   const { state } = useAuth();
@@ -45,6 +46,7 @@ export const MainLayout: React.FC = () => {
 
       {isAuthenticated && <MobileNavigation />}
       {!isAuthenticated && <Footer />}
+      <BackToTop />
     </div>
   );
 };

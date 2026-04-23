@@ -43,7 +43,6 @@ export const usePostForm = (initialPost?: Post) => {
   // Load existing post data
   useEffect(() => {
     if (initialPost) {
-      console.log('Loading initial post data:', initialPost);
 
       // Load content
       let existingContent: ContentBlock[] = [];
@@ -56,7 +55,6 @@ export const usePostForm = (initialPost?: Post) => {
         }
       }
 
-      console.log('Setting content:', existingContent);
       setContent(existingContent);
 
       // Load product mentions

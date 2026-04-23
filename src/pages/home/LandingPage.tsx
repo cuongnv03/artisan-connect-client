@@ -124,24 +124,24 @@ export const LandingPage: React.FC = () => {
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
-                  <img
+                  <img loading="lazy"
                     className="rounded-lg shadow-lg transform rotate-3 hover:rotate-6 transition-transform"
                     src="https://media.istockphoto.com/id/639487044/photo/hands-of-a-potter-creating-an-earthen-jar.webp?a=1&b=1&s=612x612&w=0&k=20&c=QnEwIt2GyTFvMlG5TFt7KSyMcHBqNhjcf4Lcsn7juEg="
                     alt="Nghệ nhân làm gốm"
                   />
-                  <img
+                  <img loading="lazy"
                     className="rounded-lg shadow-lg transform -rotate-2 hover:-rotate-6 transition-transform"
                     src="https://images.unsplash.com/photo-1632224238847-33625482f0c1?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Sản phẩm thủ công"
                   />
                 </div>
                 <div className="space-y-4 pt-8">
-                  <img
+                  <img loading="lazy"
                     className="rounded-lg shadow-lg transform -rotate-3 hover:-rotate-6 transition-transform"
                     src="https://images.unsplash.com/photo-1734873741744-759ea0a3b3e5?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Nghề thêu truyền thống"
                   />
-                  <img
+                  <img loading="lazy"
                     className="rounded-lg shadow-lg transform rotate-2 hover:rotate-6 transition-transform"
                     src="https://images.unsplash.com/photo-1677146337118-501fbedfe23c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Làng nghề Việt Nam"
@@ -235,7 +235,7 @@ export const LandingPage: React.FC = () => {
             {testimonials.map((testimonial, index) => (
               <div key={index} className="card p-6">
                 <div className="flex items-center mb-4">
-                  <img
+                  <img loading="lazy"
                     className="w-12 h-12 rounded-full object-cover"
                     src={testimonial.avatar}
                     alt={testimonial.name}

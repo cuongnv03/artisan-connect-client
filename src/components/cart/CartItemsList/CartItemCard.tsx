@@ -85,7 +85,7 @@ export const CartItemCard: React.FC<CartItemCardProps> = ({
     <div className="flex flex-col sm:flex-row gap-4">
       {/* Product Image */}
       <div className="flex-shrink-0">
-        <img
+        <img loading="lazy"
           src={getDisplayImage()}
           alt={item.product?.name || 'Product'}
           className="w-24 h-24 object-cover rounded-lg"

@@ -32,12 +32,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
       newSocket.on('connect', () => {
         setIsConnected(true);
-        console.log('Socket connected');
       });
 
       newSocket.on('disconnect', () => {
         setIsConnected(false);
-        console.log('Socket disconnected');
       });
 
       newSocket.on('connect_error', (error) => {

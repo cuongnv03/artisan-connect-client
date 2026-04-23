@@ -42,7 +42,6 @@ export const usePostDetail = () => {
   // Memoize loadPost function
   const loadPost = useCallback(async () => {
     if (!postId || !postId.trim() || postId === 'undefined') {
-      console.log('Invalid postId for loading:', postId);
       setLoading(false);
       return;
     }
@@ -58,7 +57,6 @@ export const usePostDetail = () => {
     currentPostIdRef.current = postId;
 
     try {
-      console.log('Loading post:', postId, 'Is UUID:', isUUID(postId));
 
       let postData: Post;
 
@@ -68,7 +66,6 @@ export const usePostDetail = () => {
         postData = await postService.getPostBySlug(postId);
       }
 
-      console.log('Post data received:', postData);
 
       setPost(postData);
       setIsLiked(Boolean(postData.isLiked));
@@ -86,13 +83,11 @@ export const usePostDetail = () => {
 
       if (!isAuthor && !hasIncrementedViewRef.current && authState.user) {
         hasIncrementedViewRef.current = true;
-        console.log('Incrementing view count for non-author user');
 
         // Delay để tránh race condition
         setTimeout(async () => {
           try {
             await postService.getPost(postData.id); // track view
-            console.log('View count incremented successfully');
           } catch (err) {
             console.error('Failed to increment view count:', err);
           }
@@ -134,7 +129,6 @@ export const usePostDetail = () => {
 
     // Cleanup function
     return () => {
-      console.log('usePostDetail cleanup');
     };
   }, [postId]); // Chỉ depend on postId
 

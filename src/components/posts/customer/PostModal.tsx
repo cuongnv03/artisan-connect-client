@@ -53,7 +53,6 @@ export const PostModal: React.FC<PostModalProps> = ({
 
     setLoading(true);
     try {
-      console.log('Loading full post detail for:', initialPost.id);
 
       // Gọi API để get full detail và increment view
       const fullPost = await postService.getPost(initialPost.id);
@@ -104,7 +103,7 @@ export const PostModal: React.FC<PostModalProps> = ({
         {/* Cover Image */}
         {displayPost.coverImage && (
           <div className="mb-6">
-            <img
+            <img loading="lazy"
               src={displayPost.coverImage}
               alt={displayPost.title}
               className="w-full h-64 object-cover rounded-lg"
@@ -115,7 +114,7 @@ export const PostModal: React.FC<PostModalProps> = ({
         {/* Thumbnail nếu không có cover */}
         {!displayPost.coverImage && displayPost.thumbnailUrl && (
           <div className="mb-6">
-            <img
+            <img loading="lazy"
               src={displayPost.thumbnailUrl}
               alt={displayPost.title}
               className="w-full h-64 object-cover rounded-lg"

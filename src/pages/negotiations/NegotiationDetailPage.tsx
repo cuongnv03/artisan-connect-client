@@ -223,7 +223,7 @@ export const NegotiationDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Product Info */}
           <div className="flex items-start space-x-4">
-            <img
+            <img loading="lazy"
               src={displayImages[0]}
               alt={negotiation.product.name}
               className="w-20 h-20 rounded-lg object-cover border-2 border-green-200"
@@ -370,7 +370,7 @@ export const NegotiationDetailPage: React.FC = () => {
                     Thông tin sản phẩm
                   </h3>
                   <div className="flex items-start space-x-4">
-                    <img
+                    <img loading="lazy"
                       src={displayImages[0]}
                       alt={negotiation.product.name}
                       className="w-20 h-20 rounded-lg object-cover"

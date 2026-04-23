@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { PlusIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useArtisanDashboard } from '../../hooks/artisan/useArtisanDashboard';
 import { DashboardOverview } from '../../components/artisan/dashboard/DashboardOverview';
+import { NeedsActionSection } from '../../components/artisan/dashboard/NeedsActionSection';
 import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 
 export const DashboardPage: React.FC = () => {
   const { state: authState } = useAuth();
-  const { dashboardData, analyticsData, loading, refreshDashboard } =
+  const { dashboardData, analyticsData, loading, needsAction, refreshDashboard } =
     useArtisanDashboard();
 
   if (loading) {
@@ -24,36 +26,49 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Chào mừng {authState.user?.firstName}, quản lý cửa hàng của bạn
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link to="/products/manage/create">
-            <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
-              Thêm sản phẩm mới
-            </Button>
-          </Link>
-          <Button
-            variant="outline"
-            onClick={refreshDashboard}
-            leftIcon={<ChartBarIcon className="w-4 h-4" />}
-          >
-            Làm mới
-          </Button>
-        </div>
-      </div>
+    <>
+      <Helmet>
+        <title>Dashboard - Artisan Connect</title>
+      </Helmet>
 
-      <DashboardOverview
-        dashboardData={dashboardData}
-        analyticsData={analyticsData}
-        loading={loading}
-      />
-    </div>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">
+              Chào mừng {authState.user?.firstName}, quản lý cửa hàng của bạn
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Link to="/products/create">
+              <Button leftIcon={<PlusIcon className="w-4 h-4" />}>
+                Thêm sản phẩm mới
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              onClick={refreshDashboard}
+              leftIcon={<ChartBarIcon className="w-4 h-4" />}
+            >
+              Làm mới
+            </Button>
+          </div>
+        </div>
+
+        {/* Needs Action Banner */}
+        <NeedsActionSection
+          pendingOrderCount={needsAction.pendingOrderCount}
+          pendingCustomOrderCount={needsAction.pendingCustomOrderCount}
+          pendingNegotiationCount={needsAction.pendingNegotiationCount}
+        />
+
+        <DashboardOverview
+          dashboardData={dashboardData}
+          analyticsData={analyticsData}
+          loading={loading}
+        />
+      </div>
+    </>
   );
 };

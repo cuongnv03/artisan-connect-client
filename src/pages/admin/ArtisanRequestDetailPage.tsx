@@ -363,7 +363,7 @@ export const ArtisanRequestDetailPage: React.FC = () => {
                   className="relative group cursor-pointer"
                   onClick={() => setSelectedImageIndex(index)}
                 >
-                  <img
+                  <img loading="lazy"
                     src={image}
                     alt={`Sản phẩm ${index + 1}`}
                     className="w-full h-24 object-cover rounded-lg border"
@@ -614,7 +614,7 @@ export const ArtisanRequestDetailPage: React.FC = () => {
           onClick={() => setSelectedImageIndex(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] p-4">
-            <img
+            <img loading="lazy"
               src={request.images[selectedImageIndex]}
               alt={`Sản phẩm ${selectedImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"

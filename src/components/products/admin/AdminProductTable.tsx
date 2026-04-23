@@ -141,7 +141,7 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-16 w-16">
                       {product.images?.[0] ? (
-                        <img
+                        <img loading="lazy"
                           className="h-16 w-16 rounded-lg object-cover"
                           src={product.images[0]}
                           alt={product.name}
@@ -166,7 +166,7 @@ export const AdminProductTable: React.FC<AdminProductTableProps> = ({
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-8 w-8">
                       {product.seller?.avatarUrl ? (
-                        <img
+                        <img loading="lazy"
                           className="h-8 w-8 rounded-full"
                           src={product.seller.avatarUrl}
                           alt={`${product.seller.firstName} ${product.seller.lastName}`}

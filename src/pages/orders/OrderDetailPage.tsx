@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   ArrowLeftIcon,
   TruckIcon,
   PrinterIcon,
   CheckCircleIcon,
   XCircleIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
+import { useToastContext } from '../../contexts/ToastContext';
 import { useOrderDetail } from '../../hooks/orders/useOrderDetail';
 import { UpdateOrderStatusRequest } from '../../types/order';
 import { UpdateOrderStatusModal } from '../../components/orders/UpdateOrderStatusModal';
@@ -20,8 +23,15 @@ import { ConfirmModal } from '../../components/ui/Modal';
 
 export const OrderDetailPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
+  const { success } = useToastContext();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
+
+  const handleCopyOrderNumber = (orderNumber: string) => {
+    navigator.clipboard.writeText(orderNumber).then(() => {
+      success('Đã sao chép mã đơn hàng');
+    });
+  };
 
   const {
     order,
@@ -74,6 +84,11 @@ export const OrderDetailPage: React.FC = () => {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Đơn hàng #{order.orderNumber} - Artisan Connect</title>
+      </Helmet>
+
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -89,9 +104,19 @@ export const OrderDetailPage: React.FC = () => {
           </Link>
 
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Đơn hàng #{order.orderNumber}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Đơn hàng #{order.orderNumber}
+              </h1>
+              <button
+                type="button"
+                onClick={() => handleCopyOrderNumber(order.orderNumber)}
+                title="Sao chép mã đơn hàng"
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <ClipboardDocumentIcon className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-gray-500">
               Đặt lúc {formatDate(order.createdAt)}
             </p>
@@ -207,5 +232,6 @@ export const OrderDetailPage: React.FC = () => {
         loading={updating}
       />
     </div>
+    </>
   );
 };
