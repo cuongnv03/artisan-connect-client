@@ -1,6 +1,6 @@
-# Artisan Connect — Client
+# Artisan Connect - Client
 
-React SPA for **Artisan Connect**, a social commerce platform for Vietnamese artisans. Combines a social feed with a full e-commerce storefront — artisans publish posts, manage products, negotiate prices, and handle custom orders, all in one place.
+React SPA for **Artisan Connect**, a social commerce platform for Vietnamese artisans. Combines a social feed with a full e-commerce storefront - artisans publish posts, manage products, negotiate prices, and handle custom orders, all in one place.
 
 > The backend lives in a separate repository: **artisan-connect-server**.
 > For Docker-based deployment (both services together), see the [deployment section](#deployment-with-docker).
@@ -9,15 +9,15 @@ React SPA for **Artisan Connect**, a social commerce platform for Vietnamese art
 
 ## Features
 
-- Social feed — follow artisans, like and comment on posts
+- Social feed - follow artisans, like and comment on posts
 - Product browsing, search, and filtering
 - Multi-seller shopping cart and checkout
 - Price negotiation between buyer and artisan
 - Custom order requests via chat
 - Real-time messaging and notifications (Socket.io)
-- Artisan dashboard — manage products, orders, quotes, negotiations
+- Artisan dashboard - manage products, orders, quotes, negotiations
 - Artisan profile theming and customization
-- Admin panel — manage users and artisan upgrade requests
+- Admin panel - manage users and artisan upgrade requests
 - Wishlist for products and posts
 
 ---
@@ -26,7 +26,7 @@ React SPA for **Artisan Connect**, a social commerce platform for Vietnamese art
 
 ### General & Customer
 
-| Homepage — logged out | Homepage — logged in |
+| Homepage - logged out | Homepage - logged in |
 | --- | --- |
 | ![Homepage (logged out)](https://github.com/user-attachments/assets/07416177-c4d2-4222-9d9b-a11b8836c259) | ![Homepage (logged in)](https://github.com/user-attachments/assets/2c369d70-389e-4084-adbb-9940d4e18cb9) |
 
@@ -102,7 +102,7 @@ npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api` and `/socket.io` requests to `http://localhost:5000` automatically — no environment variables needed for local development.
+The Vite dev server proxies `/api` and `/socket.io` requests to `http://localhost:5000` automatically - no environment variables needed for local development.
 
 ### Other commands
 
@@ -117,7 +117,7 @@ npm run preview      # Preview production build locally
 
 ## Deployment with Docker
 
-This app is deployed together with the backend and a PostgreSQL database using Docker Compose. The Compose file and shared `.env` live in the **parent directory** of this repository — see the [artisan-connect-server](https://github.com/cuongnv03/artisan-connect-server) README for full deployment instructions.
+This app is deployed together with the backend and a PostgreSQL database using Docker Compose. The Compose file and shared `.env` live in the **parent directory** of this repository - see the [artisan-connect-server](https://github.com/cuongnv03/artisan-connect-server) README for full deployment instructions.
 
 Quick start (from the parent directory):
 
